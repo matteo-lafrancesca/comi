@@ -1,12 +1,8 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
+import { getSessionUser } from "@/lib/auth";
 
 const f = createUploadthing();
-
-// Authentification factice pour l'instant (à lier avec l'auth de l'application plus tard)
-const auth = () => {
-  return { id: "user_dev" };
-};
 
 export const ourFileRouter = {
   // Route pour uploader les photos de repas
@@ -17,9 +13,9 @@ export const ourFileRouter = {
     },
   })
     .middleware(async () => {
-      const user = auth();
+      const user = await getSessionUser();
       if (!user) throw new UploadThingError("Unauthorized");
-      return { userId: user.id };
+      return { userId: String(user.id) };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       console.log("Upload terminé pour l'utilisateur :", metadata.userId);
