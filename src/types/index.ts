@@ -3,7 +3,8 @@ import type {
   Repas as PrismaRepas, 
   Ingredient as PrismaIngredient, 
   RepasIngredient as PrismaRepasIngredient,
-  Programmation as PrismaProgrammation 
+  Programmation as PrismaProgrammation,
+  ShoppingListItem as PrismaShoppingListItem
 } from '@prisma/client';
 
 // Modèles principaux réexportés depuis Prisma
@@ -12,6 +13,7 @@ export type Repas = PrismaRepas;
 export type Ingredient = PrismaIngredient;
 export type RepasIngredient = PrismaRepasIngredient;
 export type Programmation = PrismaProgrammation;
+export type ShoppingListItem = PrismaShoppingListItem;
 
 // Catégories d'ingrédients alimentaires (triées dans l'ordre du parcours type en magasin)
 export const CATEGORY_DETAILS = {
@@ -102,4 +104,8 @@ export type ProgrammationWithRepas = Programmation & {
 export type UserWithRelations = User & {
   repas: Repas[];
   programmation: Programmation[];
+};
+
+export type ShoppingListItemWithIngredient = ShoppingListItem & {
+  ingredient: Ingredient;
 };

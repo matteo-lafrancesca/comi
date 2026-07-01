@@ -14,6 +14,7 @@ model User {
   createdAt    DateTime        @default(now()) @map("created_at")
   repas        Repas[]
   programmation Programmation[]
+  shoppingList  ShoppingListItem[]
 
   @@map("users")
 }
@@ -33,10 +34,11 @@ model Repas {
 }
 
 model Ingredient {
-  id        Int               @id @default(autoincrement())
-  nom       String            @unique
-  categorie String            // e.g., "fruits-legumes", "epicerie-salee"
-  repas     RepasIngredient[]
+  id           Int                @id @default(autoincrement())
+  nom          String             @unique
+  categorie    String             // e.g., "fruits-legumes", "epicerie-salee"
+  repas        RepasIngredient[]
+  shoppingList ShoppingListItem[]
 
   @@map("ingredients")
 }
@@ -63,4 +65,21 @@ model Programmation {
   heure   Int      // 0 = midi, 1 = soir
 
   @@map("programmation")
+}
+
+model ShoppingListItem {
+  id           Int        @id @default(autoincrement())
+  userId       Int        @map("user_id")
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredientId Int        @map("ingredient_id")
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  quantite     Float?
+  unite        String?
+  isChecked    Boolean    @default(false) @map("is_checked")
+  week         Int
+  year         Int
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  @@unique([userId, week, year, ingredientId, unite])
+  @@map("shopping_list_items")
 }
