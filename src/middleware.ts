@@ -16,7 +16,7 @@ export async function middleware(request: NextRequest) {
     try {
       await jwtVerify(token, key, { algorithms: ['HS256'] });
       isAuthenticated = true;
-    } catch (err) {
+    } catch {
       // Le token est invalide ou expiré
       isAuthenticated = false;
     }

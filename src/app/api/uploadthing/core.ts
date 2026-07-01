@@ -4,7 +4,7 @@ import { UploadThingError } from "uploadthing/server";
 const f = createUploadthing();
 
 // Authentification factice pour l'instant (à lier avec l'auth de l'application plus tard)
-const auth = (req: Request) => {
+const auth = () => {
   return { id: "user_dev" };
 };
 
@@ -16,8 +16,8 @@ export const ourFileRouter = {
       maxFileCount: 1,
     },
   })
-    .middleware(async ({ req }) => {
-      const user = auth(req);
+    .middleware(async () => {
+      const user = auth();
       if (!user) throw new UploadThingError("Unauthorized");
       return { userId: user.id };
     })

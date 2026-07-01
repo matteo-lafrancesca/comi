@@ -38,7 +38,7 @@ export async function verifyJWT(token: string): Promise<TokenPayload | null> {
       userId: payload.userId as number,
       email: payload.email as string,
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -66,7 +66,7 @@ export async function getSessionUser() {
     });
     
     return user;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

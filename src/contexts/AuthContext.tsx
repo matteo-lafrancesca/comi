@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setUser(null);
       }
-    } catch (err) {
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
@@ -42,7 +42,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    refreshSession();
+    let active = true;
+    const init = async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      } catch {
+        if (active) setUser(null);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    init();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -61,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         return { success: false, error: data.error || 'Erreur lors de la connexion' };
       }
-    } catch (err) {
+    } catch {
       return { success: false, error: 'Une erreur réseau est survenue' };
     }
   };
@@ -82,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         return { success: false, error: data.error || "Erreur lors de l'inscription" };
       }
-    } catch (err) {
+    } catch {
       return { success: false, error: 'Une erreur réseau est survenue' };
     }
   };
