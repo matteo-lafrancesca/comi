@@ -61,7 +61,11 @@ export async function GET(request: Request) {
       include: {
         repas: {
           include: {
-            ingredients: true,
+            ingredients: {
+              include: {
+                ingredient: true,
+              },
+            },
           },
         },
       },
@@ -71,12 +75,30 @@ export async function GET(request: Request) {
       ],
     });
 
+    const responseProgrammations = programmations.map((p) => ({
+      ...p,
+      repas: {
+        id: p.repas.id,
+        userId: p.repas.userId,
+        titre: p.repas.titre,
+        recette: p.repas.recette,
+        photoUrl: p.repas.photoUrl,
+        createdAt: p.repas.createdAt,
+        ingredients: p.repas.ingredients.map((ri) => ({
+          id: ri.id,
+          nom: ri.ingredient.nom,
+          quantite: ri.quantite,
+          categorie: ri.ingredient.categorie,
+        })),
+      },
+    }));
+
     return NextResponse.json({
       week,
       year,
       start: start.toISOString(),
       end: end.toISOString(),
-      programmations,
+      programmations: responseProgrammations,
     });
   } catch (error) {
     console.error('Erreur lors de la récupération du planning:', error);
@@ -166,12 +188,35 @@ export async function POST(request: Request) {
         include: {
           repas: {
             include: {
-              ingredients: true,
+              ingredients: {
+                include: {
+                  ingredient: true,
+                },
+              },
             },
           },
         },
       });
-      return NextResponse.json(updated, { status: 200 });
+
+      const responseProg = {
+        ...updated,
+        repas: {
+          id: updated.repas.id,
+          userId: updated.repas.userId,
+          titre: updated.repas.titre,
+          recette: updated.repas.recette,
+          photoUrl: updated.repas.photoUrl,
+          createdAt: updated.repas.createdAt,
+          ingredients: updated.repas.ingredients.map((ri) => ({
+            id: ri.id,
+            nom: ri.ingredient.nom,
+            quantite: ri.quantite,
+            categorie: ri.ingredient.categorie,
+          })),
+        },
+      };
+
+      return NextResponse.json(responseProg, { status: 200 });
     }
 
     const created = await db.programmation.create({
@@ -184,13 +229,35 @@ export async function POST(request: Request) {
       include: {
         repas: {
           include: {
-            ingredients: true,
+            ingredients: {
+              include: {
+                ingredient: true,
+              },
+            },
           },
         },
       },
     });
 
-    return NextResponse.json(created, { status: 201 });
+    const responseProg = {
+      ...created,
+      repas: {
+        id: created.repas.id,
+        userId: created.repas.userId,
+        titre: created.repas.titre,
+        recette: created.repas.recette,
+        photoUrl: created.repas.photoUrl,
+        createdAt: created.repas.createdAt,
+        ingredients: created.repas.ingredients.map((ri) => ({
+          id: ri.id,
+          nom: ri.ingredient.nom,
+          quantite: ri.quantite,
+          categorie: ri.ingredient.categorie,
+        })),
+      },
+    };
+
+    return NextResponse.json(responseProg, { status: 201 });
   } catch (error) {
     console.error('Erreur lors de la création/mise à jour de la programmation:', error);
     return NextResponse.json(

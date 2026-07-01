@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth';
+import { normalizeCategory } from '@/types';
 
 interface IngredientInput {
   nom: string;
@@ -43,7 +44,13 @@ export async function GET(
 
     const repas = await db.repas.findUnique({
       where: { id: mealId },
-      include: { ingredients: true },
+      include: {
+        ingredients: {
+          include: {
+            ingredient: true,
+          },
+        },
+      },
     });
 
     if (!repas) {
@@ -60,7 +67,22 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(repas, { status: 200 });
+    const responseRepas = {
+      id: repas.id,
+      userId: repas.userId,
+      titre: repas.titre,
+      recette: repas.recette,
+      photoUrl: repas.photoUrl,
+      createdAt: repas.createdAt,
+      ingredients: repas.ingredients.map((ri) => ({
+        id: ri.id,
+        nom: ri.ingredient.nom,
+        quantite: ri.quantite,
+        categorie: ri.ingredient.categorie,
+      })),
+    };
+
+    return NextResponse.json(responseRepas, { status: 200 });
   } catch (error) {
     console.error('Erreur lors de la récupération du repas:', error);
     return NextResponse.json(
@@ -152,9 +174,9 @@ export async function PATCH(
 
     // Exécuter la mise à jour de manière transactionnelle
     const repasMisAJour = await db.$transaction(async (tx) => {
-      // Si des ingrédients sont fournis, on supprime les anciens et recrée les nouveaux
+      // Si des ingrédients sont fournis, on supprime les anciens liens
       if (ingredients !== undefined) {
-        await tx.ingredient.deleteMany({
+        await tx.repasIngredient.deleteMany({
           where: { repasId: mealId },
         });
       }
@@ -168,20 +190,46 @@ export async function PATCH(
           ...(ingredients !== undefined ? {
             ingredients: {
               create: ingredients.map((ing) => ({
-                nom: ing.nom.trim(),
                 quantite: ing.quantite?.trim() || null,
-                categorie: ing.categorie.trim(),
+                ingredient: {
+                  connectOrCreate: {
+                    where: { nom: ing.nom.trim() },
+                    create: {
+                      nom: ing.nom.trim(),
+                      categorie: normalizeCategory(ing.categorie),
+                    },
+                  },
+                },
               })),
             },
           } : {}),
         },
         include: {
-          ingredients: true,
+          ingredients: {
+            include: {
+              ingredient: true,
+            },
+          },
         },
       });
     });
 
-    return NextResponse.json(repasMisAJour, { status: 200 });
+    const responseRepas = {
+      id: repasMisAJour.id,
+      userId: repasMisAJour.userId,
+      titre: repasMisAJour.titre,
+      recette: repasMisAJour.recette,
+      photoUrl: repasMisAJour.photoUrl,
+      createdAt: repasMisAJour.createdAt,
+      ingredients: repasMisAJour.ingredients.map((ri) => ({
+        id: ri.id,
+        nom: ri.ingredient.nom,
+        quantite: ri.quantite,
+        categorie: ri.ingredient.categorie,
+      })),
+    };
+
+    return NextResponse.json(responseRepas, { status: 200 });
   } catch (error) {
     console.error('Erreur lors de la mise à jour du repas:', error);
     return NextResponse.json(

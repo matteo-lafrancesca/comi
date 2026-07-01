@@ -145,13 +145,35 @@ export async function PUT(
       include: {
         repas: {
           include: {
-            ingredients: true,
+            ingredients: {
+              include: {
+                ingredient: true,
+              },
+            },
           },
         },
       },
     });
 
-    return NextResponse.json(updatedProg, { status: 200 });
+    const responseProg = {
+      ...updatedProg,
+      repas: {
+        id: updatedProg.repas.id,
+        userId: updatedProg.repas.userId,
+        titre: updatedProg.repas.titre,
+        recette: updatedProg.repas.recette,
+        photoUrl: updatedProg.repas.photoUrl,
+        createdAt: updatedProg.repas.createdAt,
+        ingredients: updatedProg.repas.ingredients.map((ri) => ({
+          id: ri.id,
+          nom: ri.ingredient.nom,
+          quantite: ri.quantite,
+          categorie: ri.ingredient.categorie,
+        })),
+      },
+    };
+
+    return NextResponse.json(responseProg, { status: 200 });
   } catch (error) {
     console.error('Erreur lors de la mise à jour de la programmation:', error);
     return NextResponse.json(

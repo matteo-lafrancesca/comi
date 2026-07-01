@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth';
+import { normalizeCategory } from '@/types';
 
 // Interface pour valider la requête de création de repas
 interface IngredientInput {
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // 4. Insertion dans la base de données
+    // 4. Insertion dans la base de données de manière transactionnelle
     const nouveauRepas = await db.repas.create({
       data: {
         titre: titre.trim(),
@@ -85,18 +86,44 @@ export async function POST(request: Request) {
         userId: targetUserId,
         ingredients: {
           create: ingredients?.map((ing) => ({
-            nom: ing.nom.trim(),
             quantite: ing.quantite?.trim() || null,
-            categorie: ing.categorie.trim(),
+            ingredient: {
+              connectOrCreate: {
+                where: { nom: ing.nom.trim() },
+                create: {
+                  nom: ing.nom.trim(),
+                  categorie: normalizeCategory(ing.categorie),
+                },
+              },
+            },
           })) || [],
         },
       },
       include: {
-        ingredients: true,
+        ingredients: {
+          include: {
+            ingredient: true,
+          },
+        },
       },
     });
 
-    return NextResponse.json(nouveauRepas, { status: 201 });
+    const responseRepas = {
+      id: nouveauRepas.id,
+      userId: nouveauRepas.userId,
+      titre: nouveauRepas.titre,
+      recette: nouveauRepas.recette,
+      photoUrl: nouveauRepas.photoUrl,
+      createdAt: nouveauRepas.createdAt,
+      ingredients: nouveauRepas.ingredients.map((ri) => ({
+        id: ri.id,
+        nom: ri.ingredient.nom,
+        quantite: ri.quantite,
+        categorie: ri.ingredient.categorie,
+      })),
+    };
+
+    return NextResponse.json(responseRepas, { status: 201 });
   } catch (error) {
     console.error("Erreur lors de la création du repas:", error);
     return NextResponse.json(
@@ -148,7 +175,11 @@ export async function GET(request: Request) {
     const meals = await db.repas.findMany({
       where,
       include: {
-        ingredients: true,
+        ingredients: {
+          include: {
+            ingredient: true,
+          },
+        },
         // On ne charge la programmation que pour le tri par rareté
         programmation: sort === 'rarete' ? {
           orderBy: { date: 'desc' },
@@ -160,7 +191,11 @@ export async function GET(request: Request) {
 
     type MealWithRelations = Prisma.RepasGetPayload<{
       include: {
-        ingredients: true;
+        ingredients: {
+          include: {
+            ingredient: true;
+          };
+        };
         programmation: true;
       };
     }>;
@@ -179,20 +214,30 @@ export async function GET(request: Request) {
       });
     }
 
-    // Nettoyage de la relation programmation pour renvoyer le type exact attendu
+    // Aplatir et nettoyer la relation pour renvoyer le type exact attendu
     const responseMeals = (meals as MealWithRelations[]).map((meal) => {
-      const mealCopy = { ...meal } as Partial<MealWithRelations>;
-      delete mealCopy.programmation;
-      return mealCopy;
+      return {
+        id: meal.id,
+        userId: meal.userId,
+        titre: meal.titre,
+        recette: meal.recette,
+        photoUrl: meal.photoUrl,
+        createdAt: meal.createdAt,
+        ingredients: meal.ingredients.map((ri) => ({
+          id: ri.id,
+          nom: ri.ingredient.nom,
+          quantite: ri.quantite,
+          categorie: ri.ingredient.categorie,
+        })),
+      };
     });
 
     return NextResponse.json(responseMeals, { status: 200 });
   } catch (error) {
     console.error("Erreur lors de la récupération des repas:", error);
     return NextResponse.json(
-      { error: "Une erreur interne est survenue lors de la récupération des repas." },
+      { error: "Une erreur interne est survenue lors de l'accumulation des repas." },
       { status: 500 }
     );
   }
 }
-

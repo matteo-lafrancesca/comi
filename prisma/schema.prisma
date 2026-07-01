@@ -19,28 +19,37 @@ model User {
 }
 
 model Repas {
-  id            Int             @id @default(autoincrement())
-  userId        Int             @map("user_id")
-  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            Int               @id @default(autoincrement())
+  userId        Int               @map("user_id")
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   titre         String
   recette       String?
-  photoUrl      String?         @map("photo_url")
-  createdAt     DateTime        @default(now()) @map("created_at")
-  ingredients   Ingredient[]
+  photoUrl      String?           @map("photo_url")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  ingredients   RepasIngredient[]
   programmation Programmation[]
 
   @@map("repas")
 }
 
 model Ingredient {
-  id        Int     @id @default(autoincrement())
-  repasId   Int     @map("repas_id")
-  repas     Repas   @relation(fields: [repasId], references: [id], onDelete: Cascade)
-  nom       String
-  quantite  String? // e.g., "400g", "2 cuillères"
-  categorie String  // e.g., "Frais", "Épicerie", "Condiments"
+  id        Int               @id @default(autoincrement())
+  nom       String            @unique
+  categorie String            // e.g., "fruits-legumes", "epicerie-salee"
+  repas     RepasIngredient[]
 
   @@map("ingredients")
+}
+
+model RepasIngredient {
+  id           Int        @id @default(autoincrement())
+  repasId      Int        @map("repas_id")
+  repas        Repas      @relation(fields: [repasId], references: [id], onDelete: Cascade)
+  ingredientId Int        @map("ingredient_id")
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  quantite     String?    // e.g., "400g", "2 cuillères"
+
+  @@map("repas_ingredients")
 }
 
 model Programmation {
