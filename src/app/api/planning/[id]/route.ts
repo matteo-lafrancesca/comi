@@ -168,6 +168,7 @@ export async function PUT(
           id: ri.id,
           nom: ri.ingredient.nom,
           quantite: ri.quantite,
+          unite: ri.unite,
           categorie: ri.ingredient.categorie,
         })),
       },

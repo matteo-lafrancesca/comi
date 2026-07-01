@@ -47,7 +47,8 @@ model RepasIngredient {
   repas        Repas      @relation(fields: [repasId], references: [id], onDelete: Cascade)
   ingredientId Int        @map("ingredient_id")
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-  quantite     String?    // e.g., "400g", "2 cuillères"
+  quantite     Float?
+  unite        String?
 
   @@map("repas_ingredients")
 }

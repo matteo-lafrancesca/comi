@@ -89,7 +89,8 @@ export type RepasWithIngredients = Repas & {
   ingredients: {
     id: number;
     nom: string;
-    quantite: string | null;
+    quantite: number | null;
+    unite: string | null;
     categorie: CategorieIngredient;
   }[];
 };

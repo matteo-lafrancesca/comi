@@ -7,7 +7,8 @@ import { normalizeCategory } from '@/types';
 // Interface pour valider la requête de création de repas
 interface IngredientInput {
   nom: string;
-  quantite?: string;
+  quantite?: number | string | null;
+  unite?: string | null;
   categorie: string;
 }
 
@@ -85,18 +86,28 @@ export async function POST(request: Request) {
         photoUrl: photoUrl?.trim() || null,
         userId: targetUserId,
         ingredients: {
-          create: ingredients?.map((ing) => ({
-            quantite: ing.quantite?.trim() || null,
-            ingredient: {
-              connectOrCreate: {
-                where: { nom: ing.nom.trim() },
-                create: {
-                  nom: ing.nom.trim(),
-                  categorie: normalizeCategory(ing.categorie),
+          create: ingredients?.map((ing) => {
+            let parsedQuantite: number | null = null;
+            if (ing.quantite !== undefined && ing.quantite !== null) {
+              const q = typeof ing.quantite === 'string' ? parseFloat(ing.quantite) : ing.quantite;
+              if (!isNaN(q)) {
+                parsedQuantite = q;
+              }
+            }
+            return {
+              quantite: parsedQuantite,
+              unite: ing.unite?.trim() || null,
+              ingredient: {
+                connectOrCreate: {
+                  where: { nom: ing.nom.trim() },
+                  create: {
+                    nom: ing.nom.trim(),
+                    categorie: normalizeCategory(ing.categorie),
+                  },
                 },
               },
-            },
-          })) || [],
+            };
+          }) || [],
         },
       },
       include: {
@@ -119,6 +130,7 @@ export async function POST(request: Request) {
         id: ri.id,
         nom: ri.ingredient.nom,
         quantite: ri.quantite,
+        unite: ri.unite,
         categorie: ri.ingredient.categorie,
       })),
     };
@@ -227,6 +239,7 @@ export async function GET(request: Request) {
           id: ri.id,
           nom: ri.ingredient.nom,
           quantite: ri.quantite,
+          unite: ri.unite,
           categorie: ri.ingredient.categorie,
         })),
       };
