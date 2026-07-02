@@ -113,11 +113,4 @@ body {
     color: var(--color-text-dark-main);
   }
 }
-
-html {
-  background-color: red !important;
-}
-
-body {
-  background-color: lime !important;
-}
+
