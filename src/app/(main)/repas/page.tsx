@@ -167,7 +167,7 @@ export default function RepasPage() {
 
       {/* Top Header Section */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-extrabold tracking-tight text-text-light-main dark:text-text-dark-main">
+        <h1 className="text-2xl font-bold tracking-tight text-text-light-main dark:text-text-dark-main">
           Mes repas
         </h1>
         <Link

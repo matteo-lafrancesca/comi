@@ -257,7 +257,7 @@ export default function CoursesPage() {
 
       {/* 🌟 Page header */}
       <div className="flex items-center justify-between print:hidden">
-        <h1 className="text-3xl font-extrabold tracking-tight text-text-light-main dark:text-text-dark-main">
+        <h1 className="text-2xl font-bold tracking-tight text-text-light-main dark:text-text-dark-main">
           Ma liste de courses
         </h1>
         <button

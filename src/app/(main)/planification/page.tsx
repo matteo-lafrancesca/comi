@@ -209,7 +209,7 @@ export default function PlanificationPage() {
     <div className="space-y-6">
       {/* Title & Today Link */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-extrabold tracking-tight text-text-light-main dark:text-text-dark-main">
+        <h1 className="text-2xl font-bold tracking-tight text-text-light-main dark:text-text-dark-main">
           Mon Planning
         </h1>
         {currentWeek && (

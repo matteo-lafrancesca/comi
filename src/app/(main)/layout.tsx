@@ -236,7 +236,7 @@ export default function MainLayout({
       ───────────────────────────────────────────────── */}
       <nav
         className="absolute bottom-0 left-0 right-0 z-50 flex md:hidden bg-card-light dark:bg-card-dark border-t border-neutral-200/50 dark:border-neutral-800/40 transition-colors duration-300 justify-around items-start"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)', height: 'calc(56px + env(safe-area-inset-bottom, 0px) + 12px)' }}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)', height: 'calc(56px + env(safe-area-inset-bottom, 0px) + 24px)' }}
       >
         {navItems.map((item) => {
           const active = isActive(item.href);
