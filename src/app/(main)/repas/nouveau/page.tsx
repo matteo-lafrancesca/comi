@@ -207,13 +207,23 @@ export default function NouveauRepasPage() {
       let finalPhotoUrl = photoUrl;
       if (selectedImageFile) {
         try {
+          console.log("Début de l'envoi de l'image:", {
+            name: selectedImageFile.name,
+            size: selectedImageFile.size,
+            type: selectedImageFile.type
+          });
           const uploadRes = await startUpload([selectedImageFile]);
+          console.log("Résultat brut du téléversement:", uploadRes);
+          
           if (uploadRes && uploadRes[0]) {
             finalPhotoUrl = uploadRes[0].url;
+            console.log("URL de l'image obtenue avec succès:", finalPhotoUrl);
           } else {
+            console.error("Aucune réponse ou réponse vide d'Uploadthing:", uploadRes);
             throw new Error("Le stockage n'a pas pu renvoyer d'adresse URL.");
           }
         } catch (err: any) {
+          console.error("Erreur attrapée pendant startUpload:", err);
           throw new Error(`Échec du téléversement de l'image: ${err.message || err}`);
         }
       }

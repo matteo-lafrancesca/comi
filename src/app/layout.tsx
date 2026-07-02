@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   manifest: "/menumanage/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Menu Manage",
   },
   icons: {

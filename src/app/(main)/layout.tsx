@@ -184,7 +184,7 @@ export default function MainLayout({
       </aside>
 
       {/* 📱 PORTRAIT MOBILE : Top Bar avec profil / Déconnexion rapide */}
-      <header className="flex md:hidden items-center justify-between px-6 py-4 bg-card-light/80 dark:bg-card-dark/80 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-800/40 fixed top-0 w-full z-40 transition-colors duration-300">
+      <header className="flex md:hidden items-center justify-between px-6 pt-[calc(16px+env(safe-area-inset-top))] pb-4 bg-card-light/80 dark:bg-card-dark/80 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-800/40 fixed top-0 w-full z-40 transition-colors duration-300">
         <div className="flex items-center gap-2.5">
           <div className="flex items-center justify-center h-8 w-8 overflow-hidden rounded-lg bg-brand-light dark:bg-brand/10 border border-neutral-200/50 dark:border-neutral-800/40">
             <img src="/menumanage/100.png" alt="Logo" className="h-full w-full object-cover" />
@@ -216,7 +216,7 @@ export default function MainLayout({
       </header>
 
       {/* 📱 NAVIGATION MOBILE : Bottom Tab Bar */}
-      <nav className="flex md:hidden fixed bottom-0 left-0 right-0 bg-card-light/90 dark:bg-card-dark/90 backdrop-blur-lg border-t border-neutral-200/50 dark:border-neutral-800/40 px-6 pt-2.5 pb-[calc(14px+env(safe-area-inset-bottom))] z-50 transition-colors duration-300 justify-around items-center">
+      <nav className="flex md:hidden fixed bottom-0 left-0 right-0 bg-card-light/90 dark:bg-card-dark/90 backdrop-blur-lg border-t border-neutral-200/50 dark:border-neutral-800/40 px-6 pt-2 pb-[calc(8px+env(safe-area-inset-bottom))] z-50 transition-colors duration-300 justify-around items-center">
         {navItems.map((item) => {
           const active = isActive(item.href);
           const Icon = item.icon;
@@ -252,7 +252,7 @@ export default function MainLayout({
       </nav>
 
       {/* CONTENU PRINCIPAL */}
-      <main className="flex-1 flex flex-col md:pl-64 pt-[68px] md:pt-0 pb-28 md:pb-6 transition-all duration-300 overflow-y-auto overscroll-behavior-y-contain">
+      <main className="flex-1 flex flex-col md:pl-64 pt-[calc(68px+env(safe-area-inset-top))] md:pt-0 pb-24 md:pb-6 transition-all duration-300 overflow-y-auto overscroll-behavior-y-contain">
         <div className="flex-1 p-4 md:p-8 max-w-5xl w-full mx-auto">
           {children}
         </div>

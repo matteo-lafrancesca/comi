@@ -239,11 +239,25 @@ export default function ModifierRepasPage() {
 
       let finalPhotoUrl = photoUrl;
       if (selectedImageFile) {
-        const uploadRes = await startUpload([selectedImageFile]);
-        if (uploadRes && uploadRes[0]) {
-          finalPhotoUrl = uploadRes[0].url;
-        } else {
-          throw new Error("Le stockage n'a pas pu renvoyer d'adresse URL.");
+        try {
+          console.log("Début de l'envoi de l'image (modifier):", {
+            name: selectedImageFile.name,
+            size: selectedImageFile.size,
+            type: selectedImageFile.type
+          });
+          const uploadRes = await startUpload([selectedImageFile]);
+          console.log("Résultat brut du téléversement (modifier):", uploadRes);
+
+          if (uploadRes && uploadRes[0]) {
+            finalPhotoUrl = uploadRes[0].url;
+            console.log("URL de l'image obtenue avec succès (modifier):", finalPhotoUrl);
+          } else {
+            console.error("Aucune réponse ou réponse vide d'Uploadthing (modifier):", uploadRes);
+            throw new Error("Le stockage n'a pas pu renvoyer d'adresse URL.");
+          }
+        } catch (err: any) {
+          console.error("Erreur attrapée pendant startUpload (modifier):", err);
+          throw new Error(`Échec du téléversement de l'image: ${err.message || err}`);
         }
       }
 
