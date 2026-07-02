@@ -62,7 +62,7 @@ export const config = {
      * - api/auth (routes d'API d'authentification)
      * - api/uploadthing (upload de fichiers)
      * - _next/static, _next/image (fichiers système de Next)
-     * - Tout fichier statique contenant un point (ex: favicon.ico, manifest.json, sw.js, images, etc.)
+     * - Tout fichier statique contenant un point (ex: favicon.ico, manifest.json, images, etc.)
      */
     '/((?!api/auth|api/uploadthing|_next/static|_next/image|.*\\..*$).*)',
   ],

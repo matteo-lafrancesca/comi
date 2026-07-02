@@ -125,9 +125,8 @@ ManageMenu/
 ├── prisma/                  # Schéma de base de données SQLite & scripts de migration/seeding
 │   ├── schema.prisma        # Schéma Prisma
 │   └── seed.ts              # Script de seeding des ingrédients
-├── public/                  # Assets statiques (icônes PWA, manifeste public, service worker)
-│   ├── manifest.json        # Configuration PWA
-│   └── sw.js                # Configuration Service Worker (Mise en cache)
+├── public/                  # Assets statiques (icônes PWA, manifeste public)
+│   └── manifest.json        # Configuration PWA
 ├── src/
 │   ├── app/                 # Routes Next.js App Router (Pages & API Routes)
 │   │   ├── (auth)/          # Pages de Connexion / Inscription
