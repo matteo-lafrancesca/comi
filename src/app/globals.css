@@ -28,16 +28,11 @@
 
 @variant dark (&:where(.dark, .dark *));
 
-:root {
-  --app-height: 100dvh;
-  /* fallback avant que le JS tourne */
-}
-
 html,
 body {
   margin: 0;
   padding: 0;
-  height: var(--app-height);
+  height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;

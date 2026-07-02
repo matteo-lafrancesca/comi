@@ -96,7 +96,7 @@ export default function MainLayout({
   return (
     <div
       className="flex flex-col overflow-hidden bg-bg-light dark:bg-bg-dark text-text-light-main dark:text-text-dark-main transition-colors duration-300"
-      style={{ height: 'var(--app-height, 100dvh)' }}
+      style={{ height: '100dvh' }}
     >
 
       {/* 💻 NAVIGATION DESKTOP : Sidebar */}

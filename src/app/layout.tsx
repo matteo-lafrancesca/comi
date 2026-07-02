@@ -64,31 +64,7 @@ export default function RootLayout({
             `,
           }}
         />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              function setAppHeight() {
-                var safeBottom = 0;
-                try {
-                  var testEl = document.createElement('div');
-                  testEl.style.cssText = 'position:fixed;bottom:0;height:0;padding-bottom:env(safe-area-inset-bottom,0px);';
-                  var parent = document.body || document.documentElement;
-                  parent.appendChild(testEl);
-                  safeBottom = parseFloat(getComputedStyle(testEl).paddingBottom) || 0;
-                  parent.removeChild(testEl);
-                } catch(e) {}
-                var total = window.innerHeight + safeBottom;
-                document.documentElement.style.setProperty('--app-height', total + 'px');
-              }
-              setAppHeight();
-              window.addEventListener('DOMContentLoaded', setAppHeight);
-              window.addEventListener('resize', setAppHeight);
-              window.addEventListener('orientationchange', function() {
-                setTimeout(setAppHeight, 100);
-              });
-            `,
-          }}
-        />
+
       </head>
       <body className="bg-bg-light text-text-light-main dark:bg-bg-dark dark:text-text-dark-main font-sans transition-colors duration-300">
         <div className="orientation-warning">
