@@ -65,7 +65,7 @@ export default function Drawer({
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     };
   }, [visible, onClose]);
 

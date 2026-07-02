@@ -226,7 +226,7 @@ export default function MainLayout({
           - Prend toute la place restante
           - Défilement localisé
       ───────────────────────────────────────────────── */}
-      <main className="flex-grow flex flex-col md:pl-64 overflow-y-auto overscroll-none bg-bg-light dark:bg-bg-dark text-text-light-main dark:text-text-dark-main transition-colors duration-300">
+      <main className="flex-grow flex flex-col md:pl-64 min-h-0 overflow-y-auto overscroll-none bg-bg-light dark:bg-bg-dark text-text-light-main dark:text-text-dark-main transition-colors duration-300">
         <div className="flex-1 p-4 pb-24 md:p-8 max-w-5xl w-full mx-auto md:py-8">
           {children}
         </div>

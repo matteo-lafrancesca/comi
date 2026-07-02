@@ -35,7 +35,6 @@ body {
   height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
   background-color: var(--color-bg-light);
 }
 
