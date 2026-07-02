@@ -106,7 +106,7 @@ export default function MainLayout({
             <img src="/menumanage/100.png" alt="Logo" className="h-full w-full object-cover" />
           </div>
           <span className="text-xl font-bold tracking-tight text-text-light-main dark:text-text-dark-main">
-            ManageMenu
+            ManageMenu v2
           </span>
         </div>
 
@@ -197,7 +197,7 @@ export default function MainLayout({
             <img src="/menumanage/100.png" alt="Logo" className="h-full w-full object-cover" />
           </div>
           <span className="text-lg font-bold tracking-tight text-text-light-main dark:text-text-dark-main">
-            ManageMenu
+            ManageMenu v2
           </span>
         </div>
 
