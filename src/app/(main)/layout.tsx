@@ -189,7 +189,7 @@ export default function MainLayout({
           - Le fond s'étend visuellement derrière la status bar
       ───────────────────────────────────────────────── */}
       <header
-        className="flex md:hidden items-center justify-between px-5 bg-card-light/90 dark:bg-card-dark/90 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-800/40 fixed top-0 left-0 right-0 z-40 transition-colors duration-300"
+        className="flex md:hidden items-center justify-between px-5 bg-card-light dark:bg-card-dark backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-800/40 fixed top-0 left-0 right-0 z-40 transition-colors duration-300"
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: '10px' }}
       >
         <div className="flex items-center gap-2.5">
@@ -227,7 +227,7 @@ export default function MainLayout({
           - Hauteur fixe = 56px de contenu + safe-area-inset-bottom
       ───────────────────────────────────────────────── */}
       <nav
-        className="flex md:hidden fixed bottom-0 left-0 right-0 bg-card-light/95 dark:bg-card-dark/95 backdrop-blur-lg border-t border-neutral-200/50 dark:border-neutral-800/40 z-50 transition-colors duration-300 justify-around items-start"
+        className="flex md:hidden fixed bottom-0 left-0 right-0 bg-card-light dark:bg-card-dark backdrop-blur-lg border-t border-neutral-200/50 dark:border-neutral-800/40 z-50 transition-colors duration-300 justify-around items-start"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         {navItems.map((item) => {
