@@ -94,7 +94,7 @@ export default function MainLayout({
   }
 
   return (
-    <div className="min-h-dvh flex flex-col bg-bg-light dark:bg-bg-dark text-text-light-main dark:text-text-dark-main transition-colors duration-300">
+    <div className="h-dvh overflow-hidden flex flex-col bg-bg-light dark:bg-bg-dark text-text-light-main dark:text-text-dark-main transition-colors duration-300">
       
       {/* 💻 NAVIGATION DESKTOP : Sidebar */}
       <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 bg-card-light dark:bg-card-dark border-r border-neutral-200/50 dark:border-neutral-800/40 p-6 z-40 transition-all duration-300">
@@ -216,7 +216,7 @@ export default function MainLayout({
       </header>
 
       {/* 📱 NAVIGATION MOBILE : Bottom Tab Bar */}
-      <nav className="flex md:hidden fixed bottom-0 left-0 right-0 h-16 bg-card-light/90 dark:bg-card-dark/90 backdrop-blur-lg border-t border-neutral-200/50 dark:border-neutral-800/40 px-6 pb-safe z-50 transition-colors duration-300 justify-around items-center">
+      <nav className="flex md:hidden fixed bottom-0 left-0 right-0 bg-card-light/90 dark:bg-card-dark/90 backdrop-blur-lg border-t border-neutral-200/50 dark:border-neutral-800/40 px-6 pt-2.5 pb-[calc(14px+env(safe-area-inset-bottom))] z-50 transition-colors duration-300 justify-around items-center">
         {navItems.map((item) => {
           const active = isActive(item.href);
           const Icon = item.icon;
@@ -224,7 +224,7 @@ export default function MainLayout({
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center justify-center w-20 h-full py-1 text-center group cursor-pointer relative"
+              className="flex flex-col items-center justify-center w-20 py-1 text-center group cursor-pointer relative"
             >
               {/* Conteneur de l'icône avec retour visuel actif */}
               <div className={`p-1.5 rounded-full transition-all duration-300 ${
@@ -244,7 +244,7 @@ export default function MainLayout({
               
               {/* Barre active discrète sous l'onglet */}
               {active && (
-                <span className="absolute bottom-1 w-6 h-0.5 rounded-full bg-brand animate-fade-in" />
+                <span className="absolute bottom-0 w-6 h-0.5 rounded-full bg-brand animate-fade-in" />
               )}
             </Link>
           );
@@ -252,7 +252,7 @@ export default function MainLayout({
       </nav>
 
       {/* CONTENU PRINCIPAL */}
-      <main className="flex-1 flex flex-col md:pl-64 pt-[68px] md:pt-0 pb-24 md:pb-6 transition-all duration-300">
+      <main className="flex-1 flex flex-col md:pl-64 pt-[68px] md:pt-0 pb-28 md:pb-6 transition-all duration-300 overflow-y-auto overscroll-behavior-y-contain">
         <div className="flex-1 p-4 md:p-8 max-w-5xl w-full mx-auto">
           {children}
         </div>

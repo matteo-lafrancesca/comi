@@ -73,135 +73,137 @@ function RegisterContent() {
   }
 
   return (
-    <div className="flex min-h-dvh w-full items-center justify-center p-4 bg-bg-light dark:bg-bg-dark transition-colors duration-300">
-      <main className="w-full max-w-md flex flex-col gap-8">
-        {/* En-tête / Logo */}
-        <div className="flex flex-col items-center text-center gap-2">
-          <div className="flex items-center justify-center h-16 w-16 overflow-hidden rounded-card bg-brand-light dark:bg-brand/10 shadow-sm border border-neutral-200/50 dark:border-neutral-800/40">
-            <img src="/menumanage/100.png" alt="Logo" className="h-full w-full object-cover" />
+    <div className="w-full h-dvh overflow-y-auto overscroll-behavior-y-contain bg-bg-light dark:bg-bg-dark transition-colors duration-300">
+      <div className="flex min-h-full w-full items-center justify-center p-4">
+        <main className="w-full max-w-md flex flex-col gap-8">
+          {/* En-tête / Logo */}
+          <div className="flex flex-col items-center text-center gap-2">
+            <div className="flex items-center justify-center h-16 w-16 overflow-hidden rounded-card bg-brand-light dark:bg-brand/10 shadow-sm border border-neutral-200/50 dark:border-neutral-800/40">
+              <img src="/menumanage/100.png" alt="Logo" className="h-full w-full object-cover" />
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-text-light-main dark:text-text-dark-main">
+              ManageMenu
+            </h1>
+            <p className="text-sm text-text-light-muted dark:text-text-dark-muted max-w-xs">
+              Planifiez vos repas de la semaine et générez votre liste de courses en un clin d'œil.
+            </p>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-text-light-main dark:text-text-dark-main">
-            ManageMenu
-          </h1>
-          <p className="text-sm text-text-light-muted dark:text-text-dark-muted max-w-xs">
-            Planifiez vos repas de la semaine et générez votre liste de courses en un clin d'œil.
-          </p>
-        </div>
 
-        {/* Formulaire dans une carte Soft UI */}
-        <div className="p-6 md:p-8 bg-card-light dark:bg-card-dark border border-neutral-200/50 dark:border-neutral-800/40 shadow-sm rounded-card transition-all duration-300">
-          <h2 className="text-xl font-semibold mb-6 text-text-light-main dark:text-text-dark-main">
-            Créer un compte
-          </h2>
+          {/* Formulaire dans une carte Soft UI */}
+          <div className="p-6 md:p-8 bg-card-light dark:bg-card-dark border border-neutral-200/50 dark:border-neutral-800/40 shadow-sm rounded-card transition-all duration-300">
+            <h2 className="text-xl font-semibold mb-6 text-text-light-main dark:text-text-dark-main">
+              Créer un compte
+            </h2>
 
-          {error && (
-            <div className="mb-6 flex items-start gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200/40 dark:border-red-800/30 text-red-700 dark:text-red-400 text-sm">
-              <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            {/* Email */}
-            <div className="flex flex-col gap-1.5">
-              <label 
-                htmlFor="email" 
-                className="text-xs font-semibold uppercase tracking-wider text-text-light-muted dark:text-text-dark-muted px-2"
-              >
-                Adresse e-mail
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-text-light-muted dark:text-text-dark-muted">
-                  <Mail className="h-5 w-5" />
-                </span>
-                <input
-                  id="email"
-                  type="email"
-                  placeholder="exemple@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-5 py-3 text-sm transition-all border outline-none bg-card-light dark:bg-card-dark border-neutral-200 dark:border-neutral-800 rounded-input focus:border-brand dark:focus:border-brand focus:ring-1 focus:ring-brand text-text-light-main dark:text-text-dark-main placeholder:text-text-light-muted/60 dark:placeholder:text-text-dark-muted/60"
-                  required
-                  disabled={isSubmitting}
-                />
+            {error && (
+              <div className="mb-6 flex items-start gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200/40 dark:border-red-800/30 text-red-700 dark:text-red-400 text-sm">
+                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                <span>{error}</span>
               </div>
-            </div>
+            )}
 
-            {/* Mot de passe */}
-            <div className="flex flex-col gap-1.5">
-              <label 
-                htmlFor="password" 
-                className="text-xs font-semibold uppercase tracking-wider text-text-light-muted dark:text-text-dark-muted px-2"
-              >
-                Mot de passe
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-text-light-muted dark:text-text-dark-muted">
-                  <Lock className="h-5 w-5" />
-                </span>
-                <input
-                  id="password"
-                  type="password"
-                  placeholder="Minimum 6 caractères"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-5 py-3 text-sm transition-all border outline-none bg-card-light dark:bg-card-dark border-neutral-200 dark:border-neutral-800 rounded-input focus:border-brand dark:focus:border-brand focus:ring-1 focus:ring-brand text-text-light-main dark:text-text-dark-main placeholder:text-text-light-muted/60 dark:placeholder:text-text-dark-muted/60"
-                  required
-                  disabled={isSubmitting}
-                />
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              {/* Email */}
+              <div className="flex flex-col gap-1.5">
+                <label 
+                  htmlFor="email" 
+                  className="text-xs font-semibold uppercase tracking-wider text-text-light-muted dark:text-text-dark-muted px-2"
+                >
+                  Adresse e-mail
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-text-light-muted dark:text-text-dark-muted">
+                    <Mail className="h-5 w-5" />
+                  </span>
+                  <input
+                    id="email"
+                    type="email"
+                    placeholder="exemple@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-11 pr-5 py-3 text-sm transition-all border outline-none bg-card-light dark:bg-card-dark border-neutral-200 dark:border-neutral-800 rounded-input focus:border-brand dark:focus:border-brand focus:ring-1 focus:ring-brand text-text-light-main dark:text-text-dark-main placeholder:text-text-light-muted/60 dark:placeholder:text-text-dark-muted/60"
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Confirmer le mot de passe */}
-            <div className="flex flex-col gap-1.5">
-              <label 
-                htmlFor="confirmPassword" 
-                className="text-xs font-semibold uppercase tracking-wider text-text-light-muted dark:text-text-dark-muted px-2"
-              >
-                Confirmer le mot de passe
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-text-light-muted dark:text-text-dark-muted">
-                  <Lock className="h-5 w-5" />
-                </span>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Confirmer votre mot de passe"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-11 pr-5 py-3 text-sm transition-all border outline-none bg-card-light dark:bg-card-dark border-neutral-200 dark:border-neutral-800 rounded-input focus:border-brand dark:focus:border-brand focus:ring-1 focus:ring-brand text-text-light-main dark:text-text-dark-main placeholder:text-text-light-muted/60 dark:placeholder:text-text-dark-muted/60"
-                  required
-                  disabled={isSubmitting}
-                />
+              {/* Mot de passe */}
+              <div className="flex flex-col gap-1.5">
+                <label 
+                  htmlFor="password" 
+                  className="text-xs font-semibold uppercase tracking-wider text-text-light-muted dark:text-text-dark-muted px-2"
+                >
+                  Mot de passe
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-text-light-muted dark:text-text-dark-muted">
+                    <Lock className="h-5 w-5" />
+                  </span>
+                  <input
+                    id="password"
+                    type="password"
+                    placeholder="Minimum 6 caractères"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-11 pr-5 py-3 text-sm transition-all border outline-none bg-card-light dark:bg-card-dark border-neutral-200 dark:border-neutral-800 rounded-input focus:border-brand dark:focus:border-brand focus:ring-1 focus:ring-brand text-text-light-main dark:text-text-dark-main placeholder:text-text-light-muted/60 dark:placeholder:text-text-dark-muted/60"
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
               </div>
+
+              {/* Confirmer le mot de passe */}
+              <div className="flex flex-col gap-1.5">
+                <label 
+                  htmlFor="confirmPassword" 
+                  className="text-xs font-semibold uppercase tracking-wider text-text-light-muted dark:text-text-dark-muted px-2"
+                >
+                  Confirmer le mot de passe
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-text-light-muted dark:text-text-dark-muted">
+                    <Lock className="h-5 w-5" />
+                  </span>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Confirmer votre mot de passe"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full pl-11 pr-5 py-3 text-sm transition-all border outline-none bg-card-light dark:bg-card-dark border-neutral-200 dark:border-neutral-800 rounded-input focus:border-brand dark:focus:border-brand focus:ring-1 focus:ring-brand text-text-light-main dark:text-text-dark-main placeholder:text-text-light-muted/60 dark:placeholder:text-text-dark-muted/60"
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+
+              {/* Bouton de soumission */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="mt-2 w-full flex items-center justify-center gap-2 py-3 px-5 text-sm font-semibold rounded-input bg-brand hover:bg-brand-hover text-white transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-sm shadow-brand/20 disabled:opacity-50 disabled:hover:scale-100 disabled:active:scale-100 cursor-pointer"
+              >
+                {isSubmitting ? 'Création en cours...' : 'Créer un compte'}
+                {!isSubmitting && <ArrowRight className="h-4 w-4" />}
+              </button>
+            </form>
+
+            {/* Lien de connexion */}
+            <div className="mt-8 text-center text-sm">
+              <span className="text-text-light-muted dark:text-text-dark-muted">
+                Déjà un compte ?{' '}
+              </span>
+              <Link 
+                href="/login" 
+                className="font-semibold text-brand hover:text-brand-hover transition-colors inline-flex items-center gap-0.5"
+              >
+                Se connecter
+              </Link>
             </div>
-
-            {/* Bouton de soumission */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="mt-2 w-full flex items-center justify-center gap-2 py-3 px-5 text-sm font-semibold rounded-input bg-brand hover:bg-brand-hover text-white transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-sm shadow-brand/20 disabled:opacity-50 disabled:hover:scale-100 disabled:active:scale-100 cursor-pointer"
-            >
-              {isSubmitting ? 'Création en cours...' : 'Créer un compte'}
-              {!isSubmitting && <ArrowRight className="h-4 w-4" />}
-            </button>
-          </form>
-
-          {/* Lien de connexion */}
-          <div className="mt-8 text-center text-sm">
-            <span className="text-text-light-muted dark:text-text-dark-muted">
-              Déjà un compte ?{' '}
-            </span>
-            <Link 
-              href="/login" 
-              className="font-semibold text-brand hover:text-brand-hover transition-colors inline-flex items-center gap-0.5"
-            >
-              Se connecter
-            </Link>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
