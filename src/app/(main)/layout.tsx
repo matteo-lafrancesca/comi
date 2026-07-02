@@ -43,8 +43,16 @@ export default function MainLayout({
       const standalone = window.matchMedia('(display-mode: standalone)').matches;
       // @ts-ignore
       const iosStandalone = window.navigator.standalone;
+
+      // Mesure réelle de env(safe-area-inset-bottom)
+      const testEl = document.createElement('div');
+      testEl.style.paddingBottom = 'env(safe-area-inset-bottom, -1px)';
+      document.body.appendChild(testEl);
+      const safeBottom = getComputedStyle(testEl).paddingBottom;
+      document.body.removeChild(testEl);
+
       const appHeight = getComputedStyle(document.documentElement).getPropertyValue('--app-height');
-      const info = `standalone(css): ${standalone} | iosStandalone: ${iosStandalone} | innerHeight: ${window.innerHeight}px | visualVP: ${window.visualViewport ? window.visualViewport.height + 'px' : 'n/a'} | appHeight: ${appHeight}`;
+      const info = `standalone: ${standalone} | iosStandalone: ${iosStandalone} | innerH: ${window.innerHeight}px | appHeight: ${appHeight} | safeBottom: ${safeBottom} | build: ${Date.now()}`;
       setDebugInfo(info);
     };
 
