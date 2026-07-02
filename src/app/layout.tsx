@@ -64,8 +64,42 @@ export default function RootLayout({
             `,
           }}
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              function setAppHeight() {
+                document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+              }
+              setAppHeight();
+              window.addEventListener('resize', setAppHeight);
+              window.addEventListener('orientationchange', function() {
+                setTimeout(setAppHeight, 100);
+              });
+            `,
+          }}
+        />
       </head>
       <body className="bg-bg-light text-text-light-main dark:bg-bg-dark dark:text-text-dark-main font-sans transition-colors duration-300">
+        <div className="orientation-warning">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-16 w-16 text-brand animate-rotate-phone mb-6"
+          >
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+            <line x1="12" y1="18" x2="12.01" y2="18" />
+          </svg>
+          <h2 className="text-xl font-bold mb-2">Orientation non supportée</h2>
+          <p className="text-sm text-text-light-muted dark:text-text-dark-muted max-w-xs">
+            Veuillez tourner votre appareil en mode portrait pour utiliser l'application.
+          </p>
+        </div>
+
         <AuthProvider>
           {children}
         </AuthProvider>

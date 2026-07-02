@@ -28,6 +28,10 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+:root {
+  --app-height: 100dvh; /* fallback tant que le JS n'a pas tourné */
+}
+
 /* Base : couvre toujours tout l'écran physique, sans fond visible */
 html,
 body {
@@ -79,4 +83,44 @@ html {
 
 body {
   background-color: lime !important;
+}
+
+/* ─── Blocage d'orientation Paysage sur Mobile ─── */
+@keyframes rotate-phone {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(90deg);
+  }
+}
+
+.animate-rotate-phone {
+  animation: rotate-phone 2.5s ease-in-out infinite;
+}
+
+.orientation-warning {
+  display: none;
+}
+
+/* Uniquement sur mobile/tablette (max-width: 1024px) en mode paysage */
+@media screen and (max-width: 1024px) and (orientation: landscape) {
+  .orientation-warning {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background-color: var(--color-bg-light);
+    color: var(--color-text-light-main);
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .dark .orientation-warning {
+    background-color: var(--color-bg-dark);
+    color: var(--color-text-dark-main);
+  }
 }
