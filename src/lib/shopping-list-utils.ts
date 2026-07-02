@@ -13,9 +13,11 @@ export function pluralizeWord(word: string): string {
   // Mots invariables ou prépositions communes
   const exempt = [
     'de', 'd', 'du', 'des', 'le', 'la', 'les', 'un', 'une', 
-    'et', 'avec', 'sans', 'pour', 'en', 'dans', 'par', 'sur'
+    'et', 'avec', 'sans', 'pour', 'en', 'dans', 'par', 'sur', 'à', 'au', 'aux'
   ];
-  if (exempt.includes(lower) || /^[0-9]+$/.test(word)) {
+  
+  // Si le mot contient des chiffres, parenthèses ou symboles de pourcentage, on ne le pluralise pas
+  if (exempt.includes(lower) || /[\d()%]/.test(word)) {
     return word;
   }
   
@@ -62,20 +64,30 @@ export function pluralizeIngredientName(name: string): string {
   if (!trimmed) return trimmed;
   
   const words = trimmed.split(/\s+/);
-  // Trouver s'il y a un "de" ou un mot commençant par "d'" (ex: d'ail)
-  const deIndex = words.findIndex(
-    w => w.toLowerCase() === 'de' || w.toLowerCase().startsWith("d'")
-  );
+  // Trouver s'il y a une préposition (de, à, au, aux, en, etc.)
+  const prepIndex = words.findIndex(w => {
+    const lower = w.toLowerCase();
+    return (
+      ['de', 'à', 'au', 'aux', 'en', 'avec', 'sans', 'pour'].includes(lower) ||
+      lower.startsWith("d'") ||
+      lower.startsWith("d’")
+    );
+  });
 
-  if (deIndex !== -1) {
-    // On ne pluralise que ce qui précède la préposition "de/d'"
+  if (prepIndex !== -1) {
+    // On ne pluralise que ce qui précède la préposition
     return words
       .map((w, idx) => {
-        if (idx < deIndex) {
+        if (idx < prepIndex) {
           if (w.includes("'")) {
             const parts = w.split("'");
             parts[parts.length - 1] = pluralizeWord(parts[parts.length - 1]);
             return parts.join("'");
+          }
+          if (w.includes("’")) {
+            const parts = w.split("’");
+            parts[parts.length - 1] = pluralizeWord(parts[parts.length - 1]);
+            return parts.join("’");
           }
           return pluralizeWord(w);
         }
@@ -83,13 +95,18 @@ export function pluralizeIngredientName(name: string): string {
       })
       .join(' ');
   } else {
-    // Pas de préposition, on pluralise tous les mots (ex: "carotte râpée" -> "carottes râpées")
+    // Pas de préposition, on pluralise tous les mots
     return words
       .map(w => {
         if (w.includes("'")) {
           const parts = w.split("'");
           parts[parts.length - 1] = pluralizeWord(parts[parts.length - 1]);
           return parts.join("'");
+        }
+        if (w.includes("’")) {
+          const parts = w.split("’");
+          parts[parts.length - 1] = pluralizeWord(parts[parts.length - 1]);
+          return parts.join("’");
         }
         return pluralizeWord(w);
       })
