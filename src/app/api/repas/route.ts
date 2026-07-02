@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth';
 import { normalizeCategory } from '@/types';
+import { normalizeSearchText } from '@/lib/string-utils';
 
 // Interface pour valider la requête de création de repas
 interface IngredientInput {
@@ -169,12 +170,6 @@ export async function GET(request: Request) {
       userId: sessionUser.id,
     };
 
-    if (search) {
-      where.titre = {
-        contains: search,
-      };
-    }
-
     // Gestion de l'ordre de tri pour Prisma (hors rareté qui est gérée en mémoire)
     let orderBy: Prisma.RepasOrderByWithRelationInput | undefined = undefined;
     if (sort === 'alphabetique') {
@@ -212,9 +207,19 @@ export async function GET(request: Request) {
       };
     }>;
 
+    let filteredMeals = meals as MealWithRelations[];
+
+    // Filtrage par titre en mémoire pour supporter l'accentuation et les ligatures (œ -> oe, etc.)
+    if (search) {
+      const cleanSearch = normalizeSearchText(search);
+      filteredMeals = filteredMeals.filter((meal) =>
+        normalizeSearchText(meal.titre).includes(cleanSearch)
+      );
+    }
+
     // Tri par rareté en mémoire (les moins récemment programmés ou jamais programmés en premier)
     if (sort === 'rarete') {
-      (meals as MealWithRelations[]).sort((a, b) => {
+      filteredMeals.sort((a, b) => {
         const dateA = a.programmation?.[0]?.date ? new Date(a.programmation[0].date).getTime() : 0;
         const dateB = b.programmation?.[0]?.date ? new Date(b.programmation[0].date).getTime() : 0;
 
@@ -227,7 +232,7 @@ export async function GET(request: Request) {
     }
 
     // Aplatir et nettoyer la relation pour renvoyer le type exact attendu
-    const responseMeals = (meals as MealWithRelations[]).map((meal) => {
+    const responseMeals = filteredMeals.map((meal) => {
       return {
         id: meal.id,
         userId: meal.userId,

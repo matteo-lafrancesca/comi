@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth';
+import { normalizeSearchText } from '@/lib/string-utils';
 import { normalizeCategory } from '@/types';
 
 /**
@@ -25,16 +26,10 @@ export async function GET(request: Request) {
 
     let filtered = allIngredients;
     if (search) {
-      const cleanSearch = search
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase();
+      const cleanSearch = normalizeSearchText(search);
 
       filtered = allIngredients.filter((ing) => {
-        const cleanNom = ing.nom
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .toLowerCase();
+        const cleanNom = normalizeSearchText(ing.nom);
         return cleanNom.includes(cleanSearch);
       });
     }

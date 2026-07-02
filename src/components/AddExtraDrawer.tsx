@@ -5,6 +5,7 @@ import { Loader2, Utensils, Search, Plus, X } from 'lucide-react';
 import { CategorieIngredient, CATEGORY_DETAILS, normalizeCategory } from '@/types';
 import Drawer from '@/components/Drawer';
 import { formatIngredient } from '@/lib/shopping-list-utils';
+import { normalizeSearchText } from '@/lib/string-utils';
 
 interface AddExtraDrawerProps {
   isOpen: boolean;
@@ -102,8 +103,8 @@ export default function AddExtraDrawer({
 
   const filteredMeals = useMemo(() => {
     if (!searchMealQuery.trim()) return allMeals;
-    const q = searchMealQuery.toLowerCase();
-    return allMeals.filter((meal) => meal.titre.toLowerCase().includes(q));
+    const q = normalizeSearchText(searchMealQuery);
+    return allMeals.filter((meal) => normalizeSearchText(meal.titre).includes(q));
   }, [allMeals, searchMealQuery]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -327,7 +328,7 @@ export default function AddExtraDrawer({
 
                         {/* Add new on the fly */}
                         {!ingredientSuggestions.some(
-                          (s) => s.nom.toLowerCase() === ingredientNameInput.trim().toLowerCase()
+                          (s) => normalizeSearchText(s.nom) === normalizeSearchText(ingredientNameInput)
                         ) && (
                           <li>
                             <button

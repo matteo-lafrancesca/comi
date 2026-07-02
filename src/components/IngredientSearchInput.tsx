@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Loader2 } from 'lucide-react';
 import { CATEGORY_DETAILS, CategorieIngredient } from '@/types';
+import { normalizeSearchText } from '@/lib/string-utils';
 
 export interface IngredientSuggestion {
   id: number;
@@ -59,7 +60,7 @@ export default function IngredientSearchInput({
   }, [searchQuery]);
 
   const exactMatchExists = searchResults.some(
-    (r) => r.nom.toLowerCase() === searchQuery.trim().toLowerCase()
+    (r) => normalizeSearchText(r.nom) === normalizeSearchText(searchQuery)
   );
 
   const handleSelect = (ingredient: IngredientSuggestion) => {
@@ -67,7 +68,7 @@ export default function IngredientSearchInput({
     const alreadyExists = existingIngredients.some(
       (item) =>
         item.ingredientId === ingredient.id ||
-        item.nom.toLowerCase() === ingredient.nom.toLowerCase()
+        normalizeSearchText(item.nom) === normalizeSearchText(ingredient.nom)
     );
     if (!alreadyExists) {
       onSelect(ingredient);
