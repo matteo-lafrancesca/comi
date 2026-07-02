@@ -31,21 +31,27 @@
 /* Base : couvre toujours tout l'écran physique, sans fond visible */
 html,
 body {
+  margin: 0;
+  padding: 0;
   height: -webkit-fill-available;
   height: 100dvh;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+  background-color: var(--color-bg-light);
+}
+
+.dark html,
+.dark body {
+  background-color: var(--color-bg-dark);
 }
 
 body {
-  background-color: var(--color-bg-light);
   color: var(--color-text-light-main);
   transition: background-color 0.3s, color 0.3s;
 }
 
 /* Dark mode : remplace le fond body pour ne pas voir de beige sous les safe areas */
 .dark body {
-  background-color: var(--color-bg-dark);
   color: var(--color-text-dark-main);
 }
 
