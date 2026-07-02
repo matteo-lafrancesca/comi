@@ -184,13 +184,13 @@ export default function MainLayout({
       </aside>
 
       {/* ─────────────────────────────────────────────────
-          📱 MOBILE : Header fixe en haut
+          📱 MOBILE : Header dans le flux
           - padding-top absorbe la status bar iOS (safe-area-inset-top)
           - Le fond s'étend visuellement derrière la status bar
       ───────────────────────────────────────────────── */}
       <header
-        className="flex md:hidden items-center justify-between px-5 bg-card-light dark:bg-card-dark backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-800/40 fixed top-0 left-0 right-0 z-40 transition-colors duration-300"
-        style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: '10px' }}
+        className="flex md:hidden items-center justify-between px-5 bg-card-light dark:bg-card-dark border-b border-neutral-200/50 dark:border-neutral-800/40 transition-colors duration-300 shrink-0"
+        style={{ paddingTop: 'env(safe-area-inset-top, 0px)', height: 'calc(56px + env(safe-area-inset-top, 0px))' }}
       >
         <div className="flex items-center gap-2.5">
           <div className="flex items-center justify-center h-8 w-8 overflow-hidden rounded-lg bg-brand-light dark:bg-brand/10 border border-neutral-200/50 dark:border-neutral-800/40">
@@ -221,14 +221,23 @@ export default function MainLayout({
       </header>
 
       {/* ─────────────────────────────────────────────────
-          📱 MOBILE : Bottom Tab Bar fixe en bas
+          CONTENU PRINCIPAL
+          - Prend toute la place restante
+          - Défilement localisé
+      ───────────────────────────────────────────────── */}
+      <main className="flex-grow flex flex-col md:pl-64 overflow-y-auto overscroll-none bg-bg-light dark:bg-bg-dark text-text-light-main dark:text-text-dark-main transition-colors duration-300">
+        <div className="flex-1 p-4 md:p-8 max-w-5xl w-full mx-auto md:py-8">
+          {children}
+        </div>
+      </main>
+
+      {/* ─────────────────────────────────────────────────
+          📱 MOBILE : Bottom Tab Bar dans le flux
           - padding-bottom absorbe la home indicator iOS (safe-area-inset-bottom)
-          - Le fond s'étend visuellement derrière la home indicator
-          - Hauteur fixe = 56px de contenu + safe-area-inset-bottom
       ───────────────────────────────────────────────── */}
       <nav
-        className="flex md:hidden fixed bottom-0 left-0 right-0 bg-card-light dark:bg-card-dark backdrop-blur-lg border-t border-neutral-200/50 dark:border-neutral-800/40 z-50 transition-colors duration-300 justify-around items-start"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        className="flex md:hidden bg-card-light dark:bg-card-dark border-t border-neutral-200/50 dark:border-neutral-800/40 transition-colors duration-300 justify-around items-start shrink-0"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', height: 'calc(56px + env(safe-area-inset-bottom, 0px))' }}
       >
         {navItems.map((item) => {
           const active = isActive(item.href);
@@ -263,17 +272,6 @@ export default function MainLayout({
           );
         })}
       </nav>
-
-      {/* ─────────────────────────────────────────────────
-          CONTENU PRINCIPAL
-          - Sur mobile : décalé sous le header (pt-content) et au-dessus de la tab bar (pb-content)
-          - Sur desktop : décalé à droite de la sidebar
-      ───────────────────────────────────────────────── */}
-      <main className="flex-1 flex flex-col md:pl-64 overflow-y-auto overscroll-y-none pt-content md:pt-0 pb-content md:pb-6">
-        <div className="flex-1 p-4 md:p-8 max-w-5xl w-full mx-auto">
-          {children}
-        </div>
-      </main>
       
     </div>
   );

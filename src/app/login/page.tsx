@@ -62,15 +62,14 @@ function LoginContent() {
 
   return (
     <div
-      className="w-full overflow-y-auto overscroll-none bg-bg-light dark:bg-bg-dark transition-colors duration-300"
+      className="w-full flex items-center justify-center p-4 bg-bg-light dark:bg-bg-dark transition-colors duration-300"
       style={{
         minHeight: '100dvh',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
-      <div className="flex min-h-full w-full items-center justify-center p-4">
-        <main className="w-full max-w-md flex flex-col gap-8">
+      <main className="w-full max-w-md flex flex-col gap-8">
 
           {/* Formulaire dans une carte Soft UI */}
           <div className="p-6 md:p-8 bg-card-light dark:bg-card-dark border border-neutral-200/50 dark:border-neutral-800/40 shadow-sm rounded-card transition-all duration-300">
@@ -161,7 +160,6 @@ function LoginContent() {
             </div>
           </div>
         </main>
-      </div>
     </div>
   );
 }

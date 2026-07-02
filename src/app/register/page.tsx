@@ -73,9 +73,15 @@ function RegisterContent() {
   }
 
   return (
-    <div className="w-full h-dvh overflow-y-auto overscroll-behavior-y-contain bg-bg-light dark:bg-bg-dark transition-colors duration-300">
-      <div className="flex min-h-full w-full items-center justify-center p-4">
-        <main className="w-full max-w-md flex flex-col gap-8">
+    <div
+      className="w-full flex items-center justify-center p-4 bg-bg-light dark:bg-bg-dark transition-colors duration-300"
+      style={{
+        minHeight: '100dvh',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
+    >
+      <main className="w-full max-w-md flex flex-col gap-8">
           {/* En-tête / Logo */}
           <div className="flex flex-col items-center text-center gap-2">
             <div className="flex items-center justify-center h-16 w-16 overflow-hidden rounded-card bg-brand-light dark:bg-brand/10 shadow-sm border border-neutral-200/50 dark:border-neutral-800/40">
@@ -203,7 +209,6 @@ function RegisterContent() {
             </div>
           </div>
         </main>
-      </div>
     </div>
   );
 }

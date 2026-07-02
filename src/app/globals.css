@@ -59,13 +59,3 @@ body {
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
-
-/* Padding top du contenu = hauteur header + status bar */
-@utility pt-content {
-  padding-top: calc(52px + env(safe-area-inset-top, 0px));
-}
-
-/* Padding bottom du contenu = hauteur tab bar + home indicator */
-@utility pb-content {
-  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
-}
