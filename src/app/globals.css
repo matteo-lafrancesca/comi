@@ -72,3 +72,11 @@ body {
   height: -webkit-fill-available;
   height: 100dvh;
 }
+
+html {
+  background-color: red !important;
+}
+
+body {
+  background-color: lime !important;
+}
