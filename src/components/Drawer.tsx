@@ -61,11 +61,24 @@ export default function Drawer({
     };
 
     window.addEventListener('keydown', handleKeyDown);
+    
+    const originalBodyOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+
+    // Lock main scroll container to prevent page scrolling behind drawer
+    const mainEl = document.querySelector('main');
+    let originalMainOverflow = '';
+    if (mainEl) {
+      originalMainOverflow = mainEl.style.overflow;
+      mainEl.style.overflow = 'hidden';
+    }
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
+      document.body.style.overflow = originalBodyOverflow;
+      if (mainEl) {
+        mainEl.style.overflow = originalMainOverflow;
+      }
     };
   }, [visible, onClose]);
 
@@ -116,6 +129,9 @@ export default function Drawer({
       {/* Backdrop overlay */}
       <div 
         onClick={onClose}
+        onTouchMove={(e) => {
+          if (e.cancelable) e.preventDefault();
+        }}
         className={`fixed inset-0 bg-neutral-900/60 dark:bg-black/75 backdrop-blur-xs transition-opacity duration-300 ease-in-out ${
           visible ? 'opacity-100' : 'opacity-0'
         }`}
@@ -124,56 +140,63 @@ export default function Drawer({
       {/* Drawer Panel container */}
       <div 
         style={panelStyle}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
         className={`fixed bottom-0 left-0 right-0 sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:right-auto bg-card-light dark:bg-card-dark rounded-t-card sm:rounded-card shadow-2xl flex flex-col overflow-hidden border-t sm:border border-neutral-200/40 dark:border-neutral-800/40 z-10 w-full ${maxWidth} ${height} max-h-[92dvh] sm:max-h-[90vh] transition-all duration-300 ease-out select-none ${
           visible 
             ? 'translate-y-0 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:scale-100 sm:opacity-100' 
             : 'translate-y-full sm:translate-y-4 sm:-translate-x-1/2 sm:-translate-y-[45%] sm:scale-95 sm:opacity-0'
         }`}
       >
-        {/* Banner image header */}
-        {headerImage && (
-          <div className="relative shrink-0 w-full overflow-hidden select-none pointer-events-none">
-            {headerImage}
-            {/* Absolute close button */}
-            <button 
-              onClick={onClose}
-              className="absolute top-4 right-4 p-2.5 rounded-full bg-black/40 hover:bg-black/60 dark:bg-neutral-900/60 dark:hover:bg-neutral-950 text-white backdrop-blur-sm transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-md z-20 pointer-events-auto"
-              aria-label="Fermer"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        )}
-
-        {/* Swipe Handle Indicator */}
-        <div className="flex flex-col pt-3 pb-1.5 shrink-0 bg-neutral-50/20 dark:bg-neutral-800/5 select-none items-center justify-center">
-          <div className="w-12 h-1 bg-neutral-300 dark:bg-neutral-800 rounded-full sm:hidden" />
-        </div>
-
-        {/* Title Header (for drawers without header image) */}
-        {!headerImage && title && (
-          <div className="flex items-center justify-between px-6 pb-4 pt-1 shrink-0 border-b border-neutral-100/50 dark:border-neutral-800/20">
-            <div className="min-w-0 flex-1">
-              {typeof title === 'string' ? (
-                <h3 className="text-lg font-bold text-text-light-main dark:text-text-dark-main truncate">
-                  {title}
-                </h3>
-              ) : (
-                title
-              )}
+        {/* Swipe/Drag handle area at the top */}
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          className="shrink-0 cursor-grab active:cursor-grabbing"
+        >
+          {/* Banner image header */}
+          {headerImage && (
+            <div className="relative shrink-0 w-full overflow-hidden select-none pointer-events-none">
+              {headerImage}
+              {/* Absolute close button */}
+              <button 
+                onClick={onClose}
+                onTouchStart={(e) => e.stopPropagation()}
+                className="absolute top-4 right-4 p-2.5 rounded-full bg-black/40 hover:bg-black/60 dark:bg-neutral-900/60 dark:hover:bg-neutral-950 text-white backdrop-blur-sm transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-md z-20 pointer-events-auto"
+                aria-label="Fermer"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
-            <button 
-              onClick={onClose}
-              className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-text-light-muted dark:text-text-dark-muted transition-colors cursor-pointer"
-              aria-label="Fermer"
-            >
-              <X className="h-4 w-4" />
-            </button>
+          )}
+
+          {/* Swipe Handle Indicator */}
+          <div className="flex flex-col pt-3 pb-1.5 shrink-0 bg-neutral-50/20 dark:bg-neutral-800/5 select-none items-center justify-center">
+            <div className="w-12 h-1 bg-neutral-300 dark:bg-neutral-800 rounded-full sm:hidden" />
           </div>
-        )}
+
+          {/* Title Header (for drawers without header image) */}
+          {!headerImage && title && (
+            <div className="flex items-center justify-between px-6 pb-4 pt-1 shrink-0 border-b border-neutral-100/50 dark:border-neutral-800/20">
+              <div className="min-w-0 flex-1">
+                {typeof title === 'string' ? (
+                  <h3 className="text-lg font-bold text-text-light-main dark:text-text-dark-main truncate">
+                    {title}
+                  </h3>
+                ) : (
+                  title
+                )}
+              </div>
+              <button 
+                onClick={onClose}
+                onTouchStart={(e) => e.stopPropagation()}
+                className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-text-light-muted dark:text-text-dark-muted transition-colors cursor-pointer"
+                aria-label="Fermer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Scrollable contents area */}
         <div 
