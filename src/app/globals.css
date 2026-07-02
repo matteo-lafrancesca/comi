@@ -30,16 +30,14 @@
 
 :root {
   --app-height: 100dvh;
-  /* fallback tant que le JS n'a pas tourné */
+  /* fallback avant que le JS tourne */
 }
 
-/* Base : couvre toujours tout l'écran physique, sans fond visible */
 html,
 body {
   margin: 0;
   padding: 0;
-  height: -webkit-fill-available;
-  height: 100dvh;
+  height: var(--app-height);
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
   background-color: var(--color-bg-light);
@@ -119,4 +117,12 @@ body {
     background-color: var(--color-bg-dark);
     color: var(--color-text-dark-main);
   }
+}
+
+html {
+  background-color: red !important;
+}
+
+body {
+  background-color: lime !important;
 }
