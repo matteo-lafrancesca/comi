@@ -68,7 +68,16 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               function setAppHeight() {
-                document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+                var safeBottom = 0;
+                try {
+                  var testEl = document.createElement('div');
+                  testEl.style.cssText = 'position:fixed;bottom:0;height:0;padding-bottom:env(safe-area-inset-bottom,0px);';
+                  document.body.appendChild(testEl);
+                  safeBottom = parseFloat(getComputedStyle(testEl).paddingBottom) || 0;
+                  document.body.removeChild(testEl);
+                } catch(e) {}
+                var total = window.innerHeight + safeBottom;
+                document.documentElement.style.setProperty('--app-height', total + 'px');
               }
               setAppHeight();
               window.addEventListener('resize', setAppHeight);

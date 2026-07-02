@@ -31,39 +31,10 @@ export default function MainLayout({
 
   // Theme state
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [debugInfo, setDebugInfo] = useState('Initialisation debug...');
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
     setTheme(isDark ? 'dark' : 'light');
-  }, []);
-
-  useEffect(() => {
-    const updateDebug = () => {
-      const standalone = window.matchMedia('(display-mode: standalone)').matches;
-      // @ts-ignore
-      const iosStandalone = window.navigator.standalone;
-
-      // Mesure réelle de env(safe-area-inset-bottom)
-      const testEl = document.createElement('div');
-      testEl.style.paddingBottom = 'env(safe-area-inset-bottom, -1px)';
-      document.body.appendChild(testEl);
-      const safeBottom = getComputedStyle(testEl).paddingBottom;
-      document.body.removeChild(testEl);
-
-      const appHeight = getComputedStyle(document.documentElement).getPropertyValue('--app-height');
-      const info = `standalone: ${standalone} | iosStandalone: ${iosStandalone} | innerH: ${window.innerHeight}px | appHeight: ${appHeight} | safeBottom: ${safeBottom} | build: ${Date.now()}`;
-      setDebugInfo(info);
-    };
-
-    updateDebug();
-    window.addEventListener('resize', updateDebug);
-    window.addEventListener('orientationchange', () => {
-      setTimeout(updateDebug, 150);
-    });
-    return () => {
-      window.removeEventListener('resize', updateDebug);
-    };
   }, []);
 
   const toggleTheme = () => {
@@ -127,27 +98,7 @@ export default function MainLayout({
       className="flex flex-col overflow-hidden bg-bg-light dark:bg-bg-dark text-text-light-main dark:text-text-dark-main transition-colors duration-300"
       style={{ height: 'var(--app-height, 100dvh)' }}
     >
-      <div
-        style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 9999,
-          background: 'rgba(0, 0, 0, 0.95)',
-          color: 'lime',
-          fontSize: '11px',
-          padding: '12px',
-          borderRadius: '8px',
-          fontFamily: 'monospace',
-          pointerEvents: 'none',
-          maxWidth: '90%',
-          wordBreak: 'break-all',
-        }}
-        id="debug-overlay"
-      >
-        {debugInfo}
-      </div>
+
       {/* 💻 NAVIGATION DESKTOP : Sidebar */}
       <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 bg-card-light dark:bg-card-dark border-r border-neutral-200/50 dark:border-neutral-800/40 p-6 z-40 transition-all duration-300">
         {/* En-tête / Logo */}
