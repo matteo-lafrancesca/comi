@@ -55,7 +55,7 @@ export default function AddExtraDrawer({
           const res = await fetch('/api/repas');
           if (res.ok) {
             const data = await res.json();
-            setAllMeals(data);
+            setAllMeals(data.repas || []);
           }
         } catch (err) {
           console.error(err);
