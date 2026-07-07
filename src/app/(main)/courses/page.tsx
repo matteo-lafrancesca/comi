@@ -181,7 +181,7 @@ export default function CoursesPage() {
   const handlePrevWeek = () => {
     if (!weekInfo) return;
     const prevDate = new Date(weekInfo.start);
-    prevDate.setDate(prevDate.getDate() - 7);
+    prevDate.setUTCDate(prevDate.getUTCDate() - 7);
     const { week, year } = getISOWeekAndYear(prevDate);
     router.push(`${pathname}?week=${week}&year=${year}`);
   };
@@ -189,7 +189,7 @@ export default function CoursesPage() {
   const handleNextWeek = () => {
     if (!weekInfo) return;
     const nextDate = new Date(weekInfo.start);
-    nextDate.setDate(nextDate.getDate() + 7);
+    nextDate.setUTCDate(nextDate.getUTCDate() + 7);
     const { week, year } = getISOWeekAndYear(nextDate);
     router.push(`${pathname}?week=${week}&year=${year}`);
   };

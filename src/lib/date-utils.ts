@@ -57,8 +57,9 @@ export function normalizeToUTCDate(date: Date): Date {
  * La date doit être préalablement ajustée à l'heure de Paris si on souhaite obtenir la semaine à Paris.
  */
 export function getISOWeekAndYear(date: Date): { week: number; year: number } {
+  const parisDate = getParisDate(date);
   // On clone la date pour ne pas la modifier
-  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const d = new Date(parisDate.getFullYear(), parisDate.getMonth(), parisDate.getDate());
   
   // Définit le jour le plus proche du jeudi de la même semaine : date + 4 - numéro du jour
   // En ISO 8601, les semaines commencent par le Lundi (1) et se terminent par le Dimanche (7)
@@ -144,18 +145,20 @@ export function getCustomWeekRange(
   referenceDate: Date,
   weekStartDay: number
 ): { start: Date; end: Date } {
+  const parisDate = getParisDate(referenceDate);
+
   // JS getDay() : 0=Dim, 1=Lun, ..., 6=Sam
   // On convertit weekStartDay (0=Lun) vers JS convention (0=Dim)
   const jsWeekStartDay = weekStartDay === 6 ? 0 : weekStartDay + 1;
 
   // Jour JS de referenceDate
-  const refDay = referenceDate.getDay(); // 0=Dim, 1=Lun, ...
+  const refDay = parisDate.getDay(); // 0=Dim, 1=Lun, ...
 
   // Nombre de jours à reculer pour atteindre le début de la semaine personnalisée
   let diff = (refDay - jsWeekStartDay + 7) % 7;
 
-  const start = new Date(referenceDate);
-  start.setDate(referenceDate.getDate() - diff);
+  const start = new Date(parisDate);
+  start.setDate(parisDate.getDate() - diff);
 
   const end = new Date(start);
   end.setDate(start.getDate() + 6);
