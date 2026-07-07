@@ -633,7 +633,7 @@ export default function ModifierRepasPage() {
             <button
               type="button"
               onClick={handlePrev}
-              className="w-full flex items-center justify-center gap-2 px-5 py-3 text-sm font-bold border border-neutral-200 dark:border-neutral-850 rounded-input hover:bg-neutral-50 dark:hover:bg-neutral-850 text-text-light-main dark:text-text-dark-main active:scale-95 transition-all duration-300 cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 text-sm font-bold border border-neutral-200 dark:border-neutral-800 rounded-input hover:bg-neutral-50 dark:hover:bg-neutral-800 text-text-light-main dark:text-text-dark-main active:scale-95 transition-all duration-300 cursor-pointer"
             >
               <ChevronLeft className="h-4 w-4" />
               <span>Précédent</span>
@@ -641,7 +641,7 @@ export default function ModifierRepasPage() {
           ) : (
             <Link
               href="/repas"
-              className="w-full flex items-center justify-center gap-2 px-5 py-3 text-sm font-bold border border-neutral-200 dark:border-neutral-850 rounded-input hover:bg-neutral-50 dark:hover:bg-neutral-850 text-text-light-main dark:text-text-dark-main active:scale-95 transition-all duration-300 cursor-pointer text-center"
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 text-sm font-bold border border-neutral-200 dark:border-neutral-800 rounded-input hover:bg-neutral-50 dark:hover:bg-neutral-800 text-text-light-main dark:text-text-dark-main active:scale-95 transition-all duration-300 cursor-pointer text-center"
             >
               <span>Annuler</span>
             </Link>

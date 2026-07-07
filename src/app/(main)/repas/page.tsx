@@ -242,7 +242,7 @@ export default function RepasPage() {
               router.push(redirectUrl);
             }}
             disabled={isSelecting}
-            className="w-full sm:w-auto px-5 py-2 text-xs font-bold bg-neutral-105 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-text-light-main dark:text-text-dark-main rounded-input transition-all active:scale-95 cursor-pointer text-center"
+            className="w-full sm:w-auto px-5 py-2 text-xs font-bold bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-text-light-main dark:text-text-dark-main rounded-input transition-all active:scale-95 cursor-pointer text-center"
           >
             Annuler la sélection
           </button>

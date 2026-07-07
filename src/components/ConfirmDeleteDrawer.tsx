@@ -73,7 +73,7 @@ export default function ConfirmDeleteDrawer({
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="flex-1 px-4 py-2.5 text-sm font-bold border border-neutral-200 dark:border-neutral-850 rounded-input hover:bg-neutral-50 dark:hover:bg-neutral-800 text-text-light-main dark:text-text-dark-main active:scale-95 transition-all cursor-pointer text-center disabled:opacity-50"
+            className="flex-1 px-4 py-2.5 text-sm font-bold border border-neutral-200 dark:border-neutral-800 rounded-input hover:bg-neutral-50 dark:hover:bg-neutral-800 text-text-light-main dark:text-text-dark-main active:scale-95 transition-all cursor-pointer text-center disabled:opacity-50"
           >
             Annuler
           </button>

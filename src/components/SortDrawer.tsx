@@ -55,22 +55,24 @@ export default function SortDrawer({ isOpen, onClose, currentSort, onSortChange 
               }}
               className={`w-full flex items-start gap-4 p-4 rounded-card text-left transition-all duration-300 border cursor-pointer ${
                 isSelected
-                  ? 'bg-brand-light dark:bg-brand/10 border-brand/20 dark:border-brand/20'
-                  : 'bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-800/20 dark:hover:bg-neutral-850 border-neutral-100/50 dark:border-neutral-800/20 hover:scale-[1.01]'
+                  ? 'bg-brand text-white border-brand shadow-xs hover:bg-brand-hover'
+                  : 'bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-800/20 dark:hover:bg-neutral-800 border-neutral-100/50 dark:border-neutral-800/20 hover:scale-[1.01]'
               }`}
             >
               <div className="flex-1 min-w-0">
                 <span className={`block text-sm font-bold truncate ${
-                  isSelected ? 'text-brand' : 'text-text-light-main dark:text-text-dark-main'
+                  isSelected ? 'text-white' : 'text-text-light-main dark:text-text-dark-main'
                 }`}>
                   {option.label}
                 </span>
-                <span className="block text-xs font-semibold text-text-light-muted dark:text-text-dark-muted mt-1 leading-normal">
+                <span className={`block text-xs font-semibold mt-1 leading-normal ${
+                  isSelected ? 'text-white/85' : 'text-text-light-muted dark:text-text-dark-muted'
+                }`}>
                   {option.description}
                 </span>
               </div>
               {isSelected && (
-                <div className="shrink-0 h-5 w-5 bg-brand text-white rounded-full flex items-center justify-center">
+                <div className="shrink-0 h-5 w-5 bg-white/20 text-white rounded-full flex items-center justify-center">
                   <Check className="h-3 w-3 stroke-[3]" />
                 </div>
               )}

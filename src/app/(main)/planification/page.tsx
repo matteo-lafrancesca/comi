@@ -168,7 +168,7 @@ export default function PlanificationPage() {
           className="flex flex-col justify-between p-3.5 transition-all duration-300 border border-neutral-200/40 dark:border-neutral-800/40 shadow-xs bg-card-light dark:bg-card-dark rounded-card hover:shadow-md hover:scale-[1.02] hover:border-neutral-300 dark:hover:border-neutral-700 active:scale-[0.98] cursor-pointer group h-36"
         >
           {/* Cover image or icon */}
-          <div className="relative w-full h-16 overflow-hidden rounded-xl bg-neutral-105 dark:bg-neutral-800/60 mb-2 flex items-center justify-center border border-neutral-100/50 dark:border-neutral-805/10 shrink-0">
+          <div className="relative w-full h-16 overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800/60 mb-2 flex items-center justify-center border border-neutral-100/50 dark:border-neutral-800/10 shrink-0">
             {repas.photoUrl ? (
               <img 
                 src={repas.photoUrl} 

@@ -237,18 +237,18 @@ export default function AddExtraDrawer({
                         onClick={() => setSelectedRepasId(meal.id.toString())}
                         className={`w-full flex items-center gap-3 p-2.5 rounded-xl border transition-all text-left cursor-pointer ${
                           selectedRepasId === meal.id.toString()
-                            ? 'border-brand bg-brand-light dark:bg-brand/10 text-brand'
-                            : 'border-neutral-200/50 dark:border-neutral-800/25 hover:bg-neutral-105 dark:hover:bg-neutral-800/40 text-text-light-main dark:text-text-dark-main'
+                            ? 'border-brand bg-brand text-white shadow-xs hover:bg-brand-hover'
+                            : 'border-neutral-200/50 dark:border-neutral-800/25 hover:bg-neutral-100 dark:hover:bg-neutral-800/40 text-text-light-main dark:text-text-dark-main'
                         }`}
                       >
                         <div className="h-9 w-9 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 border border-neutral-200/20">
                           {meal.photoUrl ? (
                             <img src={meal.photoUrl} alt={meal.titre} className="object-cover w-full h-full" />
                           ) : (
-                            <Utensils className="h-4 w-4 text-text-light-muted dark:text-text-dark-muted" />
+                            <Utensils className={`h-4 w-4 ${selectedRepasId === meal.id.toString() ? 'text-white/70' : 'text-text-light-muted dark:text-text-dark-muted'}`} />
                           )}
                         </div>
-                        <span className="text-xs font-bold truncate">{meal.titre}</span>
+                        <span className={`text-xs font-bold truncate ${selectedRepasId === meal.id.toString() ? 'text-white' : ''}`}>{meal.titre}</span>
                       </button>
                     ))
                   )}

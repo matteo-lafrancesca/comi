@@ -131,7 +131,7 @@ export default function IngredientSearchInput({
             <button
               type="button"
               onClick={handleCreateNew}
-              className="w-full flex items-center justify-between px-4 py-3.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/60 transition-colors border-t border-neutral-100/50 dark:border-neutral-850 cursor-pointer text-left"
+              className="w-full flex items-center justify-between px-4 py-3.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/60 transition-colors border-t border-neutral-100/50 dark:border-neutral-800/50 cursor-pointer text-left"
             >
               <div className="flex items-center gap-3 text-text-light-main dark:text-text-dark-main">
                 <div className="p-1.5 bg-brand-light dark:bg-brand/10 text-brand rounded-lg shrink-0">
