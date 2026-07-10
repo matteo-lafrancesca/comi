@@ -187,3 +187,18 @@ export function getCustomWeekDays(
   }
   return days;
 }
+
+/**
+ * Calcule la semaine (ISO) précédente ou suivante par rapport à une semaine et une année données.
+ */
+export function getAdjacentWeek(
+  week: number,
+  year: number,
+  direction: 'prev' | 'next'
+): { week: number; year: number } {
+  const isoRange = getDatesForISOWeek(week, year);
+  const targetDate = new Date(isoRange.start);
+  targetDate.setUTCDate(targetDate.getUTCDate() + (direction === 'prev' ? -7 : 7));
+  return getISOWeekAndYear(targetDate);
+}
+

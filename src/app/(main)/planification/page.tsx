@@ -9,7 +9,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { ProgrammationWithRepas, RepasWithIngredients } from '@/types';
-import { getCustomWeekDays, getOrderedDayLabels, getISOWeekAndYear } from '@/lib/date-utils';
+import { getCustomWeekDays, getOrderedDayLabels, getAdjacentWeek } from '@/lib/date-utils';
 import RepasDetailModal from '@/components/RepasDetailModal';
 import WeekSelector from '@/components/WeekSelector';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -84,20 +84,16 @@ export default function PlanificationPage() {
     };
   }, [searchParams]);
 
-  // Navigate to previous/next week using 7-day offsets on week start date
+  // Navigate to previous/next week using standard ISO week offsets
   const handlePrevWeek = () => {
-    if (!weekInfo) return;
-    const prevDate = new Date(weekInfo.start);
-    prevDate.setUTCDate(prevDate.getUTCDate() - 7);
-    const { week, year } = getISOWeekAndYear(prevDate);
+    if (currentWeek === null || currentYear === null) return;
+    const { week, year } = getAdjacentWeek(currentWeek, currentYear, 'prev');
     router.push(`${pathname}?week=${week}&year=${year}`);
   };
 
   const handleNextWeek = () => {
-    if (!weekInfo) return;
-    const nextDate = new Date(weekInfo.start);
-    nextDate.setUTCDate(nextDate.getUTCDate() + 7);
-    const { week, year } = getISOWeekAndYear(nextDate);
+    if (currentWeek === null || currentYear === null) return;
+    const { week, year } = getAdjacentWeek(currentWeek, currentYear, 'next');
     router.push(`${pathname}?week=${week}&year=${year}`);
   };
 

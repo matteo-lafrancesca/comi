@@ -20,7 +20,7 @@ import {
   Utensils,
 } from 'lucide-react';
 import { CategorieIngredient, CATEGORY_DETAILS, normalizeCategory } from '@/types';
-import { getDatesForISOWeek, getISOWeekAndYear, getCustomWeekRange } from '@/lib/date-utils';
+import { getDatesForISOWeek, getCustomWeekRange, getAdjacentWeek } from '@/lib/date-utils';
 
 import { formatIngredient } from '@/lib/shopping-list-utils';
 import ConfirmDeleteDrawer from '@/components/ConfirmDeleteDrawer';
@@ -179,18 +179,14 @@ export default function CoursesPage() {
   };
 
   const handlePrevWeek = () => {
-    if (!weekInfo) return;
-    const prevDate = new Date(weekInfo.start);
-    prevDate.setUTCDate(prevDate.getUTCDate() - 7);
-    const { week, year } = getISOWeekAndYear(prevDate);
+    if (currentWeek === null || currentYear === null) return;
+    const { week, year } = getAdjacentWeek(currentWeek, currentYear, 'prev');
     router.push(`${pathname}?week=${week}&year=${year}`);
   };
 
   const handleNextWeek = () => {
-    if (!weekInfo) return;
-    const nextDate = new Date(weekInfo.start);
-    nextDate.setUTCDate(nextDate.getUTCDate() + 7);
-    const { week, year } = getISOWeekAndYear(nextDate);
+    if (currentWeek === null || currentYear === null) return;
+    const { week, year } = getAdjacentWeek(currentWeek, currentYear, 'next');
     router.push(`${pathname}?week=${week}&year=${year}`);
   };
 
