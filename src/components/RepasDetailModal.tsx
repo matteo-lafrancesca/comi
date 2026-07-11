@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Utensils, ShoppingBasket, BookOpen, Pencil, Trash2, Loader2, CalendarX } from 'lucide-react';
+import Image from 'next/image';
+import { Utensils, ShoppingBasket, BookOpen, Pencil, Trash2, Loader2, CalendarX, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { RepasWithIngredients } from '@/types';
 import { formatIngredient } from '@/lib/shopping-list-utils';
@@ -15,6 +16,7 @@ interface RepasDetailModalProps {
   onDeleted?: (id: number) => void;
   programmationId?: number;
   onUnschedule?: (id: number) => Promise<void>;
+  onReprogram?: () => void;
 }
 
 export default function RepasDetailModal({ 
@@ -23,7 +25,8 @@ export default function RepasDetailModal({
   onClose, 
   onDeleted,
   programmationId,
-  onUnschedule
+  onUnschedule,
+  onReprogram
 }: RepasDetailModalProps) {
   const router = useRouter();
   const [activeRepas, setActiveRepas] = useState<RepasWithIngredients | null>(null);
@@ -110,10 +113,13 @@ export default function RepasDetailModal({
   const headerImage = (
     <div className="relative w-full h-56 md:h-72 bg-brand-light dark:bg-neutral-800/30 border-b border-neutral-100 dark:border-neutral-800/20">
       {photoUrl ? (
-        <img
+        <Image
           src={photoUrl}
           alt={titre}
-          className="object-cover w-full h-full"
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 768px"
+          className="object-cover"
         />
       ) : (
         <div className="flex flex-col items-center justify-center w-full h-full text-brand-light dark:text-neutral-700">
@@ -140,40 +146,56 @@ export default function RepasDetailModal({
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2 shrink-0 mt-0.5">
-              {programmationId && (
-                <button
-                  type="button"
-                  onClick={handleUnschedule}
-                  disabled={isUnscheduling}
-                  title="Enlever ce repas du planning"
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 hover:bg-amber-600 hover:text-white dark:hover:bg-amber-600 dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
-                >
-                  {isUnscheduling ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <CalendarX className="h-3.5 w-3.5" />
+              {programmationId ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleUnschedule}
+                    disabled={isUnscheduling}
+                    title="Enlever ce repas du planning"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 hover:bg-amber-600 hover:text-white dark:hover:bg-amber-600 dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
+                  >
+                    {isUnscheduling ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <CalendarX className="h-3.5 w-3.5" />
+                    )}
+                    <span>Déprogrammer</span>
+                  </button>
+                  {onReprogram && (
+                    <button
+                      type="button"
+                      onClick={onReprogram}
+                      title="Reprogrammer ce créneau"
+                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-brand bg-brand-light dark:bg-brand/10 hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      <span>Reprogrammer</span>
+                    </button>
                   )}
-                  <span>Déprogrammer</span>
-                </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleEdit}
+                    title="Modifier ce repas"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-text-light-main dark:text-text-dark-main bg-neutral-100 dark:bg-neutral-800 hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Modifier</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsDeleteConfirmOpen(true)}
+                    title="Supprimer ce repas"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Supprimer</span>
+                  </button>
+                </>
               )}
-              <button
-                type="button"
-                onClick={handleEdit}
-                title="Modifier ce repas"
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-text-light-main dark:text-text-dark-main bg-neutral-100 dark:bg-neutral-800 hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Modifier</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsDeleteConfirmOpen(true)}
-                title="Supprimer ce repas"
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Supprimer</span>
-              </button>
             </div>
           </div>
 

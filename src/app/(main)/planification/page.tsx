@@ -32,6 +32,8 @@ export default function PlanificationPage() {
   // Modal states for meal details
   const [selectedRepas, setSelectedRepas] = useState<RepasWithIngredients | null>(null);
   const [selectedProgId, setSelectedProgId] = useState<number | undefined>(undefined);
+  const [selectedSlotDate, setSelectedSlotDate] = useState<string | null>(null);
+  const [selectedSlotHeure, setSelectedSlotHeure] = useState<number | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // Fetch planning data
@@ -148,6 +150,12 @@ export default function PlanificationPage() {
     setProgrammations((prev) => prev.filter((p) => p.id !== progId));
   };
 
+  const handleReprogram = () => {
+    if (!selectedSlotDate || selectedSlotHeure === null) return;
+    setIsDetailOpen(false);
+    router.push(`/repas?selectMode=true&date=${selectedSlotDate}&heure=${selectedSlotHeure}&returnWeek=${currentWeek}&returnYear=${currentYear}`);
+  };
+
   const renderSlot = (day: Date, heure: number, label: string) => {
     const prog = findProgrammation(day, heure);
     const dateStr = day.toISOString().split('T')[0];
@@ -159,6 +167,8 @@ export default function PlanificationPage() {
           onClick={() => {
             setSelectedRepas(repas);
             setSelectedProgId(id);
+            setSelectedSlotDate(dateStr);
+            setSelectedSlotHeure(heure);
             setIsDetailOpen(true);
           }}
           className="flex flex-col justify-between p-3.5 transition-all duration-300 border border-neutral-200/40 dark:border-neutral-800/40 shadow-xs bg-card-light dark:bg-card-dark rounded-card hover:shadow-md hover:scale-[1.02] hover:border-neutral-300 dark:hover:border-neutral-700 active:scale-[0.98] cursor-pointer group h-36"
@@ -319,8 +329,11 @@ export default function PlanificationPage() {
           setIsDetailOpen(false);
           setSelectedRepas(null);
           setSelectedProgId(undefined);
+          setSelectedSlotDate(null);
+          setSelectedSlotHeure(null);
         }}
         onUnschedule={handleUnscheduleSuccess}
+        onReprogram={handleReprogram}
       />
     </div>
   );
