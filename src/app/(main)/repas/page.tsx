@@ -44,6 +44,7 @@ export default function RepasPage() {
 
   const [isRefetching, setIsRefetching] = useState(false);
   const isInitialMountRef = useRef(true);
+  const skipInitialFetchRef = useRef(repasCache.isLoaded);
 
   // Synchronisation synchrone de la pagination lors du changement de recherche ou de tri (Derived State)
   const prevSearchQueryRef = useRef(debouncedSearchQuery);
@@ -117,6 +118,14 @@ export default function RepasPage() {
 
   // Fetch meals on change of page, debounced search query or sort mode
   useEffect(() => {
+    // Si c'est le premier montage et que les données sont déjà chargées depuis le cache,
+    // on évite de refaire une requête réseau pour la page actuelle.
+    if (skipInitialFetchRef.current) {
+      skipInitialFetchRef.current = false;
+      isInitialMountRef.current = false;
+      return;
+    }
+
     let active = true;
     
     const fetchRepas = async () => {
@@ -153,7 +162,12 @@ export default function RepasPage() {
           if (page === 1) {
             setRepasList(data.repas || []);
           } else {
-            setRepasList((prev) => [...prev, ...(data.repas || [])]);
+            setRepasList((prev) => {
+              // Déduplication par ID pour éviter les doublons en cas de chargement concurrent/cache
+              const existingIds = new Set(prev.map((r) => r.id));
+              const newItems = (data.repas || []).filter((r: RepasWithIngredients) => !existingIds.has(r.id));
+              return [...prev, ...newItems];
+            });
           }
           setHasMore(data.hasMore);
         }
