@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,7 +45,7 @@ export default function MainLayout({
 
   // Helper function to check active path
   const isActive = (href: string) => {
-    if (href === '/repas' && pathname === '/') {
+    if (href === '/planification' && pathname === '/') {
       return true;
     }
     return pathname.startsWith(href);

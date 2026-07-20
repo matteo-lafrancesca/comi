@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { 
   Plus, 
@@ -9,7 +9,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { ProgrammationWithRepas, RepasWithIngredients } from '@/types';
-import { getCustomWeekDays, getOrderedDayLabels, getAdjacentWeek } from '@/lib/date-utils';
+import { getCustomWeekDays, getOrderedDayLabels, getAdjacentWeek, getParisDate } from '@/lib/date-utils';
 import RepasDetailModal from '@/components/RepasDetailModal';
 import WeekSelector from '@/components/WeekSelector';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -157,6 +157,26 @@ export default function PlanificationPage() {
       : [];
   const dayLabels = getOrderedDayLabels(weekStartDay);
 
+  // Refs for scrolling to today
+  const todayMobileRef = useRef<HTMLDivElement | null>(null);
+  const todayDesktopRef = useRef<HTMLDivElement | null>(null);
+
+  const todayParis = getParisDate();
+  const todayStr = `${todayParis.getFullYear()}-${String(todayParis.getMonth() + 1).padStart(2, '0')}-${String(todayParis.getDate()).padStart(2, '0')}`;
+
+  // Auto-scroll to today's card/column once loading completes
+  useEffect(() => {
+    if (!loading && days.length > 0) {
+      const timer = setTimeout(() => {
+        const targetElement = todayMobileRef.current || todayDesktopRef.current;
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, days]);
+
   // Find a programmation for a given date and mealtime (0 = midi, 1 = soir)
   const findProgrammation = (date: Date, heure: number) => {
     const targetDateStr = date.toISOString().split('T')[0];
@@ -295,51 +315,80 @@ export default function PlanificationPage() {
         <>
           {/* 💻 VUE PC : Grille à 7 Colonnes */}
           <div className="hidden md:grid grid-cols-7 gap-4 animate-fade-in">
-            {days.map((day, idx) => (
-              <div key={idx} className="flex flex-col gap-3">
-                {/* Day Header */}
-                <div className="text-center py-2.5 bg-neutral-100/50 dark:bg-neutral-800/40 border border-neutral-200/10 dark:border-neutral-800/10 rounded-xl shrink-0">
-                  <span className="block text-xs font-extrabold capitalize text-text-light-main dark:text-text-dark-main">
-                    {dayLabels[idx]}
-                  </span>
-                  <span className="block text-[10px] font-bold text-text-light-muted dark:text-text-dark-muted mt-0.5">
-                    {formatDateLabel(day)}
-                  </span>
+            {days.map((day, idx) => {
+              const dayStr = day.toISOString().split('T')[0];
+              const isToday = dayStr === todayStr;
+              return (
+                <div 
+                  key={idx} 
+                  ref={isToday ? todayDesktopRef : undefined}
+                  className="flex flex-col gap-3"
+                >
+                  {/* Day Header */}
+                  <div className={`text-center py-2.5 border rounded-xl shrink-0 flex flex-col items-center justify-center min-h-[46px] ${
+                    isToday 
+                      ? 'bg-brand-light/40 dark:bg-brand/15 border-brand/30 text-brand' 
+                      : 'bg-neutral-100/50 dark:bg-neutral-800/40 border-neutral-200/10 dark:border-neutral-800/10'
+                  }`}>
+                    {isToday ? (
+                      <span className="block text-xs font-extrabold text-brand">
+                        Aujourd'hui
+                      </span>
+                    ) : (
+                      <>
+                        <span className="block text-xs font-extrabold capitalize text-text-light-main dark:text-text-dark-main">
+                          {dayLabels[idx]}
+                        </span>
+                        <span className="block text-[10px] font-bold text-text-light-muted dark:text-text-dark-muted mt-0.5">
+                          {formatDateLabel(day)}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Slots */}
+                  <div className="flex flex-col gap-3">
+                    {renderSlot(day, 0, 'Midi')}
+                    {renderSlot(day, 1, 'Soir')}
+                  </div>
                 </div>
-                
-                {/* Slots */}
-                <div className="flex flex-col gap-3">
-                  {renderSlot(day, 0, 'Midi')}
-                  {renderSlot(day, 1, 'Soir')}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* 📱 VUE MOBILE : Liste Verticale de Jours */}
           <div className="md:hidden space-y-4 animate-fade-in">
-            {days.map((day, idx) => (
-              <div 
-                key={idx} 
-                className="bg-card-light dark:bg-card-dark p-4 rounded-card border border-neutral-200/40 dark:border-neutral-800/40 shadow-xs flex flex-col gap-3.5"
-              >
-                {/* Day Header */}
-                <div className="flex items-baseline gap-2 pb-2 border-b border-neutral-100 dark:border-neutral-800/40">
-                  <h3 className="font-extrabold text-base capitalize text-text-light-main dark:text-text-dark-main">
-                    {dayLabels[idx]}
-                  </h3>
-                  <span className="text-xs font-bold text-text-light-muted dark:text-text-dark-muted">
-                    {formatDateLabel(day)}
-                  </span>
+            {days.map((day, idx) => {
+              const dayStr = day.toISOString().split('T')[0];
+              const isToday = dayStr === todayStr;
+              return (
+                <div 
+                  key={idx} 
+                  ref={isToday ? todayMobileRef : undefined}
+                  className={`bg-card-light dark:bg-card-dark p-4 rounded-card border shadow-xs flex flex-col gap-3.5 ${
+                    isToday ? 'border-brand/40 dark:border-brand/30' : 'border-neutral-200/40 dark:border-neutral-800/40'
+                  }`}
+                >
+                  {/* Day Header */}
+                  <div className="flex items-baseline gap-2 pb-2 border-b border-neutral-100 dark:border-neutral-800/40">
+                    <h3 className={`font-extrabold text-base capitalize ${isToday ? 'text-brand' : 'text-text-light-main dark:text-text-dark-main'}`}>
+                      {isToday ? "Aujourd'hui" : dayLabels[idx]}
+                    </h3>
+                    {!isToday && (
+                      <span className="text-xs font-bold text-text-light-muted dark:text-text-dark-muted">
+                        {formatDateLabel(day)}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Slots side by side */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {renderSlot(day, 0, 'Midi')}
+                    {renderSlot(day, 1, 'Soir')}
+                  </div>
                 </div>
-                
-                {/* Slots side by side */}
-                <div className="grid grid-cols-2 gap-3">
-                  {renderSlot(day, 0, 'Midi')}
-                  {renderSlot(day, 1, 'Soir')}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}
