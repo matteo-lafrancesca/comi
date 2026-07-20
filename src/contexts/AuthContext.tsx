@@ -3,14 +3,42 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Interception globale de fetch côté client pour injecter le basePath /comi sur les API
-if (typeof window !== 'undefined') {
+// Interception globale de fetch côté client pour injecter le basePath /comi et rafraîchir silencieusement si 401
+if (typeof window !== 'undefined' && !(window as any).__comiFetchIntercepted) {
+  (window as any).__comiFetchIntercepted = true;
   const originalFetch = window.fetch;
-  window.fetch = function (input, init) {
+
+  window.fetch = async function (input, init) {
+    let url = input;
     if (typeof input === 'string' && input.startsWith('/api/')) {
-      return originalFetch(`/comi${input}`, init);
+      url = `/comi${input}`;
     }
-    return originalFetch(input, init);
+
+    let response = await originalFetch(url, init);
+
+    const inputStr = typeof input === 'string' ? input : '';
+    const isAuthEndpoint =
+      inputStr.includes('/api/auth/login') ||
+      inputStr.includes('/api/auth/register') ||
+      inputStr.includes('/api/auth/logout') ||
+      inputStr.includes('/api/auth/refresh');
+
+    // Si la requête renvoie 401 sur une route API hors auth, tenter le rafraîchissement silencieux
+    if (response.status === 401 && !isAuthEndpoint) {
+      try {
+        const refreshRes = await originalFetch('/comi/api/auth/refresh', {
+          method: 'POST',
+        });
+        if (refreshRes.ok) {
+          // Rejouer la requête d'origine
+          response = await originalFetch(url, init);
+        }
+      } catch (err) {
+        console.error('Erreur rafraîchissement automatique:', err);
+      }
+    }
+
+    return response;
   };
 }
 

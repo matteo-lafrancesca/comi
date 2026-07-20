@@ -1,19 +1,21 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { revokeRefreshToken, clearAuthCookies } from '@/lib/auth';
 
 export async function POST() {
   try {
+    const cookieStore = await cookies();
+    const refreshToken = cookieStore.get('refresh_token')?.value;
+
+    if (refreshToken) {
+      await revokeRefreshToken(refreshToken);
+    }
+
     const response = NextResponse.json({
       message: 'Déconnexion réussie.',
     });
 
-    // Supprimer le cookie de session en le définissant comme expiré
-    response.cookies.set('token', '', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      expires: new Date(0),
-    });
+    clearAuthCookies(response);
 
     return response;
   } catch (error) {

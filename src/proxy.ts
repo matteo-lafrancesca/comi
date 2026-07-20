@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
+import { verifyAndRotateRefreshToken, setAuthCookies } from '@/lib/auth';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-at-least-32-chars-long';
 const key = new TextEncoder().encode(JWT_SECRET);
@@ -8,30 +9,49 @@ const key = new TextEncoder().encode(JWT_SECRET);
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Récupérer le token depuis les cookies
+  // Récupérer les tokens depuis les cookies
   const token = request.cookies.get('token')?.value;
+  const refreshToken = request.cookies.get('refresh_token')?.value;
 
   let isAuthenticated = false;
+  let newCookiesToSet: { accessToken: string; refreshToken: string } | null = null;
+
   if (token) {
     try {
       await jwtVerify(token, key, { algorithms: ['HS256'] });
       isAuthenticated = true;
     } catch {
-      // Le token est invalide ou expiré
+      // Le token d'accès est invalide ou expiré
       isAuthenticated = false;
+    }
+  }
+
+  // Si l'Access Token n'est plus valide mais qu'un Refresh Token est présent,
+  // tenter un rafraîchissement transparent de la session.
+  if (!isAuthenticated && refreshToken) {
+    const refreshed = await verifyAndRotateRefreshToken(refreshToken);
+    if (refreshed) {
+      isAuthenticated = true;
+      newCookiesToSet = {
+        accessToken: refreshed.accessToken,
+        refreshToken: refreshed.refreshToken,
+      };
     }
   }
 
   // Définir si la route actuelle est une route d'authentification publique (login, register)
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register');
 
-  // Si l'utilisateur est sur une page d'authentification mais est déjà connecté,
-  // on le redirige vers la page d'accueil.
+  // Si l'utilisateur est sur une page d'authentification mais est déjà connecté
   if (isAuthPage) {
     if (isAuthenticated) {
       const homeUrl = request.nextUrl.clone();
       homeUrl.pathname = '/';
-      return NextResponse.redirect(homeUrl);
+      const response = NextResponse.redirect(homeUrl);
+      if (newCookiesToSet) {
+        setAuthCookies(response, newCookiesToSet.accessToken, newCookiesToSet.refreshToken);
+      }
+      return response;
     }
     return NextResponse.next();
   }
@@ -52,7 +72,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  if (newCookiesToSet) {
+    setAuthCookies(response, newCookiesToSet.accessToken, newCookiesToSet.refreshToken);
+  }
+  return response;
 }
 
 export const config = {

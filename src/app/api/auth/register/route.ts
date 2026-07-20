@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcryptjs from 'bcryptjs';
 import { db } from '@/lib/db';
-import { signJWT } from '@/lib/auth';
+import { signJWT, createRefreshToken, setAuthCookies } from '@/lib/auth';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -62,10 +62,11 @@ export async function POST(request: Request) {
       },
     });
 
-    // Générer le JWT
-    const token = await signJWT({ userId: user.id, email: user.email });
+    // Générer l'Access Token et le Refresh Token
+    const accessToken = await signJWT({ userId: user.id, email: user.email });
+    const refreshToken = await createRefreshToken(user.id);
 
-    // Renvoyer la réponse avec le cookie HTTP-only
+    // Renvoyer la réponse avec les cookies HTTP-only
     const response = NextResponse.json(
       {
         message: 'Compte créé avec succès.',
@@ -74,13 +75,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
 
-    response.cookies.set('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 7 jours
-    });
+    setAuthCookies(response, accessToken, refreshToken);
 
     return response;
   } catch (error) {
