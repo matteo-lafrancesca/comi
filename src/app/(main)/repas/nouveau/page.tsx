@@ -14,6 +14,7 @@ import { compressImage } from '@/lib/image-compression';
 import { useNavigationCache } from '@/contexts/NavigationCacheContext';
 import { useRepasForm } from '@/hooks/useRepasForm';
 import RepasFormSteps from '@/components/RepasFormSteps';
+import { apiFetch } from '@/lib/api';
 
 export default function NouveauRepasPage() {
   const router = useRouter();
@@ -33,7 +34,6 @@ export default function NouveauRepasPage() {
       setIsAnalyzing(true);
       form.setError(null);
 
-      console.log("Compression de l'image pour analyse IA...");
       const compressedFile = await compressImage(form.selectedImageFile);
 
       const formData = new FormData();
@@ -42,7 +42,7 @@ export default function NouveauRepasPage() {
         formData.append('titre', form.titre.trim());
       }
 
-      const res = await fetch('/api/repas/analyser', {
+      const res = await apiFetch('/api/repas/analyser', {
         method: 'POST',
         body: formData,
       });
@@ -58,8 +58,8 @@ export default function NouveauRepasPage() {
 
       if (data.ingredients && Array.isArray(data.ingredients)) {
         form.setSelectedIngredients(
-          data.ingredients.map((ing: any) => ({
-            id: Math.random().toString(),
+          data.ingredients.map((ing: { nom: string; quantite: number | null | undefined; unite: string | null; categorie: string }) => ({
+            id: crypto.randomUUID(),
             nom: ing.nom,
             quantite:
               ing.quantite !== null && ing.quantite !== undefined
@@ -75,7 +75,7 @@ export default function NouveauRepasPage() {
 
       if (data.recette && Array.isArray(data.recette)) {
         const mappedSteps = data.recette.map((stepText: string) => ({
-          id: Math.random().toString(),
+          id: crypto.randomUUID(),
           text: stepText,
         }));
         form.setSteps(
@@ -87,9 +87,8 @@ export default function NouveauRepasPage() {
 
       setCreationMode('ia_form');
       form.setStep(1);
-    } catch (err: any) {
-      console.error("Erreur lors de l'analyse de l'image:", err);
-      form.setError(err.message || "Impossible d'analyser l'image.");
+    } catch (err) {
+      form.setError(err instanceof Error ? err.message : "Impossible d'analyser l'image.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -113,7 +112,7 @@ export default function NouveauRepasPage() {
 
       const payload = form.buildSubmitPayload();
 
-      const res = await fetch('/api/repas', {
+      const res = await apiFetch('/api/repas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...payload, photoUrl: finalPhotoUrl }),

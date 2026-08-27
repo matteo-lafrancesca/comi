@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Loader2 } from 'lucide-react';
 import { CATEGORY_DETAILS, CategorieIngredient } from '@/types';
 import { normalizeSearchText } from '@/lib/string-utils';
+import { apiFetch } from '@/lib/api';
 
 export interface IngredientSuggestion {
   id: number;
@@ -44,7 +45,7 @@ export default function IngredientSearchInput({
     const delayDebounceFn = setTimeout(async () => {
       try {
         setSearching(true);
-        const res = await fetch(`/api/ingredients?search=${encodeURIComponent(searchQuery)}`);
+        const res = await apiFetch(`/api/ingredients?search=${encodeURIComponent(searchQuery)}`);
         if (res.ok) {
           const data = await res.json();
           setSearchResults(data);

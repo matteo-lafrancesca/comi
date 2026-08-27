@@ -97,7 +97,7 @@ export function useRepasForm(): RepasFormReturn {
   const [newIngredientInitialName, setNewIngredientInitialName] = useState('');
 
   // Étape 3 – Instructions
-  const [steps, setSteps] = useState<StepItem[]>([{ id: 'init-step-1', text: '' }]);
+  const [steps, setSteps] = useState<StepItem[]>([{ id: crypto.randomUUID(), text: '' }]);
 
   const { startUpload, isUploading } = useUploadThing('imageUploader', {
     onUploadError: (err) => {
@@ -181,7 +181,7 @@ export function useRepasForm(): RepasFormReturn {
       return [
         ...prev,
         {
-          id: Math.random().toString(),
+          id: crypto.randomUUID(),
           ingredientId: ing.id,
           nom: ing.nom,
           quantite: '',
@@ -252,23 +252,11 @@ export function useRepasForm(): RepasFormReturn {
   const uploadImageIfNeeded = useCallback(async (): Promise<string | null> => {
     if (!selectedImageFile) return photoUrl;
 
-    console.log(
-      "Début de la compression de l'image:",
-      selectedImageFile.name,
-      `${(selectedImageFile.size / 1024).toFixed(1)} Ko`
-    );
     const compressedFile = await compressImage(selectedImageFile);
-    console.log(
-      'Image compressée avec succès:',
-      compressedFile.name,
-      `${(compressedFile.size / 1024).toFixed(1)} Ko`
-    );
 
     const uploadRes = await startUpload([compressedFile]);
-    console.log('Résultat brut du téléversement:', uploadRes);
 
     if (uploadRes && uploadRes[0]) {
-      console.log("URL de l'image obtenue avec succès:", uploadRes[0].url);
       return uploadRes[0].url;
     }
 
@@ -316,7 +304,7 @@ export function useRepasForm(): RepasFormReturn {
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
     setSelectedIngredients([]);
-    setSteps([{ id: 'init-step-1', text: '' }]);
+    setSteps([{ id: crypto.randomUUID(), text: '' }]);
   }, [localPreviewUrl]);
 
   return {

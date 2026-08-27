@@ -6,6 +6,7 @@ import { Utensils, ShoppingBasket, BookOpen, Pencil, Trash2, Loader2, CalendarX,
 import { useRouter } from 'next/navigation';
 import { RepasWithIngredients } from '@/types';
 import { formatIngredient } from '@/lib/shopping-list-utils';
+import { apiFetch } from '@/lib/api';
 import Drawer from '@/components/Drawer';
 import ConfirmDeleteDrawer from '@/components/ConfirmDeleteDrawer';
 
@@ -23,7 +24,7 @@ export default function RepasDetailModal({
   repas, 
   isOpen, 
   onClose, 
-  onDeleted,
+  onDeleted, 
   programmationId,
   onUnschedule,
   onReprogram
@@ -74,7 +75,7 @@ export default function RepasDetailModal({
     if (!programmationId) return;
     try {
       setIsUnscheduling(true);
-      const res = await fetch(`/api/planning/${programmationId}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/planning/${programmationId}`, { method: 'DELETE' });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Erreur lors de la déprogrammation.');
@@ -95,7 +96,7 @@ export default function RepasDetailModal({
       setIsDeleting(true);
       setDeleteError(null);
 
-      const res = await fetch(`/api/repas/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/repas/${id}`, { method: 'DELETE' });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Erreur lors de la suppression.');

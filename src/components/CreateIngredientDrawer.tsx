@@ -5,6 +5,7 @@ import { Tag, Check, Loader2 } from 'lucide-react';
 import { CATEGORY_DETAILS, CategorieIngredient, normalizeCategory } from '@/types';
 import Drawer from '@/components/Drawer';
 import { IngredientSuggestion } from '@/components/IngredientSearchInput';
+import { apiFetch } from '@/lib/api';
 
 interface CreateIngredientDrawerProps {
   isOpen: boolean;
@@ -38,7 +39,7 @@ export default function CreateIngredientDrawer({
 
     try {
       setCreating(true);
-      const res = await fetch('/api/ingredients', {
+      const res = await apiFetch('/api/ingredients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nom: nom.trim(), categorie }),

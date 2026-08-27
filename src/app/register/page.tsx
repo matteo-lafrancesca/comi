@@ -49,7 +49,10 @@ function RegisterContent() {
     setIsSubmitting(true);
     try {
       const result = await register(email, password);
-      if (!result.success) {
+      if (result.success) {
+        router.push(redirectUrl);
+        router.refresh();
+      } else {
         setError(result.error || "Une erreur est survenue lors de l'inscription.");
       }
     } catch {

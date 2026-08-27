@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { 
   Carrot, 
@@ -19,7 +19,7 @@ import {
   Apple,
   Utensils,
 } from 'lucide-react';
-import { CategorieIngredient, CATEGORY_DETAILS, normalizeCategory } from '@/types';
+import { CategorieIngredient, CATEGORY_DETAILS, normalizeCategory, CategoryGroup, ShoppingListExtraItem } from '@/types';
 import { getDatesForISOWeek, getCustomWeekRange, getAdjacentWeek } from '@/lib/date-utils';
 
 import { formatIngredient } from '@/lib/shopping-list-utils';
@@ -28,25 +28,7 @@ import AddExtraDrawer from '@/components/AddExtraDrawer';
 import WeekSelector from '@/components/WeekSelector';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useNavigationCache } from '@/contexts/NavigationCacheContext';
-
-
-interface ShoppingItem {
-  id: number;
-  ingredientId: number;
-  nom: string;
-  quantite: number | null;
-  unite: string | null;
-  phrase: string;
-  isChecked: boolean;
-}
-
-interface CategoryGroup {
-  categorie: CategorieIngredient;
-  label: string;
-  order: number;
-  items: ShoppingItem[];
-}
-
+import { apiFetch } from '@/lib/api';
 const CATEGORY_ICONS: Record<CategorieIngredient, React.ComponentType<{ className?: string }>> = {
   'fruits-legumes': Carrot,
   'boucherie-poissonnerie': Beef,
@@ -74,7 +56,7 @@ export default function CoursesPage() {
   const [loading, setLoading] = useState(!isCacheValid);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<CategoryGroup[]>(isCacheValid ? coursesCache.categories : []);
-  const [extras, setExtras] = useState<any[]>(isCacheValid ? coursesCache.extras : []);
+  const [extras, setExtras] = useState<ShoppingListExtraItem[]>(isCacheValid ? coursesCache.extras : []);
   const [currentWeek, setCurrentWeek] = useState<number | null>(isCacheValid ? coursesCache.currentWeek : null);
   const [currentYear, setCurrentYear] = useState<number | null>(isCacheValid ? coursesCache.currentYear : null);
 
@@ -83,7 +65,7 @@ export default function CoursesPage() {
 
   // Drawer states
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
-  const [extraToDelete, setExtraToDelete] = useState<any | null>(null);
+  const [extraToDelete, setExtraToDelete] = useState<ShoppingListExtraItem | null>(null);
 
   // Accumulateur des modifications en attente de synchronisation réseau
   const pendingUpdatesRef = useRef<Record<number, { isChecked: boolean; originalChecked: boolean }>>({});
@@ -120,7 +102,7 @@ export default function CoursesPage() {
   }, [categories, extras, currentWeek, currentYear, cacheKey, searchParams, updateCoursesCache]);
 
   // Unified fetch shopping list data function
-  const fetchShoppingList = async (showLoader = true) => {
+  const fetchShoppingList = useCallback(async (showLoader = true) => {
     try {
       if (showLoader && !isCacheValid) setLoading(true);
       setError(null);
@@ -133,7 +115,7 @@ export default function CoursesPage() {
         url += `?week=${weekVal}&year=${yearVal}`;
       }
 
-      const res = await fetch(url);
+      const res = await apiFetch(url);
       if (!res.ok) {
         throw new Error('Impossible de charger la liste de courses.');
       }
@@ -148,7 +130,7 @@ export default function CoursesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchParams, isCacheValid]);
 
   useEffect(() => {
     fetchShoppingList(true);
@@ -162,13 +144,13 @@ export default function CoursesPage() {
     }
   }, [actionError]);
 
-  const handleDeleteExtra = (extra: any) => {
+  const handleDeleteExtra = (extra: ShoppingListExtraItem) => {
     setExtraToDelete(extra);
   };
 
   const confirmDeleteExtra = async (extraId: number) => {
     try {
-      const res = await fetch(`/api/shopping-list/extras/${extraId}`, {
+      const res = await apiFetch(`/api/shopping-list/extras/${extraId}`, {
         method: 'DELETE',
       });
 
@@ -177,8 +159,8 @@ export default function CoursesPage() {
       }
 
       await fetchShoppingList(false);
-    } catch (err: any) {
-      setActionError(err.message || 'Une erreur est survenue lors de la suppression.');
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la suppression.');
     }
   };
 
@@ -270,7 +252,7 @@ export default function CoursesPage() {
       if (items.length === 0) return;
 
       try {
-        const res = await fetch('/api/shopping-list', {
+        const res = await apiFetch('/api/shopping-list', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -444,8 +426,8 @@ export default function CoursesPage() {
                   } else if (extra.ingredient) {
                     const phrase = formatIngredient(
                       extra.ingredient.nom,
-                      extra.quantite,
-                      extra.unite
+                      extra.quantite ?? null,
+                      extra.unite ?? null
                     );
                     return (
                       <div

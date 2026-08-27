@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth';
-import { normalizeCategory } from '@/types';
+import { normalizeCategory } from '@/lib/category-utils';
 import { normalizeSearchText } from '@/lib/string-utils';
+import { formatRepasResponse } from '@/lib/api-formatters';
 
 // Interface pour valider la requête de création de repas
 interface IngredientInput {
@@ -120,23 +121,7 @@ export async function POST(request: Request) {
       },
     });
 
-    const responseRepas = {
-      id: nouveauRepas.id,
-      userId: nouveauRepas.userId,
-      titre: nouveauRepas.titre,
-      recette: nouveauRepas.recette,
-      photoUrl: nouveauRepas.photoUrl,
-      createdAt: nouveauRepas.createdAt,
-      ingredients: nouveauRepas.ingredients.map((ri) => ({
-        id: ri.id,
-        nom: ri.ingredient.nom,
-        quantite: ri.quantite,
-        unite: ri.unite,
-        categorie: ri.ingredient.categorie,
-      })),
-    };
-
-    return NextResponse.json(responseRepas, { status: 201 });
+    return NextResponse.json(formatRepasResponse(nouveauRepas), { status: 201 });
   } catch (error) {
     console.error("Erreur lors de la création du repas:", error);
     return NextResponse.json(
@@ -250,24 +235,7 @@ export async function GET(request: Request) {
       filteredMeals = filteredMeals.slice(0, limit);
     }
 
-    // Aplatir et nettoyer la relation pour renvoyer le type exact attendu
-    const responseMeals = filteredMeals.map((meal) => {
-      return {
-        id: meal.id,
-        userId: meal.userId,
-        titre: meal.titre,
-        recette: meal.recette,
-        photoUrl: meal.photoUrl,
-        createdAt: meal.createdAt,
-        ingredients: meal.ingredients.map((ri) => ({
-          id: ri.id,
-          nom: ri.ingredient.nom,
-          quantite: ri.quantite,
-          unite: ri.unite,
-          categorie: ri.ingredient.categorie,
-        })),
-      };
-    });
+    const responseMeals = filteredMeals.map(formatRepasResponse);
 
     return NextResponse.json({ repas: responseMeals, hasMore }, { status: 200 });
   } catch (error) {

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { 
-  Plus, 
   Utensils, 
   CalendarDays,
   Loader2
@@ -12,8 +11,10 @@ import { ProgrammationWithRepas, RepasWithIngredients } from '@/types';
 import { getCustomWeekDays, getOrderedDayLabels, getAdjacentWeek, getParisDate } from '@/lib/date-utils';
 import RepasDetailModal from '@/components/RepasDetailModal';
 import WeekSelector from '@/components/WeekSelector';
+import PlanningSlot from '@/components/PlanningSlot';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useNavigationCache } from '@/contexts/NavigationCacheContext';
+import { apiFetch } from '@/lib/api';
 
 export default function PlanificationPage() {
   const router = useRouter();
@@ -60,7 +61,7 @@ export default function PlanificationPage() {
           url += `?week=${weekVal}&year=${yearVal}`;
         }
         
-        const res = await fetch(url);
+        const res = await apiFetch(url);
         if (!res.ok) {
           throw new Error('Impossible de charger le planning.');
         }
@@ -88,9 +89,9 @@ export default function PlanificationPage() {
             key: cacheKey
           });
         }
-      } catch (err: any) {
+      } catch (err) {
         if (active) {
-          setError(err.message || 'Une erreur est survenue lors de la récupération du planning.');
+          setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la récupération du planning.');
         }
       } finally {
         if (active) {
@@ -200,66 +201,13 @@ export default function PlanificationPage() {
     router.push(`/repas?selectMode=true&date=${selectedSlotDate}&heure=${selectedSlotHeure}&returnWeek=${currentWeek}&returnYear=${currentYear}`);
   };
 
-  const renderSlot = (day: Date, heure: number, label: string) => {
-    const prog = findProgrammation(day, heure);
-    const dateStr = day.toISOString().split('T')[0];
-    
-    if (prog) {
-      const { id, repas } = prog;
-      return (
-        <article 
-          onClick={() => {
-            setSelectedRepas(repas);
-            setSelectedProgId(id);
-            setSelectedSlotDate(dateStr);
-            setSelectedSlotHeure(heure);
-            setIsDetailOpen(true);
-          }}
-          className="flex flex-col justify-between p-3.5 transition-all duration-300 border border-neutral-200/40 dark:border-neutral-800/40 shadow-xs bg-card-light dark:bg-card-dark rounded-card hover:shadow-md hover:scale-[1.02] hover:border-neutral-300 dark:hover:border-neutral-700 active:scale-[0.98] cursor-pointer group h-36"
-        >
-          {/* Cover image or icon */}
-          <div className="relative w-full h-16 overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800/60 mb-2 flex items-center justify-center border border-neutral-100/50 dark:border-neutral-800/10 shrink-0">
-            {repas.photoUrl ? (
-              <img 
-                src={repas.photoUrl} 
-                alt={repas.titre} 
-                className="object-cover w-full h-full" 
-              />
-            ) : (
-              <Utensils className="h-5 w-5 text-brand/35 dark:text-brand/20" />
-            )}
-            {/* Slot indicator */}
-            <span className="absolute top-1.5 left-1.5 px-2 py-0.5 text-[9px] font-extrabold tracking-wider bg-brand-light dark:bg-brand/20 text-brand rounded-full uppercase">
-              {label}
-            </span>
-          </div>
-          
-          <h4 className="text-xs font-bold text-center line-clamp-2 text-text-light-main dark:text-text-dark-main leading-snug grow flex items-center justify-center px-1">
-            {repas.titre}
-          </h4>
-        </article>
-      );
-    }
-
-    // Empty slot
-    return (
-      <button
-        onClick={() => {
-          router.push(`/repas?selectMode=true&date=${dateStr}&heure=${heure}&returnWeek=${currentWeek}&returnYear=${currentYear}`);
-        }}
-        className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-neutral-200/60 dark:border-neutral-800/50 rounded-card hover:border-brand/50 dark:hover:border-brand/40 hover:bg-brand-light/20 dark:hover:bg-brand/5 group transition-all duration-300 cursor-pointer h-36 w-full text-left outline-none"
-      >
-        <span className="px-2 py-0.5 text-[9px] font-extrabold tracking-wider bg-neutral-100 dark:bg-neutral-800 text-text-light-muted dark:text-text-dark-muted rounded-full uppercase group-hover:bg-brand-light group-hover:text-brand transition-colors mb-2">
-          {label}
-        </span>
-        <div className="p-2 bg-neutral-50 dark:bg-neutral-800 text-text-light-muted dark:text-text-dark-muted rounded-full group-hover:bg-brand group-hover:text-white transition-all shadow-xs group-hover:scale-105 active:scale-95">
-          <Plus className="h-4 w-4" />
-        </div>
-        <span className="text-[10px] font-semibold text-text-light-muted dark:text-text-dark-muted mt-2 group-hover:text-brand transition-colors">
-          Ajouter
-        </span>
-      </button>
-    );
+  // Appelé depuis PlanningSlot quand on clique sur un créneau occupé
+  const handleOpenSlotDetail = (prog: ProgrammationWithRepas, dateStr: string) => {
+    setSelectedRepas(prog.repas);
+    setSelectedProgId(prog.id);
+    setSelectedSlotDate(dateStr);
+    setSelectedSlotHeure(prog.heure);
+    setIsDetailOpen(true);
   };
 
   return (
@@ -348,8 +296,24 @@ export default function PlanificationPage() {
                   
                   {/* Slots */}
                   <div className="flex flex-col gap-3">
-                    {renderSlot(day, 0, 'Midi')}
-                    {renderSlot(day, 1, 'Soir')}
+                    <PlanningSlot
+                      day={day}
+                      heure={0}
+                      label="Midi"
+                      programmation={findProgrammation(day, 0)}
+                      currentWeek={currentWeek!}
+                      currentYear={currentYear!}
+                      onOpenDetail={handleOpenSlotDetail}
+                    />
+                    <PlanningSlot
+                      day={day}
+                      heure={1}
+                      label="Soir"
+                      programmation={findProgrammation(day, 1)}
+                      currentWeek={currentWeek!}
+                      currentYear={currentYear!}
+                      onOpenDetail={handleOpenSlotDetail}
+                    />
                   </div>
                 </div>
               );
@@ -383,8 +347,24 @@ export default function PlanificationPage() {
                   
                   {/* Slots side by side */}
                   <div className="grid grid-cols-2 gap-3">
-                    {renderSlot(day, 0, 'Midi')}
-                    {renderSlot(day, 1, 'Soir')}
+                    <PlanningSlot
+                      day={day}
+                      heure={0}
+                      label="Midi"
+                      programmation={findProgrammation(day, 0)}
+                      currentWeek={currentWeek!}
+                      currentYear={currentYear!}
+                      onOpenDetail={handleOpenSlotDetail}
+                    />
+                    <PlanningSlot
+                      day={day}
+                      heure={1}
+                      label="Soir"
+                      programmation={findProgrammation(day, 1)}
+                      currentWeek={currentWeek!}
+                      currentYear={currentYear!}
+                      onOpenDetail={handleOpenSlotDetail}
+                    />
                   </div>
                 </div>
               );

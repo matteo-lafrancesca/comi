@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth';
-import { normalizeCategory } from '@/types';
+import { normalizeCategory } from '@/lib/category-utils';
+import { formatRepasResponse } from '@/lib/api-formatters';
 import { UTApi } from 'uploadthing/server';
 
 interface IngredientInput {
@@ -69,23 +70,7 @@ export async function GET(
       );
     }
 
-    const responseRepas = {
-      id: repas.id,
-      userId: repas.userId,
-      titre: repas.titre,
-      recette: repas.recette,
-      photoUrl: repas.photoUrl,
-      createdAt: repas.createdAt,
-      ingredients: repas.ingredients.map((ri) => ({
-        id: ri.id,
-        nom: ri.ingredient.nom,
-        quantite: ri.quantite,
-        unite: ri.unite,
-        categorie: ri.ingredient.categorie,
-      })),
-    };
-
-    return NextResponse.json(responseRepas, { status: 200 });
+    return NextResponse.json(formatRepasResponse(repas), { status: 200 });
   } catch (error) {
     console.error('Erreur lors de la récupération du repas:', error);
     return NextResponse.json(
@@ -227,23 +212,7 @@ export async function PATCH(
       });
     });
 
-    const responseRepas = {
-      id: repasMisAJour.id,
-      userId: repasMisAJour.userId,
-      titre: repasMisAJour.titre,
-      recette: repasMisAJour.recette,
-      photoUrl: repasMisAJour.photoUrl,
-      createdAt: repasMisAJour.createdAt,
-      ingredients: repasMisAJour.ingredients.map((ri) => ({
-        id: ri.id,
-        nom: ri.ingredient.nom,
-        quantite: ri.quantite,
-        unite: ri.unite,
-        categorie: ri.ingredient.categorie,
-      })),
-    };
-
-    return NextResponse.json(responseRepas, { status: 200 });
+    return NextResponse.json(formatRepasResponse(repasMisAJour), { status: 200 });
   } catch (error) {
     console.error('Erreur lors de la mise à jour du repas:', error);
     return NextResponse.json(

@@ -9,6 +9,7 @@ import RepasCard from '@/components/RepasCard';
 import RepasDetailModal from '@/components/RepasDetailModal';
 import SortDrawer from '@/components/SortDrawer';
 import { useNavigationCache } from '@/contexts/NavigationCacheContext';
+import { apiFetch } from '@/lib/api';
 
 export default function RepasPage() {
   const searchParams = useSearchParams();
@@ -46,13 +47,11 @@ export default function RepasPage() {
   const isInitialMountRef = useRef(true);
   const skipInitialFetchRef = useRef(repasCache.isLoaded);
 
-  // Synchronisation synchrone de la pagination lors du changement de recherche ou de tri (Derived State)
-  const prevSearchQueryRef = useRef(debouncedSearchQuery);
-  const prevSortByRef = useRef(sortBy);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  if (debouncedSearchQuery !== prevSearchQueryRef.current || sortBy !== prevSortByRef.current) {
-    prevSearchQueryRef.current = debouncedSearchQuery;
-    prevSortByRef.current = sortBy;
+
+  // Réinitialisation de la pagination quand la recherche ou le tri change
+  useEffect(() => {
     setPage(1);
     setHasMore(true);
     if (repasList.length === 0) {
@@ -60,17 +59,13 @@ export default function RepasPage() {
     } else {
       setIsRefetching(true);
     }
-    // Scroll to top to avoid auto-triggering the scroll observer during update
     const mainEl = document.querySelector('main');
-    if (mainEl) {
-      mainEl.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }
+    if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchQuery, sortBy]);
 
-  // Save sorting option to localStorage on change
   const handleSortChange = (newSort: string) => {
     setSortBy(newSort);
-    localStorage.setItem('repas_sort_by', newSort);
   };
 
   // Debounce search input
@@ -152,7 +147,7 @@ export default function RepasPage() {
           url += `&order=desc`;
         }
 
-        const res = await fetch(url);
+        const res = await apiFetch(url);
         if (!res.ok) {
           throw new Error('Impossible de charger vos repas.');
         }
@@ -171,9 +166,9 @@ export default function RepasPage() {
           }
           setHasMore(data.hasMore);
         }
-      } catch (err: any) {
+      } catch (err) {
         if (active) {
-          setError(err.message || 'Une erreur est survenue lors de la récupération des repas.');
+          setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la récupération des repas.');
         }
       } finally {
         if (active) {
@@ -219,7 +214,7 @@ export default function RepasPage() {
     if (!dateParam || !heureParam) return;
     try {
       setIsSelecting(true);
-      const res = await fetch('/api/planning', {
+      const res = await apiFetch('/api/planning', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -243,12 +238,20 @@ export default function RepasPage() {
         redirectUrl += `?week=${returnWeek}&year=${returnYear}`;
       }
       router.push(redirectUrl);
-    } catch (err: any) {
-      alert(err.message || 'Une erreur est survenue lors de la programmation du repas.');
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la programmation du repas.');
     } finally {
       setIsSelecting(false);
     }
   };
+
+  // Auto-dismiss floating error after 4 seconds
+  useEffect(() => {
+    if (actionError) {
+      const timer = setTimeout(() => setActionError(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [actionError]);
 
   const getCurrentSortLabel = () => {
     switch (sortBy) {
@@ -264,6 +267,21 @@ export default function RepasPage() {
 
   return (
     <div className="space-y-6">
+      {/* 🔔 Floating error notification */}
+      {actionError && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full px-4 animate-fade-in">
+          <div className="bg-red-50 dark:bg-red-950/95 text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-900/50 p-4 rounded-xl shadow-lg flex items-center justify-between gap-3">
+            <span className="text-xs font-bold leading-normal">{actionError}</span>
+            <button
+              onClick={() => setActionError(null)}
+              className="text-text-light-muted dark:text-text-dark-muted hover:text-red-600 transition-colors font-extrabold text-xs cursor-pointer px-1.5 py-0.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/40"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Banner de sélection pour la planification */}
       {selectMode && dateParam && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4.5 bg-brand-light dark:bg-brand/10 border border-brand/20 rounded-card animate-fade-in">

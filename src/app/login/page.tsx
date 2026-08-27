@@ -37,7 +37,10 @@ function LoginContent() {
     setIsSubmitting(true);
     try {
       const result = await login(email, password);
-      if (!result.success) {
+      if (result.success) {
+        router.push(redirectUrl);
+        router.refresh();
+      } else {
         setError(result.error || 'Une erreur est survenue lors de la connexion.');
       }
     } catch {

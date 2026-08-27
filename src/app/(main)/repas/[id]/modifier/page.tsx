@@ -8,6 +8,7 @@ import { CategorieIngredient, RepasWithIngredients } from '@/types';
 import { useNavigationCache } from '@/contexts/NavigationCacheContext';
 import { useRepasForm } from '@/hooks/useRepasForm';
 import RepasFormSteps from '@/components/RepasFormSteps';
+import { apiFetch } from '@/lib/api';
 
 export default function ModifierRepasPage() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export default function ModifierRepasPage() {
     const fetchRepas = async () => {
       try {
         setInitialLoading(true);
-        const res = await fetch(`/api/repas/${repasId}`);
+        const res = await apiFetch(`/api/repas/${repasId}`);
         if (!res.ok) {
           throw new Error('Repas introuvable ou accès non autorisé.');
         }
@@ -89,7 +90,7 @@ export default function ModifierRepasPage() {
 
       const payload = form.buildSubmitPayload();
 
-      const res = await fetch(`/api/repas/${repasId}`, {
+      const res = await apiFetch(`/api/repas/${repasId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...payload, photoUrl: finalPhotoUrl ?? null }),

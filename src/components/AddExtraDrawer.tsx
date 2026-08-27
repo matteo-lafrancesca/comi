@@ -6,6 +6,7 @@ import { CategorieIngredient, CATEGORY_DETAILS, normalizeCategory } from '@/type
 import Drawer from '@/components/Drawer';
 import { formatIngredient } from '@/lib/shopping-list-utils';
 import { normalizeSearchText } from '@/lib/string-utils';
+import { apiFetch } from '@/lib/api';
 
 interface AddExtraDrawerProps {
   isOpen: boolean;
@@ -52,7 +53,7 @@ export default function AddExtraDrawer({
       const fetchMeals = async () => {
         try {
           setLoadingMeals(true);
-          const res = await fetch('/api/repas');
+          const res = await apiFetch('/api/repas');
           if (res.ok) {
             const data = await res.json();
             setAllMeals(data.repas || []);
@@ -75,7 +76,7 @@ export default function AddExtraDrawer({
     }
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/ingredients?search=${encodeURIComponent(ingredientNameInput)}`);
+        const res = await apiFetch(`/api/ingredients?search=${encodeURIComponent(ingredientNameInput)}`);
         if (res.ok) {
           const data = await res.json();
           setIngredientSuggestions(data);
@@ -135,7 +136,7 @@ export default function AddExtraDrawer({
         if (ingredientUnite) body.unite = ingredientUnite;
       }
 
-      const res = await fetch('/api/shopping-list/extras', {
+      const res = await apiFetch('/api/shopping-list/extras', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

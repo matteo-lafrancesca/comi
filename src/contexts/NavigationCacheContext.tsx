@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { RepasWithIngredients, ProgrammationWithRepas } from '@/types';
+import { RepasWithIngredients, ProgrammationWithRepas, CategoryGroup, ShoppingListExtraItem } from '@/types';
 import { useSettings } from './SettingsContext';
 
 export interface RepasCache {
@@ -24,8 +24,8 @@ export interface PlanificationCache {
 }
 
 export interface CoursesCache {
-  categories: any[];
-  extras: any[];
+  categories: CategoryGroup[];
+  extras: ShoppingListExtraItem[];
   currentWeek: number | null;
   currentYear: number | null;
   isLoaded: boolean;

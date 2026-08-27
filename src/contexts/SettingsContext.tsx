@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { apiFetch } from '@/lib/api';
 
 interface SettingsContextType {
   /** Jour de début de semaine : 0=Lun, 1=Mar, 2=Mer, 3=Jeu, 4=Ven, 5=Sam, 6=Dim */
@@ -39,7 +40,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     let active = true;
     const load = async () => {
       try {
-        const res = await fetch('/api/settings');
+        const res = await apiFetch('/api/settings');
         if (res.ok) {
           const data = await res.json();
           if (active) setWeekStartDayState(data.weekStartDay ?? 0);
@@ -58,7 +59,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     // Optimistic update
     setWeekStartDayState(day);
     try {
-      const res = await fetch('/api/settings', {
+      const res = await apiFetch('/api/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ weekStartDay: day }),
