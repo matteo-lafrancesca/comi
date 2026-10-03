@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { errorMessage } from '@/lib/errors';
 import { useRouter } from 'next/navigation';
 import { PenLine, Camera, Loader2, Sparkles } from 'lucide-react';
@@ -15,6 +15,14 @@ import Alert from '@/components/ui/Alert';
 import TextInput from '@/components/ui/TextInput';
 import { apiFetch } from '@/lib/api';
 
+const DRAFT_KEY = 'comi:repas-draft';
+
+function clearDraft() {
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+  } catch {}
+}
+
 export default function NouveauRepasPage() {
   const router = useRouter();
   const { invalidateRepasCache } = useNavigationCache();
@@ -24,6 +32,43 @@ export default function NouveauRepasPage() {
   // État propre à cette page
   const [creationMode, setCreationMode] = useState<null | 'manuel' | 'ia_upload' | 'ia_form'>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // ── Brouillon (localStorage) : survit à un rechargement ou à un changement de page.
+  // La photo n'est pas conservée (File non sérialisable).
+  const [draftRestored, setDraftRestored] = useState(false);
+
+  useEffect(() => {
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? 'null');
+      if (d && (d.mode === 'manuel' || d.mode === 'ia_form')) {
+        /* eslint-disable react-hooks/set-state-in-effect -- restauration unique du brouillon (localStorage indisponible au rendu serveur) */
+        form.setTitre(d.titre ?? '');
+        form.setSelectedIngredients(d.ingredients ?? []);
+        if (d.steps?.length) form.setSteps(d.steps);
+        form.setStep(d.step ?? 1);
+        setCreationMode(d.mode);
+      }
+    } catch {}
+    setDraftRestored(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- uniquement au montage
+  }, []);
+
+  useEffect(() => {
+    if (!draftRestored || (creationMode !== 'manuel' && creationMode !== 'ia_form')) return;
+    try {
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({
+          mode: creationMode,
+          step: form.step,
+          titre: form.titre,
+          ingredients: form.selectedIngredients,
+          steps: form.steps,
+        })
+      );
+    } catch {}
+  }, [draftRestored, creationMode, form.step, form.titre, form.selectedIngredients, form.steps]);
 
   // ── Analyse de l'image par l'IA ──────────────────────────────────────────
 
@@ -123,6 +168,7 @@ export default function NouveauRepasPage() {
         throw new Error(data.error || 'Erreur lors de la création du repas.');
       }
 
+      clearDraft();
       invalidateRepasCache();
       router.push('/repas');
     } catch (err) {
@@ -220,6 +266,7 @@ export default function NouveauRepasPage() {
   // ── Formulaire multi-étapes (mode manuel ou ia_form) ─────────────────────
 
   const backToChoice = () => {
+    clearDraft();
     form.reset();
     setCreationMode(null);
   };
