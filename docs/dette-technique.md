@@ -6,10 +6,9 @@ Classée par risque, puis valeur, puis effort. Mis à jour après la passe de ne
 
 | # | Sujet | Détail | Effort |
 |---|---|---|---|
-| 1 | Aucun test | Ni unitaire ni e2e. Les routes critiques (`api/planning`, `api/shopping-list`, auth) et `lib/date-utils.ts` (semaines personnalisées) sont les premières à couvrir. | M |
-| 2 | Secret JWT de repli en dev | `src/lib/auth.ts` retombe sur une constante si `JWT_SECRET` est absent hors production. Acceptable en local ; à rendre bloquant partout si l'app est exposée. | S |
-| 3 | `POST /api/repas` : un 500 isolé | Observé une fois (création de 6 repas à la suite, aucune reproduction ensuite). Soupçon : course sur la création d'ingrédients partagés. À investiguer dans `src/app/api/repas/route.ts`. | S |
-| 4 | Garde-fous auth à auditer | Limitation de débit sur login/register, politique de mot de passe (6 caractères min.), durée des refresh tokens : non vérifiés dans cette passe. | M |
+| 1 | Tests de composants / e2e | Les routes (`planning`, `shopping-list`, `repas`, auth) et `date-utils` sont couverts par `npm test` (base SQLite jetable `tests/test.db`, session simulée). Reste : tests UI / e2e des parcours (Playwright). | M |
+| 3 | `POST /api/repas` : 500 isolé non reproduit | Doublon d'ingrédient dans un payload et 6 créations parallèles passent en 201 (test de non-régression ajouté dans `tests/routes.test.ts`). Si ça réapparaît, regarder le log serveur (`P2002` ou verrou SQLite). | S |
+| 4 | Risques auth acceptés | (a) Pas de rotation du refresh token : `getSessionUser` s'exécute en Server Component où les cookies sont en lecture seule, un nouveau token serait perdu et déconnecterait l'utilisateur. À reprendre avec une colonne `prev_token` si on déplace le rafraîchissement dans le seul `proxy`. (b) `register` indique si un email existe : choix UX, atténué par la limitation de débit. (c) Limiteur en mémoire : passer à Redis si plusieurs instances. | S |
 
 ## Valeur / maintenabilité
 

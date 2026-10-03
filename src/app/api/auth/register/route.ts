@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
 import bcryptjs from 'bcryptjs';
 import { db } from '@/lib/db';
+import { isRateLimited, rateLimitKey } from '@/lib/rate-limit';
 import { signJWT, createRefreshToken, setAuthCookies } from '@/lib/auth';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: Request) {
   try {
+    if (isRateLimited(rateLimitKey(request, 'register'))) {
+      return NextResponse.json(
+        { error: 'Trop de tentatives. Réessayez dans quelques minutes.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
     const { email, password } = body;
 
@@ -27,9 +35,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (password.length < 6) {
+    if (typeof password !== 'string' || password.length < 6 || password.length > 72) {
       return NextResponse.json(
-        { error: 'Le mot de passe doit contenir au moins 6 caractères.' },
+        { error: 'Le mot de passe doit contenir entre 6 et 72 caractères.' },
         { status: 400 }
       );
     }

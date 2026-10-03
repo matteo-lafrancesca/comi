@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "check": "npm run lint && npm run typecheck"
+    "check": "npm run lint && npm run typecheck && npm test",
+    "test": "tsx tests/setup.ts && node --import tsx --test tests/*.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

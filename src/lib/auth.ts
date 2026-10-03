@@ -4,14 +4,17 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { db } from './db';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-at-least-32-chars-long';
+const JWT_SECRET = process.env.JWT_SECRET;
 
-if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
-  throw new Error('JWT_SECRET environment variable is required in production.');
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required.');
 }
 
 /** Clé de signature/vérification des JWT (partagée avec le proxy). */
 export const key = new TextEncoder().encode(JWT_SECRET);
+
+/** Seul le hash SHA-256 du refresh token est stocké en base. */
+const hashToken = (token: string) => crypto.createHash('sha256').update(token).digest('hex');
 
 export interface TokenPayload {
   userId: number;
@@ -54,11 +57,12 @@ export async function verifyJWT(token: string): Promise<TokenPayload | null> {
  */
 export async function createRefreshToken(userId: number): Promise<string> {
   const token = crypto.randomBytes(32).toString('hex');
+  await db.refreshToken.deleteMany({ where: { expiresAt: { lt: new Date() } } }); // purge des expirés
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
 
   await db.refreshToken.create({
     data: {
-      token,
+      token: hashToken(token),
       userId,
       expiresAt,
     },
@@ -74,7 +78,7 @@ export async function createRefreshToken(userId: number): Promise<string> {
 export async function verifyAndRotateRefreshToken(tokenString: string) {
   try {
     const storedToken = await db.refreshToken.findUnique({
-      where: { token: tokenString },
+      where: { token: hashToken(tokenString) },
       include: { user: true },
     });
 
@@ -102,7 +106,7 @@ export async function verifyAndRotateRefreshToken(tokenString: string) {
 
     return {
       accessToken: newAccessToken,
-      refreshToken: storedToken.token,
+      refreshToken: tokenString,
       user: {
         id: storedToken.user.id,
         email: storedToken.user.email,
@@ -122,7 +126,7 @@ export async function verifyAndRotateRefreshToken(tokenString: string) {
 export async function revokeRefreshToken(tokenString: string) {
   try {
     await db.refreshToken.delete({
-      where: { token: tokenString },
+      where: { token: hashToken(tokenString) },
     });
   } catch {
     // Ignorer si le token n'existe déjà plus
