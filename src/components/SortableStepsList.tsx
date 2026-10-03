@@ -302,6 +302,7 @@ export default function SortableStepsList({ steps, onChange }: SortableStepsList
 
       {/* Liste */}
       <div className="relative" style={{ isolation: 'isolate' }}>
+        {/* eslint-disable-next-line react-hooks/refs -- géométrie de drag lue dans des refs (dette: la passer en state) */}
         {steps.map((s, idx) => {
           const isDragging = s.id === draggingId;
           // translateY pour les items NON-draggés (magnétique) — via React state

@@ -37,10 +37,7 @@ export default function IngredientSearchInput({
 
   // Debounced autocomplete search
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      return;
-    }
+    if (!searchQuery.trim()) return;
 
     const delayDebounceFn = setTimeout(async () => {
       try {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { 
   CalendarDays,
@@ -25,25 +25,12 @@ export default function PlanificationPage() {
 
   const targetDateParam = searchParams.get('targetDate');
 
-  const [activeScheduleRepas, setActiveScheduleRepas] = useState<{ id: number; titre?: string } | null>(() => {
-    const idParam = searchParams.get('scheduleRepasId');
-    const titleParam = searchParams.get('scheduleRepasTitle');
-    return idParam ? { id: parseInt(idParam, 10), titre: titleParam || undefined } : null;
-  });
-
-  // Synchroniser quand searchParams change
-  useEffect(() => {
-    const idParam = searchParams.get('scheduleRepasId');
-    const titleParam = searchParams.get('scheduleRepasTitle');
-    if (idParam) {
-      setActiveScheduleRepas({
-        id: parseInt(idParam, 10),
-        titre: titleParam || undefined,
-      });
-    } else {
-      setActiveScheduleRepas(null);
-    }
-  }, [searchParams]);
+  const scheduleRepasId = searchParams.get('scheduleRepasId');
+  const scheduleRepasTitleParam = searchParams.get('scheduleRepasTitle');
+  const activeScheduleRepas = useMemo(
+    () => (scheduleRepasId ? { id: parseInt(scheduleRepasId, 10), titre: scheduleRepasTitleParam || undefined } : null),
+    [scheduleRepasId, scheduleRepasTitleParam]
+  );
 
   const isSchedulingMode = Boolean(activeScheduleRepas);
   const scheduleRepasTitle = activeScheduleRepas?.titre;
@@ -274,6 +261,7 @@ export default function PlanificationPage() {
       centerOnDate(todayStr, 'auto');
     }, 40);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cadrage volontairement déclenché sur ces seules dépendances
   }, [loading, days.length, targetDateParam, activeScheduleRepas, planificationCache.hasInitialScrolled, updatePlanificationCache, todayStr]);
 
   // Find a programmation for a given date and mealtime (0 = midi, 1 = soir)
@@ -302,7 +290,6 @@ export default function PlanificationPage() {
   };
 
   const handleCancelScheduleMode = () => {
-    setActiveScheduleRepas(null);
     if (typeof window !== 'undefined') {
       const currentParams = new URLSearchParams(window.location.search);
       currentParams.delete('scheduleRepasId');

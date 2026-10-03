@@ -21,6 +21,7 @@ export default function NouveauRepasPage() {
   const router = useRouter();
   const { invalidateRepasCache } = useNavigationCache();
   const form = useRepasForm();
+  const { fileInputRef, handleFileChange, selectedImageFile } = form;
 
   // État propre à cette page
   const [creationMode, setCreationMode] = useState<null | 'manuel' | 'ia_upload' | 'ia_form'>(null);
@@ -29,13 +30,13 @@ export default function NouveauRepasPage() {
   // ── Analyse de l'image par l'IA ──────────────────────────────────────────
 
   const handleAnalyzeImage = async () => {
-    if (!form.selectedImageFile) return;
+    if (!selectedImageFile) return;
 
     try {
       setIsAnalyzing(true);
       form.setError(null);
 
-      const compressedFile = await compressImage(form.selectedImageFile);
+      const compressedFile = await compressImage(selectedImageFile);
 
       const formData = new FormData();
       formData.append('image', compressedFile);
@@ -265,7 +266,7 @@ export default function NouveauRepasPage() {
                   <div className="absolute inset-0 bg-black/45 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
                     <button
                       type="button"
-                      onClick={() => form.fileInputRef.current?.click()}
+                      onClick={() => fileInputRef.current?.click()}
                       className="px-4 py-2 bg-white text-black text-xs font-bold rounded-input shadow-md hover:bg-neutral-100 transition-colors cursor-pointer"
                     >
                       Modifier
@@ -285,7 +286,7 @@ export default function NouveauRepasPage() {
                 onDragOver={form.handleDragOver}
                 onDragLeave={form.handleDragLeave}
                 onDrop={form.handleDrop}
-                onClick={() => !isAnalyzing && form.fileInputRef.current?.click()}
+                onClick={() => !isAnalyzing && fileInputRef.current?.click()}
                 className={`border-2 border-dashed rounded-card p-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 min-h-[250px] ${
                   form.isDragging
                     ? 'border-brand bg-brand-light/30 dark:bg-brand/5 scale-[1.01]'
@@ -309,8 +310,8 @@ export default function NouveauRepasPage() {
             )}
             <input
               type="file"
-              ref={form.fileInputRef}
-              onChange={form.handleFileChange}
+              ref={fileInputRef}
+              onChange={handleFileChange}
               accept="image/*"
               className="hidden"
               disabled={isAnalyzing}
@@ -322,7 +323,7 @@ export default function NouveauRepasPage() {
             <button
               type="button"
               onClick={handleAnalyzeImage}
-              disabled={!form.selectedImageFile || isAnalyzing}
+              disabled={!selectedImageFile || isAnalyzing}
               className="w-full flex items-center justify-center gap-2 px-6 py-3 text-sm font-extrabold bg-brand hover:bg-brand-hover text-white rounded-input active:scale-95 transition-all duration-300 cursor-pointer shadow-md shadow-brand/20 disabled:opacity-50 disabled:pointer-events-none"
             >
               {isAnalyzing ? (
@@ -384,7 +385,7 @@ export default function NouveauRepasPage() {
         form={form}
         submitLabel="Créer la recette"
         submitLoadingLabel={
-          form.selectedImageFile && !form.photoUrl
+          selectedImageFile && !form.photoUrl
             ? "Envoi de l'image..."
             : 'Enregistrement...'
         }

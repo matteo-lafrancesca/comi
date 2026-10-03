@@ -94,7 +94,7 @@ function RegisterContent() {
               Comi
             </h1>
             <p className="text-sm text-text-light-muted dark:text-text-dark-muted max-w-xs">
-              Planifiez vos repas de la semaine et générez votre liste de courses en un clin d'œil.
+              Planifiez vos repas de la semaine et générez votre liste de courses en un clin d&apos;œil.
             </p>
           </div>
 

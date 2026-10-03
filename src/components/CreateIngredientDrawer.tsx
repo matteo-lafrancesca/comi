@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { errorMessage } from '@/lib/errors';
 import { Tag, Check, Loader2 } from 'lucide-react';
 import { CATEGORY_DETAILS, CategorieIngredient, normalizeCategory } from '@/types';
@@ -17,23 +17,29 @@ interface CreateIngredientDrawerProps {
   onCreated: (ingredient: IngredientSuggestion) => void;
 }
 
-export default function CreateIngredientDrawer({
-  isOpen,
-  onClose,
-  initialName = '',
-  onCreated,
-}: CreateIngredientDrawerProps) {
-  const [nom, setNom] = useState(initialName);
-  const [categorie, setCategorie] = useState<CategorieIngredient>('epicerie-salee');
-  const [creating, setCreating] = useState(false);
+export default function CreateIngredientDrawer({ isOpen, onClose, initialName = '', onCreated }: CreateIngredientDrawerProps) {
+  return (
+    <Drawer
+      isOpen={isOpen}
+      onClose={onClose}
+      title={
+        <div className="flex items-center gap-2 text-brand">
+          <Tag className="h-5 w-5" />
+          <span className="font-extrabold text-lg">Nouvel ingrédient</span>
+        </div>
+      }
+      maxWidth="sm:max-w-md"
+    >
+      <CreateIngredientForm initialName={initialName} onClose={onClose} onCreated={onCreated} />
+    </Drawer>
+  );
+}
 
-  // Sync initialName when drawer opens or the prop changes
-  useEffect(() => {
-    if (isOpen) {
-      setNom(initialName);
-      setCategorie(normalizeCategory(initialName));
-    }
-  }, [isOpen, initialName]);
+/** Monté uniquement drawer ouvert : l'état se réinitialise à chaque ouverture. */
+function CreateIngredientForm({ initialName, onClose, onCreated }: Omit<CreateIngredientDrawerProps, 'isOpen' | 'initialName'> & { initialName: string }) {
+  const [nom, setNom] = useState(initialName);
+  const [categorie, setCategorie] = useState<CategorieIngredient>(normalizeCategory(initialName));
+  const [creating, setCreating] = useState(false);
 
   const handleSubmit = async () => {
     if (!nom.trim()) return;
@@ -61,17 +67,6 @@ export default function CreateIngredientDrawer({
   };
 
   return (
-    <Drawer
-      isOpen={isOpen}
-      onClose={onClose}
-      title={
-        <div className="flex items-center gap-2 text-brand">
-          <Tag className="h-5 w-5" />
-          <span className="font-extrabold text-lg">Nouvel ingrédient</span>
-        </div>
-      }
-      maxWidth="sm:max-w-md"
-    >
       <div className="space-y-5">
         <p className="text-xs text-text-light-muted dark:text-text-dark-muted font-medium leading-relaxed">
           Cet ingrédient n&apos;existe pas encore. Enregistrez-le pour pouvoir l&apos;utiliser dans vos recettes.
@@ -143,6 +138,5 @@ export default function CreateIngredientDrawer({
           </button>
         </div>
       </div>
-    </Drawer>
   );
 }

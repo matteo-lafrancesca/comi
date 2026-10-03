@@ -52,6 +52,7 @@ export default function RepasPage() {
 
   // Réinitialisation de la pagination quand la recherche ou le tri change
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- reset de la liste au changement de filtre (dette: migrer vers un data-fetching dédié) */
     setPage(1);
     setHasMore(true);
     if (repasList.length === 0) {
@@ -59,6 +60,7 @@ export default function RepasPage() {
     } else {
       setIsRefetching(true);
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
     const mainEl = document.querySelector('main');
     if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -185,6 +187,7 @@ export default function RepasPage() {
     return () => {
       active = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refetch uniquement sur page/recherche/tri
   }, [page, debouncedSearchQuery, sortBy]);
 
   // Set up IntersectionObserver for Infinite Scroll

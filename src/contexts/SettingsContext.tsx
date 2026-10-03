@@ -27,6 +27,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       savedTheme === 'dark' ||
       (!savedTheme && document.documentElement.classList.contains('dark'));
     const resolvedTheme = isDark ? 'dark' : 'light';
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- lecture de localStorage impossible au rendu serveur (hydratation)
     setTheme(resolvedTheme);
     if (isDark) {
       document.documentElement.classList.add('dark');

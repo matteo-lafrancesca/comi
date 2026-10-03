@@ -25,31 +25,33 @@ export default function Drawer({
   height = 'h-[80dvh] sm:h-auto',
   maxHeight = 'max-h-[94dvh] sm:max-h-[90vh]'
 }: DrawerProps) {
-  // Local mounting and visibility states to support open & close animations
-  const [mounted, setMounted] = useState(false);
-  const [visible, setVisible] = useState(false);
+  // Montage différé : le panneau reste monté pendant l'animation de fermeture
+  const [mounted, setMounted] = useState(isOpen);
+  const [entered, setEntered] = useState(false);
+  const visible = isOpen && entered;
+
+  if (isOpen && !mounted) setMounted(true);
 
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  
+
   const touchStartRef = useRef(0);
   const scrollStartRef = useRef(0);
-  
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Sync open state with animations
   useEffect(() => {
     if (isOpen) {
-      setMounted(true);
-      // Give a tiny frame delay for mounting before sliding up
-      const timer = setTimeout(() => setVisible(true), 20);
-      return () => clearTimeout(timer);
-    } else {
-      setVisible(false);
-      // Wait for slide down transition (300ms) to complete before unmounting from DOM
-      const timer = setTimeout(() => setMounted(false), 300);
-      return () => clearTimeout(timer);
+      // Une frame de délai pour que la transition d'entrée se déclenche
+      const timer = setTimeout(() => setEntered(true), 20);
+      return () => {
+        clearTimeout(timer);
+        setEntered(false);
+      };
     }
+    // Attend la fin de la transition de sortie (300ms) avant de démonter
+    const timer = setTimeout(() => setMounted(false), 300);
+    return () => clearTimeout(timer);
   }, [isOpen]);
 
   // Sync Escape key and body overflow locking

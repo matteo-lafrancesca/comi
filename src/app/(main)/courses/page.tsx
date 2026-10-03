@@ -133,8 +133,9 @@ export default function CoursesPage() {
   }, [searchParams, isCacheValid]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- chargement des données au changement de semaine (dette: migrer vers un data-fetching dédié)
     fetchShoppingList(true);
-  }, [searchParams, cacheKey, isCacheValid]);
+  }, [fetchShoppingList]);
 
   // Auto-dismiss floating action errors after 4 seconds
   useEffect(() => {

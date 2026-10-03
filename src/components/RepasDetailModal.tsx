@@ -41,11 +41,8 @@ export default function RepasDetailModal({
   // Unschedule state
   const [isUnscheduling, setIsUnscheduling] = useState(false);
 
-  useEffect(() => {
-    if (repas) {
-      setActiveRepas(repas);
-    }
-  }, [repas]);
+  // Conserve le dernier repas affiché pendant l'animation de fermeture
+  if (repas && repas !== activeRepas) setActiveRepas(repas);
 
   useEffect(() => {
     if (!isOpen) {
