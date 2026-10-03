@@ -58,7 +58,7 @@ export default function SortDrawer({ isOpen, onClose, currentSort, onSortChange 
               >
                 <div className="flex-1 min-w-0">
                   <span className="block font-display text-lg">
-                    <span className={isSelected ? 'marker' : ''}>{option.label}</span>
+                    <span className={isSelected ? 'font-bold' : ''}>{option.label}</span>
                   </span>
                   <span className="block text-xs mt-1 text-text-light-muted dark:text-text-dark-muted">
                     {option.description}

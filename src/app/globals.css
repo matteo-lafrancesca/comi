@@ -156,12 +156,6 @@ body {
 }
 
 
-/* ─── Signature visuelle : surligneur jaune sous le texte ─── */
-@utility marker {
-  background-image: linear-gradient(transparent 62%, var(--color-brand) 62% 90%, transparent 90%);
-  background-repeat: no-repeat;
-}
-
 /* Étiquette de section : petites capitales espacées */
 @utility eyebrow {
   font-size: 0.6875rem;

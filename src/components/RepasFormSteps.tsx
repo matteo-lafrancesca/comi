@@ -88,7 +88,7 @@ export default function RepasFormSteps({
                 }`}
               >
                 <span className={`font-display italic ${current ? 'text-2xl' : 'text-base'}`}>{n}</span>
-                <span className={`text-sm ${current ? 'font-semibold marker' : 'hidden sm:inline'}`}>{label}</span>
+                <span className={`text-sm ${current ? 'font-semibold' : 'hidden sm:inline'}`}>{label}</span>
               </li>
             );
           })}

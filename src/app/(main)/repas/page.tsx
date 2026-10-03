@@ -28,7 +28,7 @@ export default function RepasPage() {
   const [loading, setLoading] = useState(!repasCache.isLoaded);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isSelecting, setIsSelecting] = useState(false);
+  const [, setIsSelecting] = useState(false);
   
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState(repasCache.searchQuery);
@@ -284,32 +284,6 @@ export default function RepasPage() {
               Fermer
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Banner de sélection pour la planification */}
-      {selectMode && dateParam && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 p-4 bg-brand-light dark:bg-brand/10 border-l-4 border-brand animate-fade-in">
-          <p className="text-sm text-text-light-main dark:text-text-dark-main">
-            Choisissez un repas pour le{' '}
-            <strong className="capitalize">
-              {new Date(dateParam).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </strong>{' '}
-            ({parseInt(heureParam || '0', 10) === 0 ? 'midi' : 'soir'})
-          </p>
-          <button
-            onClick={() => {
-              let redirectUrl = '/planification';
-              if (returnWeek && returnYear) {
-                redirectUrl += `?week=${returnWeek}&year=${returnYear}`;
-              }
-              router.push(redirectUrl);
-            }}
-            disabled={isSelecting}
-            className={buttonStyles({ variant: 'secondary', size: 'sm' })}
-          >
-            Annuler
-          </button>
         </div>
       )}
 

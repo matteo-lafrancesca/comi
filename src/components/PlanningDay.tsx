@@ -44,7 +44,7 @@ export default function PlanningDay({
       <header className="pt-0.5">
         <span className="eyebrow block capitalize">{weekdayLabel.slice(0, 3)}.</span>
         <span className="block font-display text-4xl font-semibold leading-none mt-1">
-          <span className={isToday ? 'marker' : ''}>{dayNumber}</span>
+          {dayNumber}
         </span>
         <span className="block text-xs mt-1.5 text-text-light-muted dark:text-text-dark-muted">
           {isToday ? "aujourd'hui" : monthLabel}

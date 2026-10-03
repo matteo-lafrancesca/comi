@@ -168,7 +168,7 @@ function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps
                       onClick={() => setSelectedRepasId(meal.id)}
                       className="w-full flex items-center justify-between gap-3 py-3 text-left cursor-pointer"
                     >
-                      <span className={`font-display text-[17px] ${selected ? 'marker' : ''}`}>{meal.titre}</span>
+                      <span className={`font-display text-[17px] ${selected ? 'font-semibold' : ''}`}>{meal.titre}</span>
                       {selected && <Check className="h-4 w-4 shrink-0" />}
                     </button>
                   </li>

@@ -58,9 +58,7 @@ export default function PlanningSlot({
   };
 
   const repas = programmation?.repas;
-  const highlight = isSchedulingMode
-    ? 'bg-brand-light dark:bg-brand/10 outline outline-1 -outline-offset-1 outline-brand'
-    : 'hover:bg-neutral-100/70 dark:hover:bg-neutral-800/40';
+  const highlight = 'hover:bg-neutral-100/70 dark:hover:bg-neutral-800/40';
 
   return (
     <button
@@ -89,14 +87,11 @@ export default function PlanningSlot({
           <span className="block font-display text-[17px] leading-snug line-clamp-2">{repas.titre}</span>
         ) : (
           <span className="block text-sm text-text-light-muted dark:text-text-dark-muted">
-            {isSchedulingMode ? 'Placer ici' : 'Ajouter un repas'}
+            Ajouter un repas
           </span>
         )}
       </div>
 
-      {isSchedulingMode && repas && (
-        <span className="eyebrow shrink-0 text-text-light-main dark:text-text-dark-main">Remplacer</span>
-      )}
     </button>
   );
 }

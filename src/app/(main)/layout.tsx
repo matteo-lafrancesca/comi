@@ -79,7 +79,7 @@ export default function MainLayout({
               <span
                 className={`transition-colors ${
                   isActive(item.href)
-                    ? 'marker'
+                    ? 'underline decoration-brand decoration-2 underline-offset-4'
                     : 'text-text-light-muted dark:text-text-dark-muted group-hover:text-text-light-main dark:group-hover:text-text-dark-main'
                 }`}
               >

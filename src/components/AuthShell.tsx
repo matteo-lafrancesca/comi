@@ -25,7 +25,7 @@ export default function AuthShell({ title, footer, children }: AuthShellProps) {
         </div>
 
         <h1 className="font-display text-3xl font-semibold mb-8">
-          <span className="marker">{title}</span>
+          {title}
         </h1>
 
         {children}

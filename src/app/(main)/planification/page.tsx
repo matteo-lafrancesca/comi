@@ -31,9 +31,7 @@ export default function PlanificationPage() {
   );
 
   const isSchedulingMode = Boolean(activeScheduleRepas);
-  const scheduleRepasTitle = activeScheduleRepas?.titre;
 
-  const [isScheduling, setIsScheduling] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const weekParam = searchParams.get('week') || 'current';
@@ -293,7 +291,6 @@ export default function PlanificationPage() {
     const currentScroll = mainEl ? mainEl.scrollTop : planificationCache.scrollPosition;
 
     try {
-      setIsScheduling(true);
       setActionError(null);
       const res = await apiFetch('/api/planning', {
         method: 'POST',
@@ -340,7 +337,6 @@ export default function PlanificationPage() {
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la programmation.');
     } finally {
-      setIsScheduling(false);
     }
   };
 
@@ -380,22 +376,6 @@ export default function PlanificationPage() {
             >
               Fermer
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Programmation rapide : bandeau flottant */}
-      {isSchedulingMode && (
-        <div className="fixed top-16 md:top-6 left-1/2 -translate-x-1/2 z-40 max-w-lg w-full px-4 animate-fade-in pointer-events-none">
-          <div className="flex items-center justify-between gap-3 p-3.5 bg-card-light dark:bg-card-dark border border-text-light-main dark:border-text-dark-main rounded-card shadow-lg pointer-events-auto">
-            <p className="text-sm min-w-0">
-              {isScheduling ? <Loader2 className="inline h-4 w-4 animate-spin mr-2" /> : null}
-              Choisissez un créneau pour{' '}
-              <strong className="font-display text-base">{scheduleRepasTitle || 'ce repas'}</strong>
-            </p>
-            <Button variant="secondary" size="sm" onClick={handleCancelScheduleMode} disabled={isScheduling}>
-              Annuler
-            </Button>
           </div>
         </div>
       )}
