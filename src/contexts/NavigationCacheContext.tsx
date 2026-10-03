@@ -21,6 +21,8 @@ export interface PlanificationCache {
   weekInfo: { start: string; end: string } | null;
   isLoaded: boolean;
   key: string;
+  scrollPosition: number;
+  hasInitialScrolled: boolean;
 }
 
 export interface CoursesCache {
@@ -41,6 +43,7 @@ interface NavigationCacheContextType {
   updateCoursesCache: (updates: Partial<CoursesCache>) => void;
   invalidateRepasCache: () => void;
   invalidatePlanningAndCourses: () => void;
+  invalidateCoursesCache: () => void;
   invalidateAllCaches: () => void;
 }
 
@@ -61,6 +64,8 @@ const initialPlanificationCache: PlanificationCache = {
   weekInfo: null,
   isLoaded: false,
   key: '',
+  scrollPosition: 0,
+  hasInitialScrolled: false,
 };
 
 const initialCoursesCache: CoursesCache = {
@@ -108,6 +113,10 @@ export function NavigationCacheProvider({ children }: { children: React.ReactNod
     setCoursesCache(initialCoursesCache);
   }, []);
 
+  const invalidateCoursesCache = useCallback(() => {
+    setCoursesCache(initialCoursesCache);
+  }, []);
+
   const invalidateAllCaches = useCallback(() => {
     setRepasCache(initialRepasCache);
     setPlanificationCache(initialPlanificationCache);
@@ -125,6 +134,7 @@ export function NavigationCacheProvider({ children }: { children: React.ReactNod
         updateCoursesCache,
         invalidateRepasCache,
         invalidatePlanningAndCourses,
+        invalidateCoursesCache,
         invalidateAllCaches,
       }}
     >

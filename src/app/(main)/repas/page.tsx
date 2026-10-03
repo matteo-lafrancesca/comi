@@ -14,7 +14,7 @@ import { apiFetch } from '@/lib/api';
 export default function RepasPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { repasCache, updateRepasCache, invalidatePlanningAndCourses } = useNavigationCache();
+  const { repasCache, updateRepasCache, invalidateCoursesCache } = useNavigationCache();
 
   const selectMode = searchParams.get('selectMode') === 'true';
   const dateParam = searchParams.get('date');
@@ -229,15 +229,15 @@ export default function RepasPage() {
         throw new Error(data.error || 'Erreur lors de la programmation.');
       }
 
-      // Invalider le cache planification et courses car un repas a été planifié
-      invalidatePlanningAndCourses();
+      // Invalider uniquement le cache des courses car un repas a été planifié
+      invalidateCoursesCache();
 
-      // Redirect back to planning page
-      let redirectUrl = '/planification';
+      // Redirect back to planning page en ciblant le jour choisi
+      let redirectUrl = `/planification?targetDate=${dateParam}`;
       if (returnWeek && returnYear) {
-        redirectUrl += `?week=${returnWeek}&year=${returnYear}`;
+        redirectUrl += `&week=${returnWeek}&year=${returnYear}`;
       }
-      router.push(redirectUrl);
+      router.push(redirectUrl, { scroll: false });
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la programmation du repas.');
     } finally {

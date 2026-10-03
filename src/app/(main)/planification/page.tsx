@@ -5,6 +5,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { 
   Utensils, 
   CalendarDays,
+  CalendarPlus,
   Loader2
 } from 'lucide-react';
 import { ProgrammationWithRepas, RepasWithIngredients } from '@/types';
@@ -21,7 +22,35 @@ export default function PlanificationPage() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { weekStartDay } = useSettings();
-  const { planificationCache, updatePlanificationCache } = useNavigationCache();
+  const { planificationCache, updatePlanificationCache, invalidateCoursesCache } = useNavigationCache();
+
+  const targetDateParam = searchParams.get('targetDate');
+
+  const [activeScheduleRepas, setActiveScheduleRepas] = useState<{ id: number; titre?: string } | null>(() => {
+    const idParam = searchParams.get('scheduleRepasId');
+    const titleParam = searchParams.get('scheduleRepasTitle');
+    return idParam ? { id: parseInt(idParam, 10), titre: titleParam || undefined } : null;
+  });
+
+  // Synchroniser quand searchParams change
+  useEffect(() => {
+    const idParam = searchParams.get('scheduleRepasId');
+    const titleParam = searchParams.get('scheduleRepasTitle');
+    if (idParam) {
+      setActiveScheduleRepas({
+        id: parseInt(idParam, 10),
+        titre: titleParam || undefined,
+      });
+    } else {
+      setActiveScheduleRepas(null);
+    }
+  }, [searchParams]);
+
+  const isSchedulingMode = Boolean(activeScheduleRepas);
+  const scheduleRepasTitle = activeScheduleRepas?.titre;
+
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const weekParam = searchParams.get('week') || 'current';
   const yearParam = searchParams.get('year') || 'current';
@@ -111,17 +140,21 @@ export default function PlanificationPage() {
   const handlePrevWeek = () => {
     if (currentWeek === null || currentYear === null) return;
     const { week, year } = getAdjacentWeek(currentWeek, currentYear, 'prev');
-    router.push(`${pathname}?week=${week}&year=${year}`);
+    router.push(`${pathname}?week=${week}&year=${year}`, { scroll: false });
   };
 
   const handleNextWeek = () => {
     if (currentWeek === null || currentYear === null) return;
     const { week, year } = getAdjacentWeek(currentWeek, currentYear, 'next');
-    router.push(`${pathname}?week=${week}&year=${year}`);
+    router.push(`${pathname}?week=${week}&year=${year}`, { scroll: false });
   };
 
   const handleCurrentWeek = () => {
-    router.push(pathname);
+    if (pathname === '/planification' && !searchParams.get('week')) {
+      centerOnDate(todayStr, 'smooth');
+    } else {
+      router.push(pathname, { scroll: false });
+    }
   };
 
   // Helper to format date display (forcing UTC to avoid client timezone shifts)
@@ -165,18 +198,84 @@ export default function PlanificationPage() {
   const todayParis = getParisDate();
   const todayStr = `${todayParis.getFullYear()}-${String(todayParis.getMonth() + 1).padStart(2, '0')}-${String(todayParis.getDate()).padStart(2, '0')}`;
 
-  // Auto-scroll to today's card/column once loading completes
+  // Helper pour centrer un jour dans le conteneur principal sans animation dérangeante
+  const centerOnDate = (dateStr: string, behavior: ScrollBehavior = 'auto') => {
+    const mainEl = document.querySelector('main');
+    if (!mainEl) return;
+    const targetElement = document.getElementById(`day-card-${dateStr}`) || document.getElementById(`day-col-${dateStr}`);
+    if (targetElement) {
+      const targetRect = targetElement.getBoundingClientRect();
+      const mainRect = mainEl.getBoundingClientRect();
+      const offsetTopInMain = targetRect.top - mainRect.top + mainEl.scrollTop;
+      const desiredScrollTop = Math.max(0, offsetTopInMain - (mainEl.clientHeight / 2) + (targetElement.clientHeight / 2));
+      mainEl.scrollTo({ top: desiredScrollTop, behavior });
+      updatePlanificationCache({ scrollPosition: desiredScrollTop, hasInitialScrolled: true });
+    }
+  };
+
+  // Suivre et mémoriser la position de défilement en continu
   useEffect(() => {
-    if (!loading && days.length > 0) {
+    const mainEl = document.querySelector('main');
+    if (!mainEl) return;
+
+    const handleScroll = () => {
+      updatePlanificationCache({ 
+        scrollPosition: mainEl.scrollTop, 
+        hasInitialScrolled: true 
+      });
+    };
+
+    mainEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      mainEl.removeEventListener('scroll', handleScroll);
+    };
+  }, [updatePlanificationCache]);
+
+  const hasCenteredForScheduleRef = useRef(false);
+
+  // Cadrage automatique lors de l'accès ou après programmation d'un repas
+  useEffect(() => {
+    const mainEl = document.querySelector('main');
+    if (!mainEl || loading || days.length === 0) return;
+
+    // 1. Si on revient de la sélection d'un repas pour une date précise :
+    if (targetDateParam) {
       const timer = setTimeout(() => {
-        const targetElement = todayMobileRef.current || todayDesktopRef.current;
-        if (targetElement) {
-          targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        centerOnDate(targetDateParam, 'auto');
+        if (typeof window !== 'undefined') {
+          const currentParams = new URLSearchParams(window.location.search);
+          currentParams.delete('targetDate');
+          const newQuery = currentParams.toString();
+          const newUrl = window.location.pathname + (newQuery ? `?${newQuery}` : '');
+          window.history.replaceState(null, '', newUrl);
         }
-      }, 150);
+      }, 40);
       return () => clearTimeout(timer);
     }
-  }, [loading, days]);
+
+    // 2. Si on arrive en mode programmation rapide depuis un repas :
+    if (activeScheduleRepas && !hasCenteredForScheduleRef.current) {
+      hasCenteredForScheduleRef.current = true;
+      const timer = setTimeout(() => {
+        centerOnDate(todayStr, 'auto');
+      }, 40);
+      return () => clearTimeout(timer);
+    }
+
+    // 3. Restauration de la position précédente si déjà visité :
+    if (planificationCache.hasInitialScrolled) {
+      if (typeof planificationCache.scrollPosition === 'number' && planificationCache.scrollPosition > 0) {
+        mainEl.scrollTop = planificationCache.scrollPosition;
+      }
+      return;
+    }
+
+    // 4. Premier accès absolu : cadrage direct sur aujourd'hui
+    const timer = setTimeout(() => {
+      centerOnDate(todayStr, 'auto');
+    }, 40);
+    return () => clearTimeout(timer);
+  }, [loading, days.length, targetDateParam, activeScheduleRepas, planificationCache.hasInitialScrolled, updatePlanificationCache, todayStr]);
 
   // Find a programmation for a given date and mealtime (0 = midi, 1 = soir)
   const findProgrammation = (date: Date, heure: number) => {
@@ -188,17 +287,103 @@ export default function PlanificationPage() {
   };
 
   const handleUnscheduleSuccess = async (progId: number) => {
-    setProgrammations((prev) => {
-      const updated = prev.filter((p) => p.id !== progId);
-      updatePlanificationCache({ programmations: updated });
-      return updated;
+    const mainEl = document.querySelector('main');
+    const currentScroll = mainEl ? mainEl.scrollTop : planificationCache.scrollPosition;
+
+    const updated = programmations.filter((p) => p.id !== progId);
+    setProgrammations(updated);
+    updatePlanificationCache({
+      programmations: updated,
+      isLoaded: true,
+      key: cacheKey,
+      scrollPosition: currentScroll,
+      hasInitialScrolled: true,
     });
+    invalidateCoursesCache();
   };
+
+  const handleCancelScheduleMode = () => {
+    setActiveScheduleRepas(null);
+    if (typeof window !== 'undefined') {
+      const currentParams = new URLSearchParams(window.location.search);
+      currentParams.delete('scheduleRepasId');
+      currentParams.delete('scheduleRepasTitle');
+      const newQuery = currentParams.toString();
+      const newUrl = window.location.pathname + (newQuery ? `?${newQuery}` : '');
+      window.history.replaceState(null, '', newUrl);
+    }
+  };
+
+  const handleDirectSchedule = async (dateStr: string, heure: 0 | 1) => {
+    if (!activeScheduleRepas) return;
+    const currentRepasId = activeScheduleRepas.id;
+    const mainEl = document.querySelector('main');
+    const currentScroll = mainEl ? mainEl.scrollTop : planificationCache.scrollPosition;
+
+    try {
+      setIsScheduling(true);
+      setActionError(null);
+      const res = await apiFetch('/api/planning', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          repasId: currentRepasId,
+          date: dateStr,
+          heure,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Erreur lors de la programmation.');
+      }
+
+      const newProg: ProgrammationWithRepas = await res.json();
+
+      // Mettre à jour l'état local et le cache sans recharger la page
+      const filtered = programmations.filter(
+        (p) => !(new Date(p.date).toISOString().split('T')[0] === dateStr && p.heure === heure)
+      );
+      const updated = [...filtered, newProg];
+      setProgrammations(updated);
+
+      updatePlanificationCache({
+        programmations: updated,
+        isLoaded: true,
+        key: cacheKey,
+        scrollPosition: currentScroll,
+        hasInitialScrolled: true,
+      });
+
+      // Invalider les courses
+      invalidateCoursesCache();
+
+      // Quitter le mode programmation
+      handleCancelScheduleMode();
+
+      // Maintenir le focus sur la date sélectionnée sans remonter
+      requestAnimationFrame(() => {
+        centerOnDate(dateStr, 'auto');
+      });
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la programmation.');
+    } finally {
+      setIsScheduling(false);
+    }
+  };
+
+  // Auto-dismiss floating error after 4 seconds
+  useEffect(() => {
+    if (actionError) {
+      const timer = setTimeout(() => setActionError(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [actionError]);
 
   const handleReprogram = () => {
     if (!selectedSlotDate || selectedSlotHeure === null) return;
     setIsDetailOpen(false);
-    router.push(`/repas?selectMode=true&date=${selectedSlotDate}&heure=${selectedSlotHeure}&returnWeek=${currentWeek}&returnYear=${currentYear}`);
+    router.push(`/repas?selectMode=true&date=${selectedSlotDate}&heure=${selectedSlotHeure}&returnWeek=${currentWeek}&returnYear=${currentYear}`, { scroll: false });
   };
 
   // Appelé depuis PlanningSlot quand on clique sur un créneau occupé
@@ -212,6 +397,54 @@ export default function PlanificationPage() {
 
   return (
     <div className="space-y-6">
+      {/* 🔔 Floating error notification */}
+      {actionError && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full px-4 animate-fade-in">
+          <div className="bg-red-50 dark:bg-red-950/95 text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-900/50 p-4 rounded-xl shadow-lg flex items-center justify-between gap-3">
+            <span className="text-xs font-bold leading-normal">{actionError}</span>
+            <button
+              onClick={() => setActionError(null)}
+              className="text-text-light-muted dark:text-text-dark-muted hover:text-red-600 transition-colors font-extrabold text-xs cursor-pointer px-1.5 py-0.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/40"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Banner de programmation rapide flottant (sans décalage de page) */}
+      {isSchedulingMode && (
+        <div className="fixed top-16 md:top-6 left-1/2 -translate-x-1/2 z-40 max-w-lg w-full px-4 animate-fade-in pointer-events-none">
+          <div className="flex items-center justify-between gap-3 p-3.5 bg-card-light/95 dark:bg-card-dark/95 backdrop-blur-md border border-brand/40 rounded-card shadow-xl pointer-events-auto">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-8 w-8 rounded-full bg-brand/10 dark:bg-brand/20 flex items-center justify-center text-brand shrink-0">
+                {isScheduling ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CalendarPlus className="h-4 w-4" />
+                )}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-extrabold text-text-light-main dark:text-text-dark-main truncate">
+                  Programmation rapide
+                </span>
+                <span className="text-[11px] text-text-light-muted dark:text-text-dark-muted font-medium truncate">
+                  Cliquez sur un créneau pour :{' '}
+                  <span className="font-bold text-brand">{scheduleRepasTitle || 'ce repas'}</span>
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={handleCancelScheduleMode}
+              disabled={isScheduling}
+              className="px-3 py-1.5 text-xs font-bold bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-text-light-main dark:text-text-dark-main rounded-input transition-all active:scale-95 cursor-pointer text-center shrink-0"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Title & Today Link */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-text-light-main dark:text-text-dark-main">
@@ -269,6 +502,7 @@ export default function PlanificationPage() {
               return (
                 <div 
                   key={idx} 
+                  id={`day-col-${dayStr}`}
                   ref={isToday ? todayDesktopRef : undefined}
                   className="flex flex-col gap-3"
                 >
@@ -304,6 +538,8 @@ export default function PlanificationPage() {
                       currentWeek={currentWeek!}
                       currentYear={currentYear!}
                       onOpenDetail={handleOpenSlotDetail}
+                      isSchedulingMode={isSchedulingMode}
+                      onScheduleRepas={handleDirectSchedule}
                     />
                     <PlanningSlot
                       day={day}
@@ -313,6 +549,8 @@ export default function PlanificationPage() {
                       currentWeek={currentWeek!}
                       currentYear={currentYear!}
                       onOpenDetail={handleOpenSlotDetail}
+                      isSchedulingMode={isSchedulingMode}
+                      onScheduleRepas={handleDirectSchedule}
                     />
                   </div>
                 </div>
@@ -328,6 +566,7 @@ export default function PlanificationPage() {
               return (
                 <div 
                   key={idx} 
+                  id={`day-card-${dayStr}`}
                   ref={isToday ? todayMobileRef : undefined}
                   className={`bg-card-light dark:bg-card-dark p-4 rounded-card border shadow-xs flex flex-col gap-3.5 ${
                     isToday ? 'border-brand/40 dark:border-brand/30' : 'border-neutral-200/40 dark:border-neutral-800/40'
@@ -355,6 +594,8 @@ export default function PlanificationPage() {
                       currentWeek={currentWeek!}
                       currentYear={currentYear!}
                       onOpenDetail={handleOpenSlotDetail}
+                      isSchedulingMode={isSchedulingMode}
+                      onScheduleRepas={handleDirectSchedule}
                     />
                     <PlanningSlot
                       day={day}
@@ -364,6 +605,8 @@ export default function PlanificationPage() {
                       currentWeek={currentWeek!}
                       currentYear={currentYear!}
                       onOpenDetail={handleOpenSlotDetail}
+                      isSchedulingMode={isSchedulingMode}
+                      onScheduleRepas={handleDirectSchedule}
                     />
                   </div>
                 </div>

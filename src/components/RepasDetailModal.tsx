@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Utensils, ShoppingBasket, BookOpen, Pencil, Trash2, Loader2, CalendarX, RefreshCw } from 'lucide-react';
+import { Utensils, ShoppingBasket, BookOpen, Pencil, Trash2, Loader2, RefreshCw, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { RepasWithIngredients } from '@/types';
 import { formatIngredient } from '@/lib/shopping-list-utils';
@@ -71,6 +71,11 @@ export default function RepasDetailModal({
     router.push(`/repas/${id}/modifier`);
   };
 
+  const handleSchedule = () => {
+    onClose();
+    router.push(`/planification?scheduleRepasId=${id}&scheduleRepasTitle=${encodeURIComponent(titre)}`, { scroll: false });
+  };
+
   const handleUnschedule = async () => {
     if (!programmationId) return;
     try {
@@ -112,7 +117,7 @@ export default function RepasDetailModal({
   };
 
   const headerImage = (
-    <div className="relative w-full h-56 md:h-72 bg-brand-light dark:bg-neutral-800/30 border-b border-neutral-100 dark:border-neutral-800/20">
+    <div className="relative w-full aspect-square sm:max-h-[420px] bg-brand-light dark:bg-neutral-800/30 border-b border-neutral-100 dark:border-neutral-800/20 flex items-center justify-center">
       {photoUrl ? (
         <Image
           src={photoUrl}
@@ -137,6 +142,8 @@ export default function RepasDetailModal({
         onClose={onClose}
         headerImage={headerImage}
         maxWidth="sm:max-w-3xl"
+        height="h-[95dvh] sm:h-auto"
+        maxHeight="max-h-[96dvh] sm:max-h-[90vh]"
       >
         <div className="space-y-6">
           {/* Header Title + Actions */}
@@ -153,25 +160,25 @@ export default function RepasDetailModal({
                     type="button"
                     onClick={handleUnschedule}
                     disabled={isUnscheduling}
-                    title="Enlever ce repas du planning"
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 hover:bg-amber-600 hover:text-white dark:hover:bg-amber-600 dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
+                    title="Déprogrammer ce repas"
+                    aria-label="Déprogrammer ce repas"
+                    className="p-2.5 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
                   >
                     {isUnscheduling ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <CalendarX className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     )}
-                    <span>Déprogrammer</span>
                   </button>
                   {onReprogram && (
                     <button
                       type="button"
                       onClick={onReprogram}
                       title="Reprogrammer ce créneau"
-                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-brand bg-brand-light dark:bg-brand/10 hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
+                      aria-label="Reprogrammer ce créneau"
+                      className="p-2.5 text-brand bg-brand-light dark:bg-brand/10 hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
                     >
-                      <RefreshCw className="h-3.5 w-3.5" />
-                      <span>Reprogrammer</span>
+                      <RefreshCw className="h-4 w-4" />
                     </button>
                   )}
                 </>
@@ -179,21 +186,30 @@ export default function RepasDetailModal({
                 <>
                   <button
                     type="button"
+                    onClick={handleSchedule}
+                    title="Programmer ce repas"
+                    aria-label="Programmer ce repas"
+                    className="p-2.5 text-brand bg-brand-light dark:bg-brand/10 hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
+                  >
+                    <Calendar className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleEdit}
                     title="Modifier ce repas"
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-text-light-main dark:text-text-dark-main bg-neutral-100 dark:bg-neutral-800 hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
+                    aria-label="Modifier ce repas"
+                    className="p-2.5 text-text-light-main dark:text-text-dark-main bg-neutral-100 dark:bg-neutral-800 hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
                   >
-                    <Pencil className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Modifier</span>
+                    <Pencil className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsDeleteConfirmOpen(true)}
                     title="Supprimer ce repas"
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
+                    aria-label="Supprimer ce repas"
+                    className="p-2.5 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Supprimer</span>
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </>
               )}
