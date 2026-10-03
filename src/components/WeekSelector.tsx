@@ -1,69 +1,49 @@
 'use client';
 
 import React from 'react';
-import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface WeekSelectorProps {
   week: number;
   year: number;
-  /** Formatted start and end dates of the current week */
+  /** Dates de début et de fin de la semaine, déjà formatées */
   dateRange: string;
   onPrev: () => void;
   onNext: () => void;
-  /** If provided, a "Semaine actuelle" reset button is shown */
+  /** Si fourni, un bouton « Cette semaine » est affiché */
   onReset?: () => void;
   className?: string;
 }
 
-export default function WeekSelector({
-  week,
-  dateRange,
-  onPrev,
-  onNext,
-  onReset,
-  className = '',
-}: WeekSelectorProps) {
+/** Bandeau de navigation entre semaines : numéro en serif, dates en dessous. */
+export default function WeekSelector({ week, dateRange, onPrev, onNext, onReset, className = '' }: WeekSelectorProps) {
+  const arrow =
+    'p-2 -m-2 text-text-light-muted dark:text-text-dark-muted hover:text-text-light-main dark:hover:text-text-dark-main transition-colors cursor-pointer print:hidden';
+
   return (
     <div
-      className={`flex items-center justify-between p-3 bg-card-light dark:bg-card-dark rounded-card border border-neutral-200/40 dark:border-neutral-800/40 shadow-xs print:border-none print:shadow-none print:bg-transparent print:p-0 ${className}`}
+      className={`flex items-center justify-between gap-4 py-4 border-y border-neutral-200 dark:border-neutral-800 print:border-none print:py-0 ${className}`}
     >
-      <button
-        onClick={onPrev}
-        aria-label="Semaine précédente"
-        className="p-2.5 rounded-full hover:bg-neutral-50 dark:hover:bg-neutral-800/60 transition-colors border border-neutral-200/30 dark:border-neutral-800/20 text-text-light-main dark:text-text-dark-main cursor-pointer print:hidden"
-      >
+      <button onClick={onPrev} aria-label="Semaine précédente" className={arrow}>
         <ChevronLeft className="h-5 w-5" />
       </button>
 
       <div className="text-center print:text-left">
-        <span className="block text-sm font-semibold text-text-light-main dark:text-text-dark-main print:text-xl">
-          Semaine {week}
-        </span>
-        <span className="block text-xs font-medium text-text-light-muted dark:text-text-dark-muted print:text-sm">
-          {dateRange}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-2 print:hidden">
+        <span className="block font-display text-2xl font-semibold leading-none">Semaine {week}</span>
+        <span className="block mt-1.5 text-xs text-text-light-muted dark:text-text-dark-muted">{dateRange}</span>
         {onReset && (
           <button
             onClick={onReset}
-            aria-label="Revenir à la semaine actuelle"
-            className="hidden sm:flex items-center gap-1 px-3 py-1.5 text-xs font-bold transition-all border border-neutral-200/50 dark:border-neutral-800 rounded-input hover:bg-neutral-50 dark:hover:bg-neutral-800/60 text-text-light-main dark:text-text-dark-main cursor-pointer active:scale-95 bg-card-light dark:bg-card-dark"
+            className="mt-1.5 text-xs font-semibold underline underline-offset-4 decoration-brand decoration-2 cursor-pointer print:hidden"
           >
-            <CalendarDays className="h-3.5 w-3.5 text-brand shrink-0" />
-            <span>Semaine actuelle</span>
+            Revenir à cette semaine
           </button>
         )}
-
-        <button
-          onClick={onNext}
-          aria-label="Semaine suivante"
-          className="p-2.5 rounded-full hover:bg-neutral-50 dark:hover:bg-neutral-800/60 transition-colors border border-neutral-200/30 dark:border-neutral-800/20 text-text-light-main dark:text-text-dark-main cursor-pointer"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
       </div>
+
+      <button onClick={onNext} aria-label="Semaine suivante" className={arrow}>
+        <ChevronRight className="h-5 w-5" />
+      </button>
     </div>
   );
 }
