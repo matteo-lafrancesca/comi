@@ -6,7 +6,7 @@ Tailwind CSS v4, tokens déclarés dans `@theme` (`src/app/globals.css`). Clair 
 
 L'interface ressemble à un carnet de recettes imprimé, pas à un tableau de bord SaaS :
 
-- **Papier, encre, jaune d'œuf.** Fond crème, texte brun très sombre, jaune `brand` utilisé comme *surligneur* ou comme bouton principal — jamais comme couleur d'ambiance partout.
+- **Papier, encre, jaune d'œuf.** Fond crème, texte brun très sombre, jaune `brand` réservé au bouton principal et à de rares repères (soulignement de l'onglet actif, trait du jour courant) — pas de surlignage derrière les titres — jamais comme couleur d'ambiance partout.
 - **Serif pour ce qui se lit** (titres, noms de repas, numéros) : `font-display` (Fraunces). **Sans** pour ce qui se manipule (labels, boutons, formulaires) : DM Sans.
 - **Filets, pas de cartes.** On sépare par des traits (`border-neutral-200`, `divide-dashed`) plutôt que d'empiler des cartes arrondies à ombre. Une carte n'existe que si l'objet est une photo.
 - **Rien d'inutile.** Pas de texte de remplissage, pas d'info qui n'aide pas à agir (ex. e-mail dans la nav, titres d'étape décoratifs, sous-titres qui répètent le titre).
@@ -41,7 +41,6 @@ Quand on crée un composant, chercher d'abord une forme propre au contenu (une l
 
 ## 4. Utilitaires de signature (`globals.css`)
 
-- `marker` — surlignage jaune sous le texte : titre de page, élément actif de la nav, jour courant, choix sélectionné. **Un seul par zone visible.**
 - `eyebrow` — petites capitales espacées pour les labels de section et métadonnées (`Midi`, `Ingrédients`…).
 - `font-display` — serif. `italic` + `font-display` pour les numéros (étapes, jours, initiales).
 
