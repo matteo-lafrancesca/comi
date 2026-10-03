@@ -54,6 +54,8 @@ export default function RepasPage() {
 
   // Réinitialisation de la pagination quand la recherche ou le tri change
   useEffect(() => {
+    // Montage avec cache : pas de refetch derrière, donc ne rien réinitialiser (sinon isRefetching reste bloqué)
+    if (skipInitialFetchRef.current) return;
     /* eslint-disable react-hooks/set-state-in-effect -- reset de la liste au changement de filtre (dette: migrer vers un data-fetching dédié) */
     setPage(1);
     setHasMore(true);

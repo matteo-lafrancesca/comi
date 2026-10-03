@@ -119,23 +119,28 @@ export default function PlanificationPage() {
   }, [searchParams, cacheKey, isCacheValid, updatePlanificationCache]);
 
   // Navigate to previous/next week using standard ISO week offsets
-  const handlePrevWeek = () => {
-    if (currentWeek === null || currentYear === null) return;
-    const { week, year } = getAdjacentWeek(currentWeek, currentYear, 'prev');
-    router.push(`${pathname}?week=${week}&year=${year}`, { scroll: false });
+  // Conserve le mode d'attribution (scheduleRepas*) pendant la navigation
+  const withScheduleParams = (params: URLSearchParams) => {
+    if (scheduleRepasId) params.set('scheduleRepasId', scheduleRepasId);
+    if (scheduleRepasTitleParam) params.set('scheduleRepasTitle', scheduleRepasTitleParam);
+    const qs = params.toString();
+    return qs ? `${pathname}?${qs}` : pathname;
   };
 
-  const handleNextWeek = () => {
+  const goToWeek = (dir: 'prev' | 'next') => {
     if (currentWeek === null || currentYear === null) return;
-    const { week, year } = getAdjacentWeek(currentWeek, currentYear, 'next');
-    router.push(`${pathname}?week=${week}&year=${year}`, { scroll: false });
+    const { week, year } = getAdjacentWeek(currentWeek, currentYear, dir);
+    router.push(withScheduleParams(new URLSearchParams({ week: String(week), year: String(year) })), { scroll: false });
   };
+
+  const handlePrevWeek = () => goToWeek('prev');
+  const handleNextWeek = () => goToWeek('next');
 
   const handleCurrentWeek = () => {
     if (pathname === '/planification' && !searchParams.get('week')) {
       centerOnDate(todayStr, 'smooth');
     } else {
-      router.push(pathname, { scroll: false });
+      router.push(withScheduleParams(new URLSearchParams()), { scroll: false });
     }
   };
 
