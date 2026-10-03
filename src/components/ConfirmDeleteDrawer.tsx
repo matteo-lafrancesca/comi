@@ -43,7 +43,7 @@ export default function ConfirmDeleteDrawer({
       title={
         <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
           <AlertTriangle className="h-5 w-5" />
-          <span className="font-extrabold text-lg">{title}</span>
+          <span className="font-semibold text-lg">{title}</span>
         </div>
       }
     >
@@ -52,7 +52,7 @@ export default function ConfirmDeleteDrawer({
           {message}{highlightedName ? (
             <>
               {' '}
-              <span className="font-extrabold">&quot;{highlightedName}&quot;</span>
+              <span className="font-semibold">&quot;{highlightedName}&quot;</span>
             </>
           ) : null} ?
           {warningText && (
@@ -81,7 +81,7 @@ export default function ConfirmDeleteDrawer({
             type="button"
             onClick={onConfirm}
             disabled={isDeleting}
-            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-extrabold bg-red-600 hover:bg-red-700 text-white rounded-input active:scale-95 transition-all cursor-pointer shadow-sm disabled:opacity-60 disabled:pointer-events-none"
+            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold bg-red-600 hover:bg-red-700 text-white rounded-input active:scale-95 transition-all cursor-pointer shadow-sm disabled:opacity-60 disabled:pointer-events-none"
           >
             {isDeleting ? (
               <>

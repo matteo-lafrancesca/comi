@@ -142,7 +142,7 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="mt-2 w-full flex items-center justify-center gap-2 py-3 px-5 text-sm font-semibold rounded-input bg-brand hover:bg-brand-hover text-white transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-sm shadow-brand/20 disabled:opacity-50 disabled:hover:scale-100 disabled:active:scale-100 cursor-pointer"
+                className="mt-2 w-full flex items-center justify-center gap-2 py-3 px-5 text-sm font-semibold rounded-input bg-brand hover:bg-brand-hover text-ink transition-all duration-300 active:scale-95 shadow-sm shadow-brand/20 disabled:opacity-50 disabled:hover:scale-100 disabled:active:scale-100 cursor-pointer"
               >
                 {isSubmitting ? 'Connexion en cours...' : 'Se connecter'}
                 {!isSubmitting && <ArrowRight className="h-4 w-4" />}

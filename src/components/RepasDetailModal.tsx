@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { errorMessage } from '@/lib/errors';
 import Image from 'next/image';
-import { Utensils, ShoppingBasket, BookOpen, Pencil, Trash2, Loader2, RefreshCw, Calendar } from 'lucide-react';
+import { Pencil, Trash2, Loader2, RefreshCw, Calendar, CalendarX } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { RepasWithIngredients } from '@/types';
 import { formatIngredient } from '@/lib/shopping-list-utils';
 import { apiFetch } from '@/lib/api';
 import Drawer from '@/components/Drawer';
+import IconButton from '@/components/ui/IconButton';
 import ConfirmDeleteDrawer from '@/components/ConfirmDeleteDrawer';
 
 interface RepasDetailModalProps {
@@ -115,7 +116,11 @@ export default function RepasDetailModal({
   };
 
   const headerImage = (
-    <div className="relative w-full aspect-square sm:max-h-[420px] bg-brand-light dark:bg-neutral-800/30 border-b border-neutral-100 dark:border-neutral-800/20 flex items-center justify-center">
+    <div
+      className={`relative w-full bg-neutral-100 dark:bg-neutral-800/60 flex items-center justify-center ${
+        photoUrl ? 'aspect-square sm:aspect-[16/10] sm:max-h-[420px]' : 'h-28'
+      }`}
+    >
       {photoUrl ? (
         <Image
           src={photoUrl}
@@ -126,9 +131,9 @@ export default function RepasDetailModal({
           className="object-cover"
         />
       ) : (
-        <div className="flex flex-col items-center justify-center w-full h-full text-brand-light dark:text-neutral-700">
-          <Utensils className="h-16 w-16 text-brand/35 dark:text-brand/20 stroke-[1.2]" />
-        </div>
+        <span className="font-display italic text-6xl text-neutral-400 dark:text-neutral-600 select-none">
+          {titre.trim().charAt(0).toUpperCase()}
+        </span>
       )}
     </div>
   );
@@ -143,134 +148,72 @@ export default function RepasDetailModal({
         height="h-[95dvh] sm:h-auto"
         maxHeight="max-h-[96dvh] sm:max-h-[90vh]"
       >
-        <div className="space-y-6">
-          {/* Header Title + Actions */}
-          <div className="flex items-start justify-between gap-4">
-            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-text-light-main dark:text-text-dark-main leading-tight">
-              {titre}
-            </h2>
+        <div className="space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-tight leading-tight">{titre}</h2>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2 shrink-0 mt-0.5">
+            <div className="flex items-center gap-2 shrink-0 sm:mt-1">
               {programmationId ? (
                 <>
-                  <button
-                    type="button"
-                    onClick={handleUnschedule}
-                    disabled={isUnscheduling}
-                    title="Déprogrammer ce repas"
-                    aria-label="Déprogrammer ce repas"
-                    className="p-2.5 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
-                  >
-                    {isUnscheduling ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </button>
+                  <IconButton label="Déprogrammer ce repas" onClick={handleUnschedule} disabled={isUnscheduling}>
+                    {isUnscheduling ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarX className="h-4 w-4" />}
+                  </IconButton>
                   {onReprogram && (
-                    <button
-                      type="button"
-                      onClick={onReprogram}
-                      title="Reprogrammer ce créneau"
-                      aria-label="Reprogrammer ce créneau"
-                      className="p-2.5 text-brand bg-brand-light dark:bg-brand/10 hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
-                    >
+                    <IconButton label="Reprogrammer ce créneau" onClick={onReprogram}>
                       <RefreshCw className="h-4 w-4" />
-                    </button>
+                    </IconButton>
                   )}
                 </>
               ) : (
                 <>
-                  <button
-                    type="button"
-                    onClick={handleSchedule}
-                    title="Programmer ce repas"
-                    aria-label="Programmer ce repas"
-                    className="p-2.5 text-brand bg-brand-light dark:bg-brand/10 hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
-                  >
+                  <IconButton label="Programmer ce repas" onClick={handleSchedule}>
                     <Calendar className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleEdit}
-                    title="Modifier ce repas"
-                    aria-label="Modifier ce repas"
-                    className="p-2.5 text-text-light-main dark:text-text-dark-main bg-neutral-100 dark:bg-neutral-800 hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
-                  >
+                  </IconButton>
+                  <IconButton label="Modifier ce repas" onClick={handleEdit}>
                     <Pencil className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsDeleteConfirmOpen(true)}
-                    title="Supprimer ce repas"
-                    aria-label="Supprimer ce repas"
-                    className="p-2.5 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white rounded-input transition-all duration-200 active:scale-95 cursor-pointer"
-                  >
+                  </IconButton>
+                  <IconButton label="Supprimer ce repas" tone="danger" onClick={() => setIsDeleteConfirmOpen(true)}>
                     <Trash2 className="h-4 w-4" />
-                  </button>
+                  </IconButton>
                 </>
               )}
             </div>
           </div>
 
-          <hr className="border-neutral-100 dark:border-neutral-800/40" />
-
-          {/* Grid Layout: Column 1 (Ingredients), Column 2-3 (Recipe) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-
-            {/* Column 1: Ingredients */}
-            <div className="md:col-span-1 space-y-5">
-              <div className="flex items-center gap-2 text-brand font-bold text-sm uppercase tracking-wider">
-                <ShoppingBasket className="h-5 w-5 stroke-[2]" />
-                <h3>Ingrédients</h3>
-              </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-12">
+            <section className="md:col-span-2">
+              <h3 className="eyebrow pb-2 border-b border-text-light-main dark:border-text-dark-main">Ingrédients</h3>
               {ingredients.length === 0 ? (
-                <p className="text-sm text-text-light-muted dark:text-text-dark-muted italic">
-                  Aucun ingrédient renseigné.
-                </p>
+                <p className="mt-3 text-sm italic text-text-light-muted dark:text-text-dark-muted">Aucun ingrédient renseigné.</p>
               ) : (
-                <ul className="space-y-2">
+                <ul className="divide-y divide-dashed divide-neutral-300 dark:divide-neutral-700">
                   {ingredients.map((ing) => (
-                    <li
-                      key={ing.id}
-                      className="text-sm font-medium text-text-light-main dark:text-text-dark-main bg-neutral-50 dark:bg-neutral-800/20 px-3.5 py-2.5 rounded-xl border border-neutral-100/50 dark:border-neutral-800/20"
-                    >
+                    <li key={ing.id} className="py-2.5 text-sm">
                       {formatIngredient(ing.nom, ing.quantite, ing.unite)}
                     </li>
                   ))}
                 </ul>
               )}
-            </div>
+            </section>
 
-            {/* Column 2-3: Recipe Instructions */}
-            <div className="md:col-span-2 space-y-5">
-              <div className="flex items-center gap-2 text-brand font-bold text-sm uppercase tracking-wider">
-                <BookOpen className="h-5 w-5 stroke-[2]" />
-                <h3>Préparation</h3>
-              </div>
-
+            <section className="md:col-span-3">
+              <h3 className="eyebrow pb-2 border-b border-text-light-main dark:border-text-dark-main">Préparation</h3>
               {recette ? (
-                <div className="space-y-4">
-                  {recette.split('\n').filter(line => line.trim() !== '').map((step, idx) => (
-                    <div key={idx} className="flex gap-3.5 items-start">
-                      <span className="flex items-center justify-center shrink-0 w-6 h-6 rounded-full bg-brand-light dark:bg-brand/10 text-brand text-xs font-bold mt-0.5 border border-brand/10">
-                        {idx + 1}
-                      </span>
-                      <p className="text-sm font-medium text-text-light-main dark:text-text-dark-main leading-relaxed pt-0.5">
-                        {step}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                <ol className="mt-4 space-y-5">
+                  {recette
+                    .split('\n')
+                    .filter((line) => line.trim() !== '')
+                    .map((step, idx) => (
+                      <li key={idx} className="flex gap-4 items-baseline">
+                        <span className="font-display italic text-3xl leading-none text-brand w-7 shrink-0 text-right">{idx + 1}</span>
+                        <p className="text-[15px] leading-relaxed">{step}</p>
+                      </li>
+                    ))}
+                </ol>
               ) : (
-                <p className="text-sm text-text-light-muted dark:text-text-dark-muted italic">
-                  Aucune instruction de préparation.
-                </p>
+                <p className="mt-3 text-sm italic text-text-light-muted dark:text-text-dark-muted">Aucune instruction de préparation.</p>
               )}
-            </div>
-
+            </section>
           </div>
         </div>
       </Drawer>

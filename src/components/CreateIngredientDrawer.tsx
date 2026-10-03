@@ -25,7 +25,7 @@ export default function CreateIngredientDrawer({ isOpen, onClose, initialName = 
       title={
         <div className="flex items-center gap-2 text-brand">
           <Tag className="h-5 w-5" />
-          <span className="font-extrabold text-lg">Nouvel ingrédient</span>
+          <span className="font-semibold text-lg">Nouvel ingrédient</span>
         </div>
       }
       maxWidth="sm:max-w-md"
@@ -99,7 +99,7 @@ function CreateIngredientForm({ initialName, onClose, onCreated }: Omit<CreateIn
                   onClick={() => setCategorie(key as CategorieIngredient)}
                   className={`flex items-center gap-2 px-3 py-2.5 text-xs font-semibold rounded-xl border text-left transition-all duration-300 cursor-pointer ${
                     isSelected
-                      ? 'bg-brand text-white border-brand shadow-xs shadow-brand/10'
+                      ? 'bg-brand text-ink border-brand shadow-xs shadow-brand/10'
                       : 'bg-bg-light dark:bg-bg-dark text-text-light-main dark:text-text-dark-main border-neutral-200/60 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800/40'
                   }`}
                 >
@@ -122,7 +122,7 @@ function CreateIngredientForm({ initialName, onClose, onCreated }: Omit<CreateIn
             type="button"
             onClick={handleSubmit}
             disabled={creating || !nom.trim()}
-            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-extrabold bg-brand hover:bg-brand-hover text-white rounded-input active:scale-95 transition-all cursor-pointer shadow-sm shadow-brand/20 disabled:opacity-60 disabled:pointer-events-none"
+            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-semibold bg-brand hover:bg-brand-hover text-ink rounded-input active:scale-95 transition-all cursor-pointer shadow-sm shadow-brand/20 disabled:opacity-60 disabled:pointer-events-none"
           >
             {creating ? (
               <>

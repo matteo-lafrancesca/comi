@@ -390,7 +390,7 @@ export default function PlanificationPage() {
             <span className="text-xs font-bold leading-normal">{actionError}</span>
             <button
               onClick={() => setActionError(null)}
-              className="text-text-light-muted dark:text-text-dark-muted hover:text-red-600 transition-colors font-extrabold text-xs cursor-pointer px-1.5 py-0.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/40"
+              className="text-text-light-muted dark:text-text-dark-muted hover:text-red-600 transition-colors font-semibold text-xs cursor-pointer px-1.5 py-0.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/40"
             >
               Fermer
             </button>
@@ -411,7 +411,7 @@ export default function PlanificationPage() {
                 )}
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-xs font-extrabold text-text-light-main dark:text-text-dark-main truncate">
+                <span className="text-xs font-semibold text-text-light-main dark:text-text-dark-main truncate">
                   Programmation rapide
                 </span>
                 <span className="text-[11px] text-text-light-muted dark:text-text-dark-muted font-medium truncate">
@@ -499,12 +499,12 @@ export default function PlanificationPage() {
                       : 'bg-neutral-100/50 dark:bg-neutral-800/40 border-neutral-200/10 dark:border-neutral-800/10'
                   }`}>
                     {isToday ? (
-                      <span className="block text-xs font-extrabold text-brand">
+                      <span className="block text-xs font-semibold text-brand">
                         Aujourd&apos;hui
                       </span>
                     ) : (
                       <>
-                        <span className="block text-xs font-extrabold capitalize text-text-light-main dark:text-text-dark-main">
+                        <span className="block text-xs font-semibold capitalize text-text-light-main dark:text-text-dark-main">
                           {dayLabels[idx]}
                         </span>
                         <span className="block text-[10px] font-bold text-text-light-muted dark:text-text-dark-muted mt-0.5">
@@ -560,7 +560,7 @@ export default function PlanificationPage() {
                 >
                   {/* Day Header */}
                   <div className="flex items-baseline gap-2 pb-2 border-b border-neutral-100 dark:border-neutral-800/40">
-                    <h3 className={`font-extrabold text-base capitalize ${isToday ? 'text-brand' : 'text-text-light-main dark:text-text-dark-main'}`}>
+                    <h3 className={`font-semibold text-base capitalize ${isToday ? 'text-brand' : 'text-text-light-main dark:text-text-dark-main'}`}>
                       {isToday ? "Aujourd'hui" : dayLabels[idx]}
                     </h3>
                     {!isToday && (

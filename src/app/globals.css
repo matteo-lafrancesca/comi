@@ -1,29 +1,52 @@
 @import "tailwindcss";
 
 @theme {
-  /* Jaune doré signature du logo */
+  /* Carnet de cuisine : papier chaud, encre brune, jaune d'œuf en surligneur */
   --color-brand: #FEB92D;
-  --color-brand-hover: #E5A420;
-  --color-brand-light: #FFF8E7;
+  --color-brand-hover: #F0A91A;
+  --color-brand-light: #FCEFCB;
+  --color-ink: #2A211A;
 
-  /* Thème Clair : Fonds chauds / textes sombres mais doux */
-  --color-bg-light: #FAF6F0;
-  --color-card-light: #FFFFFF;
-  --color-text-light-main: #1A1A1A;
-  --color-text-light-muted: #666666;
+  /* Thème clair */
+  --color-bg-light: #F4EEE2;
+  --color-card-light: #FBF8F1;
+  --color-text-light-main: #2A211A;
+  --color-text-light-muted: #7B6D5C;
 
-  /* Thème Sombre : Éviter le noir pur, utiliser des gris-moka très sombres */
-  --color-bg-dark: #121110;
-  --color-card-dark: #1C1A18;
-  --color-text-dark-main: #F5F5F5;
-  --color-text-dark-muted: #A09E9B;
+  /* Thème sombre : brun café, jamais de noir pur */
+  --color-bg-dark: #15120E;
+  --color-card-dark: #1E1A15;
+  --color-text-dark-main: #EFE7D8;
+  --color-text-dark-muted: #A39683;
 
-  /* Arrondis généreux et pilules */
-  --radius-card: 24px;
-  --radius-input: 9999px;
+  /* Neutres réchauffés (remplacent les gris froids par défaut) */
+  --color-neutral-50: #FAF6EE;
+  --color-neutral-100: #F1EADB;
+  --color-neutral-200: #E4DAC6;
+  --color-neutral-300: #D0C3AA;
+  --color-neutral-400: #A99B84;
+  --color-neutral-500: #857763;
+  --color-neutral-600: #675A49;
+  --color-neutral-700: #4D4236;
+  --color-neutral-800: #332B22;
+  --color-neutral-900: #231D17;
+  --color-neutral-950: #17130F;
 
-  /* Typographie */
-  --font-sans: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  /* Angles francs mais pas durs */
+  --radius-card: 14px;
+  --radius-input: 10px;
+
+  /* Ombres plates, teintées brun */
+  --shadow-xs: 0 1px 0 rgb(42 33 26 / 0.05);
+  --shadow-sm: 0 1px 2px rgb(42 33 26 / 0.08);
+  --shadow-md: 0 2px 6px -1px rgb(42 33 26 / 0.12);
+  --shadow-lg: 0 6px 16px -4px rgb(42 33 26 / 0.18);
+  --shadow-xl: 0 12px 28px -8px rgb(42 33 26 / 0.22);
+  --shadow-2xl: 0 20px 44px -12px rgb(42 33 26 / 0.3);
+
+  /* Typographie : titres en serif, texte en sans humaniste */
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
 }
 
 @variant dark (&:where(.dark, .dark *));
@@ -132,3 +155,21 @@ body {
   }
 }
 
+
+/* ─── Signature visuelle : surligneur jaune sous le texte ─── */
+@utility marker {
+  background-image: linear-gradient(transparent 62%, var(--color-brand) 62% 90%, transparent 90%);
+  background-repeat: no-repeat;
+}
+
+/* Étiquette de section : petites capitales espacées */
+@utility eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-light-muted);
+}
+.dark .eyebrow {
+  color: var(--color-text-dark-muted);
+}

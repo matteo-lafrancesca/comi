@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, ArrowUpDown, UtensilsCrossed, Plus, Loader2 } from 'lucide-react';
+import { Search, ArrowUpDown, Plus, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { RepasWithIngredients } from '@/types';
 import RepasCard from '@/components/RepasCard';
+import PageHeader from '@/components/PageHeader';
+import { buttonStyles } from '@/components/ui/button-styles';
 import RepasDetailModal from '@/components/RepasDetailModal';
 import SortDrawer from '@/components/SortDrawer';
 import { useNavigationCache } from '@/contexts/NavigationCacheContext';
@@ -269,7 +271,7 @@ export default function RepasPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div>
       {/* 🔔 Floating error notification */}
       {actionError && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full px-4 animate-fade-in">
@@ -277,7 +279,7 @@ export default function RepasPage() {
             <span className="text-xs font-bold leading-normal">{actionError}</span>
             <button
               onClick={() => setActionError(null)}
-              className="text-text-light-muted dark:text-text-dark-muted hover:text-red-600 transition-colors font-extrabold text-xs cursor-pointer px-1.5 py-0.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/40"
+              className="text-text-light-muted dark:text-text-dark-muted hover:text-red-600 transition-colors font-semibold text-xs cursor-pointer px-1.5 py-0.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/40"
             >
               Fermer
             </button>
@@ -287,24 +289,14 @@ export default function RepasPage() {
 
       {/* Banner de sélection pour la planification */}
       {selectMode && dateParam && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4.5 bg-brand-light dark:bg-brand/10 border border-brand/20 rounded-card animate-fade-in">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-brand/10 dark:bg-brand/20 flex items-center justify-center text-brand shrink-0">
-              <UtensilsCrossed className="h-5 w-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-extrabold text-text-light-main dark:text-text-dark-main">
-                Mode programmation actif
-              </span>
-              <span className="text-xs text-text-light-muted dark:text-text-dark-muted font-medium">
-                Choisissez un repas pour le{' '}
-                <span className="font-bold text-brand capitalize">
-                  {new Date(dateParam).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                </span>{' '}
-                ({parseInt(heureParam || '0', 10) === 0 ? 'Midi' : 'Soir'})
-              </span>
-            </div>
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 p-4 bg-brand-light dark:bg-brand/10 border-l-4 border-brand animate-fade-in">
+          <p className="text-sm text-text-light-main dark:text-text-dark-main">
+            Choisissez un repas pour le{' '}
+            <strong className="capitalize">
+              {new Date(dateParam).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </strong>{' '}
+            ({parseInt(heureParam || '0', 10) === 0 ? 'midi' : 'soir'})
+          </p>
           <button
             onClick={() => {
               let redirectUrl = '/planification';
@@ -314,50 +306,41 @@ export default function RepasPage() {
               router.push(redirectUrl);
             }}
             disabled={isSelecting}
-            className="w-full sm:w-auto px-5 py-2 text-xs font-bold bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-text-light-main dark:text-text-dark-main rounded-input transition-all active:scale-95 cursor-pointer text-center"
+            className={buttonStyles({ variant: 'secondary', size: 'sm' })}
           >
-            Annuler la sélection
+            Annuler
           </button>
         </div>
       )}
 
-      {/* Top Header Section */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-text-light-main dark:text-text-dark-main">
-          Mes repas
-        </h1>
-        <Link
-          href="/repas/nouveau"
-          className="flex items-center gap-2 px-4.5 py-2.5 text-sm font-bold bg-brand hover:bg-brand-hover text-white rounded-input hover:scale-[1.02] active:scale-95 transition-all duration-300 shadow-sm shadow-brand/20 cursor-pointer text-center"
-        >
-          <Plus className="h-4.5 w-4.5 shrink-0" />
-          <span>Nouveau repas</span>
-        </Link>
-      </div>
+      <PageHeader
+        title="Mes repas"
+        action={
+          <Link href="/repas/nouveau" className={buttonStyles({ size: 'sm' })}>
+            <Plus className="h-4 w-4" />
+            Nouveau
+          </Link>
+        }
+      />
 
-      {/* Toolbar / Search & Filter Controls */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-card-light dark:bg-card-dark p-4 rounded-card border border-neutral-200/40 dark:border-neutral-800/40 shadow-xs">
-        {/* Search Input */}
-        <div className="relative w-full sm:flex-1 sm:max-w-md">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-text-light-muted dark:text-text-dark-muted" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher un repas par titre..."
-            className="w-full pl-11 pr-6 py-2.5 text-sm transition-all border outline-none bg-bg-light dark:bg-bg-dark border-neutral-200/50 dark:border-neutral-800 rounded-input focus:border-brand dark:focus:border-brand focus:ring-1 focus:ring-brand text-text-light-main dark:text-text-dark-main placeholder:text-text-light-muted dark:placeholder:text-text-dark-muted"
-          />
-        </div>
-
-        {/* Sort Drawer Trigger Button */}
-        <button
-          onClick={() => setIsSortOpen(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold transition-all border outline-none bg-bg-light dark:bg-bg-dark border-neutral-200/50 dark:border-neutral-800 rounded-input hover:bg-neutral-50 dark:hover:bg-neutral-800/60 text-text-light-main dark:text-text-dark-main cursor-pointer shadow-xs active:scale-98"
-        >
-          <ArrowUpDown className="h-4 w-4 text-text-light-muted dark:text-text-dark-muted shrink-0" />
-          <span>Trier par : {getCurrentSortLabel()}</span>
-        </button>
+      {/* Recherche & tri */}
+      <div className="flex items-center gap-3 border-b border-neutral-300 dark:border-neutral-700 focus-within:border-text-light-main dark:focus-within:border-text-dark-main transition-colors">
+        <Search className="h-4 w-4 shrink-0 text-text-light-muted dark:text-text-dark-muted" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Rechercher une recette"
+          className="flex-1 min-w-0 py-3 text-base bg-transparent outline-none placeholder:text-text-light-muted dark:placeholder:text-text-dark-muted"
+        />
       </div>
+      <button
+        onClick={() => setIsSortOpen(true)}
+        className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-text-light-muted dark:text-text-dark-muted hover:text-text-light-main dark:hover:text-text-dark-main cursor-pointer"
+      >
+        <ArrowUpDown className="h-3.5 w-3.5" />
+        Trié par : {getCurrentSortLabel().toLowerCase()}
+      </button>
 
       {/* Main Grid Content Area */}
       {loading ? (
@@ -381,24 +364,20 @@ export default function RepasPage() {
         </div>
       ) : repasList.length === 0 ? (
         /* Empty State */
-        <div className="flex flex-col items-center justify-center py-14 px-6 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-card bg-card-light/20 dark:bg-card-dark/5 max-w-md mx-auto text-center mt-6">
-          <div className="p-4 bg-brand-light dark:bg-brand/10 text-brand rounded-full mb-4">
-            <UtensilsCrossed className="h-8 w-8 stroke-[1.5]" />
-          </div>
-          <h3 className="text-lg font-bold text-text-light-main dark:text-text-dark-main">
-            Aucun repas trouvé
-          </h3>
-          <p className="text-sm text-text-light-muted dark:text-text-dark-muted mt-2 font-medium">
-            {searchQuery 
-              ? "Aucun résultat ne correspond à votre recherche. Essayez d'autres mots-clés ou modifiez vos filtres." 
-              : "Vous n'avez pas encore enregistré de repas dans votre carnet de recettes."
-            }
+        <div className="py-20 max-w-sm">
+          <p className="font-display text-2xl leading-snug">
+            {searchQuery ? 'Rien ne correspond à cette recherche.' : 'Votre carnet est vide.'}
           </p>
+          {!searchQuery && (
+            <p className="mt-2 text-sm text-text-light-muted dark:text-text-dark-muted">
+              Ajoutez une première recette avec le bouton « Nouveau ».
+            </p>
+          )}
         </div>
       ) : (
         /* Meals Grid List */
         <div className="space-y-6">
-          <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 animate-fade-in transition-opacity duration-200 ${isRefetching ? 'opacity-50' : ''}`}>
+          <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-6 mt-8 animate-fade-in transition-opacity duration-200 ${isRefetching ? 'opacity-50' : ''}`}>
             {repasList.map((repas) => (
               <RepasCard
                 key={repas.id}

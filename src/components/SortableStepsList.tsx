@@ -359,7 +359,7 @@ export default function SortableStepsList({ steps, onChange }: SortableStepsList
               </button>
 
               {/* Numéro */}
-              <span className="flex items-center justify-center shrink-0 w-6 h-6 rounded-full bg-brand-light dark:bg-brand/10 text-brand text-xs font-extrabold border border-brand/15 mt-1.5 select-none">
+              <span className="flex items-center justify-center shrink-0 w-6 h-6 rounded-full bg-brand-light dark:bg-brand/10 text-brand text-xs font-semibold border border-brand/15 mt-1.5 select-none">
                 {idx + 1}
               </span>
 

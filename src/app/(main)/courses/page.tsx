@@ -298,7 +298,7 @@ export default function CoursesPage() {
             <span className="text-xs font-bold leading-normal">{actionError}</span>
             <button
               onClick={() => setActionError(null)}
-              className="text-text-light-muted dark:text-text-dark-muted hover:text-red-600 transition-colors font-extrabold text-xs cursor-pointer px-1.5 py-0.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/40"
+              className="text-text-light-muted dark:text-text-dark-muted hover:text-red-600 transition-colors font-semibold text-xs cursor-pointer px-1.5 py-0.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/40"
             >
               Fermer
             </button>
@@ -330,7 +330,7 @@ export default function CoursesPage() {
         </h1>
         <button
           onClick={() => setIsAddDrawerOpen(true)}
-          className="flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-extrabold transition-all duration-300 bg-brand hover:bg-brand-hover text-white rounded-input hover:scale-[1.02] active:scale-95 shadow-sm shadow-brand/20 cursor-pointer"
+          className="flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-300 bg-brand hover:bg-brand-hover text-ink rounded-input active:scale-95 shadow-sm shadow-brand/20 cursor-pointer"
         >
           <span>Ajouter un article / repas</span>
         </button>
@@ -377,13 +377,13 @@ export default function CoursesPage() {
           <div className="flex flex-col sm:flex-row gap-3 mt-6 w-full max-w-xs justify-center">
             <button
               onClick={() => router.push('/planification')}
-              className="px-5 py-2.5 text-sm font-bold bg-brand hover:bg-brand-hover text-white rounded-input hover:scale-[1.02] active:scale-95 transition-all duration-300 shadow-sm shadow-brand/20 cursor-pointer text-center"
+              className="px-5 py-2.5 text-sm font-bold bg-brand hover:bg-brand-hover text-ink rounded-input active:scale-95 transition-all duration-300 shadow-sm shadow-brand/20 cursor-pointer text-center"
             >
               Planifier mes repas
             </button>
             <button
               onClick={() => setIsAddDrawerOpen(true)}
-              className="px-5 py-2.5 text-sm font-bold bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-text-light-main dark:text-text-dark-main rounded-input hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer text-center"
+              className="px-5 py-2.5 text-sm font-bold bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-text-light-main dark:text-text-dark-main rounded-input active:scale-95 transition-all duration-300 cursor-pointer text-center"
             >
               Ajouter manuellement
             </button>
@@ -396,7 +396,7 @@ export default function CoursesPage() {
           {extras.length > 0 && (
             <div className="bg-card-light dark:bg-card-dark p-5 rounded-card border border-neutral-200/40 dark:border-neutral-800/40 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-neutral-100 dark:border-neutral-800/50">
-                <h2 className="text-sm font-extrabold text-text-light-main dark:text-text-dark-main flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-text-light-main dark:text-text-dark-main flex items-center gap-2">
                   <ShoppingBag className="h-4.5 w-4.5 text-brand shrink-0" />
                   <span>Hors-planning ({extras.length})</span>
                 </h2>
@@ -469,7 +469,7 @@ export default function CoursesPage() {
                       <div className="h-9 w-9 rounded-xl bg-brand-light dark:bg-brand/10 text-brand flex items-center justify-center shrink-0 print:hidden">
                         <IconComponent className="h-5 w-5" />
                       </div>
-                      <h2 className="text-base font-extrabold text-text-light-main dark:text-text-dark-main print:text-lg">
+                      <h2 className="text-base font-semibold text-text-light-main dark:text-text-dark-main print:text-lg">
                         {group.label}
                       </h2>
                     </div>
@@ -486,7 +486,7 @@ export default function CoursesPage() {
                         {/* Custom checkbox */}
                         <div className={`h-5 w-5 rounded-md border flex items-center justify-center shrink-0 transition-all duration-300 print:border-neutral-400 ${
                           item.isChecked
-                            ? 'bg-brand border-brand text-white scale-100 shadow-xs shadow-brand/10'
+                            ? 'bg-brand border-brand text-ink scale-100 shadow-xs shadow-brand/10'
                             : 'border-neutral-300 dark:border-neutral-700 bg-transparent scale-100'
                         }`}>
                           {item.isChecked && (

@@ -150,7 +150,7 @@ export default function NouveauRepasPage() {
             <span className="text-xs font-bold text-text-light-muted dark:text-text-dark-muted uppercase tracking-wider">
               Mes recettes
             </span>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-text-light-main dark:text-text-dark-main">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-text-light-main dark:text-text-dark-main">
               Créer un repas
             </h1>
           </div>
@@ -161,7 +161,7 @@ export default function NouveauRepasPage() {
           <button
             type="button"
             onClick={() => setCreationMode('manuel')}
-            className="flex flex-col items-center justify-center p-8 bg-card-light dark:bg-card-dark border border-neutral-200/40 dark:border-neutral-800/40 rounded-card shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer group min-h-[250px] text-center"
+            className="flex flex-col items-center justify-center p-8 bg-card-light dark:bg-card-dark border border-neutral-200/40 dark:border-neutral-800/40 rounded-card shadow-xs hover:shadow-md active:scale-95 transition-all duration-300 cursor-pointer group min-h-[250px] text-center"
           >
             <div className="p-5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-text-light-muted dark:text-text-dark-muted mb-4 group-hover:bg-brand/10 group-hover:text-brand transition-colors duration-300">
               <Plus className="h-8 w-8 stroke-[1.5]" />
@@ -178,7 +178,7 @@ export default function NouveauRepasPage() {
           <button
             type="button"
             onClick={() => setCreationMode('ia_upload')}
-            className="flex flex-col items-center justify-center p-8 bg-card-light dark:bg-card-dark border border-neutral-200/40 dark:border-neutral-800/40 rounded-card shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer group min-h-[250px] text-center"
+            className="flex flex-col items-center justify-center p-8 bg-card-light dark:bg-card-dark border border-neutral-200/40 dark:border-neutral-800/40 rounded-card shadow-xs hover:shadow-md active:scale-95 transition-all duration-300 cursor-pointer group min-h-[250px] text-center"
           >
             <div className="p-5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-text-light-muted dark:text-text-dark-muted mb-4 group-hover:bg-brand/10 group-hover:text-brand transition-colors duration-300 relative">
               <Camera className="h-8 w-8 stroke-[1.5]" />
@@ -218,7 +218,7 @@ export default function NouveauRepasPage() {
             <span className="text-xs font-bold text-text-light-muted dark:text-text-dark-muted uppercase tracking-wider">
               Analyse photo par IA
             </span>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-text-light-main dark:text-text-dark-main">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-text-light-main dark:text-text-dark-main">
               Importer la photo du plat
             </h1>
           </div>
@@ -324,7 +324,7 @@ export default function NouveauRepasPage() {
               type="button"
               onClick={handleAnalyzeImage}
               disabled={!selectedImageFile || isAnalyzing}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 text-sm font-extrabold bg-brand hover:bg-brand-hover text-white rounded-input active:scale-95 transition-all duration-300 cursor-pointer shadow-md shadow-brand/20 disabled:opacity-50 disabled:pointer-events-none"
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold bg-brand hover:bg-brand-hover text-ink rounded-input active:scale-95 transition-all duration-300 cursor-pointer shadow-md shadow-brand/20 disabled:opacity-50 disabled:pointer-events-none"
             >
               {isAnalyzing ? (
                 <>
@@ -375,7 +375,7 @@ export default function NouveauRepasPage() {
           <span className="text-xs font-bold text-text-light-muted dark:text-text-dark-muted uppercase tracking-wider">
             Mes recettes {creationMode === 'ia_form' && '• IA'}
           </span>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-text-light-main dark:text-text-dark-main">
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-text-light-main dark:text-text-dark-main">
             Créer un repas {creationMode === 'ia_form' && "avec l'IA"}
           </h1>
         </div>

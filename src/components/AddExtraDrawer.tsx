@@ -171,7 +171,7 @@ function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps
           <button
             type="button"
             onClick={() => switchTab('repas')}
-            className={`flex-1 py-2 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
+            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               activeTab === 'repas'
                 ? 'bg-white dark:bg-neutral-800 text-brand shadow-xs'
                 : 'text-text-light-muted dark:text-text-dark-muted hover:text-text-light-main dark:hover:text-text-dark-main'
@@ -182,7 +182,7 @@ function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps
           <button
             type="button"
             onClick={() => switchTab('ingredient')}
-            className={`flex-1 py-2 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
+            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               activeTab === 'ingredient'
                 ? 'bg-white dark:bg-neutral-800 text-brand shadow-xs'
                 : 'text-text-light-muted dark:text-text-dark-muted hover:text-text-light-main dark:hover:text-text-dark-main'
@@ -194,7 +194,7 @@ function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps
 
         {/* Form error */}
         {formError && (
-          <div className="p-3 text-xs font-extrabold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/30 rounded-xl leading-normal shrink-0">
+          <div className="p-3 text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/30 rounded-xl leading-normal shrink-0">
             {formError}
           </div>
         )}
@@ -204,7 +204,7 @@ function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps
             /* Repas tab */
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-extrabold text-text-light-main dark:text-text-dark-main">
+                <label className="text-xs font-semibold text-text-light-main dark:text-text-dark-main">
                   Sélectionner un repas
                 </label>
                 <input
@@ -234,7 +234,7 @@ function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps
                         onClick={() => setSelectedRepasId(meal.id.toString())}
                         className={`w-full flex items-center gap-3 p-2.5 rounded-xl border transition-all text-left cursor-pointer ${
                           selectedRepasId === meal.id.toString()
-                            ? 'border-brand bg-brand text-white shadow-xs hover:bg-brand-hover'
+                            ? 'border-brand bg-brand text-ink shadow-xs hover:bg-brand-hover'
                             : 'border-neutral-200/50 dark:border-neutral-800/25 hover:bg-neutral-100 dark:hover:bg-neutral-800/40 text-text-light-main dark:text-text-dark-main'
                         }`}
                       >
@@ -281,7 +281,7 @@ function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps
               ) : (
                 /* Search field */
                 <div className="space-y-1.5 relative">
-                  <label className="text-xs font-extrabold text-text-light-main dark:text-text-dark-main">
+                  <label className="text-xs font-semibold text-text-light-main dark:text-text-dark-main">
                     Rechercher ou ajouter un article
                   </label>
                   <div className="relative">
@@ -313,7 +313,7 @@ function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps
                                 setIngredientNameInput(suggestion.nom);
                                 setShowSuggestions(false);
                               }}
-                              className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-extrabold hover:bg-neutral-50 dark:hover:bg-neutral-800 text-text-light-main dark:text-text-dark-main cursor-pointer"
+                              className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-semibold hover:bg-neutral-50 dark:hover:bg-neutral-800 text-text-light-main dark:text-text-dark-main cursor-pointer"
                             >
                               <span>{suggestion.nom}</span>
                               <span className="text-[9px] text-brand px-2 py-0.5 bg-brand-light dark:bg-brand/10 border border-brand/15 rounded-full font-bold">
@@ -347,12 +347,12 @@ function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps
                                 <Plus className="h-4 w-4 text-brand shrink-0" />
                                 <span>
                                   Ajouter{' '}
-                                  <span className="font-extrabold text-brand">
+                                  <span className="font-semibold text-brand">
                                     &quot;{ingredientNameInput.trim()}&quot;
                                   </span>
                                 </span>
                               </div>
-                              <span className="text-[9px] font-extrabold px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 text-text-light-muted dark:text-text-dark-muted rounded-full uppercase shrink-0">
+                              <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 text-text-light-muted dark:text-text-dark-muted rounded-full uppercase shrink-0">
                                 Nouveau
                               </span>
                             </button>
@@ -367,7 +367,7 @@ function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps
               {/* Quantity / Unit fields — shown once an ingredient is selected */}
               {selectedIngredient && (
                 <div className="space-y-1.5 animate-fade-in">
-                  <label className="text-xs font-extrabold text-text-light-main dark:text-text-dark-main">
+                  <label className="text-xs font-semibold text-text-light-main dark:text-text-dark-main">
                     Quantité / Unité
                   </label>
                   <div className="flex items-center border border-neutral-200 dark:border-neutral-800 rounded-xl bg-card-light dark:bg-card-dark focus-within:border-brand overflow-hidden h-10 w-full transition-all">
@@ -396,7 +396,7 @@ function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps
           <button
             type="submit"
             disabled={adding}
-            className="w-full py-3 bg-brand hover:bg-brand-hover text-white font-extrabold rounded-input flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50 disabled:scale-100 cursor-pointer shadow-md shadow-brand/10"
+            className="w-full py-3 bg-brand hover:bg-brand-hover text-ink font-semibold rounded-input flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 cursor-pointer shadow-md shadow-brand/10"
           >
             {adding ? (
               <>

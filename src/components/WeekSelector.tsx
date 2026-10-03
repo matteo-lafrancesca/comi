@@ -36,7 +36,7 @@ export default function WeekSelector({
       </button>
 
       <div className="text-center print:text-left">
-        <span className="block text-sm font-extrabold text-text-light-main dark:text-text-dark-main print:text-xl">
+        <span className="block text-sm font-semibold text-text-light-main dark:text-text-dark-main print:text-xl">
           Semaine {week}
         </span>
         <span className="block text-xs font-medium text-text-light-muted dark:text-text-dark-muted print:text-sm">

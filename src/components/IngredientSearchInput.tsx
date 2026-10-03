@@ -136,10 +136,10 @@ export default function IngredientSearchInput({
                   <Plus className="h-4.5 w-4.5" />
                 </div>
                 <span className="font-semibold">
-                  Ajouter <span className="font-extrabold text-brand">&quot;{searchQuery}&quot;</span> au dictionnaire
+                  Ajouter <span className="font-semibold text-brand">&quot;{searchQuery}&quot;</span> au dictionnaire
                 </span>
               </div>
-              <span className="text-[10px] uppercase font-extrabold px-2.5 py-1 bg-neutral-100 dark:bg-neutral-800 text-text-light-muted dark:text-text-dark-muted rounded-full">
+              <span className="text-[10px] uppercase font-semibold px-2.5 py-1 bg-neutral-100 dark:bg-neutral-800 text-text-light-muted dark:text-text-dark-muted rounded-full">
                 Nouveau
               </span>
             </button>

@@ -82,7 +82,7 @@ export default function RepasFormSteps({
 
         {/* ── Indicateur d'étape ── */}
         <div className="flex items-center justify-between pb-2 border-b border-neutral-100 dark:border-neutral-800/20">
-          <span className="font-extrabold text-sm text-text-light-main dark:text-text-dark-main">
+          <span className="font-semibold text-sm text-text-light-main dark:text-text-dark-main">
             Étape {step} sur 3
           </span>
           <span className="text-xs font-bold text-text-light-muted dark:text-text-dark-muted">
@@ -289,7 +289,7 @@ export default function RepasFormSteps({
               type="button"
               onClick={onSubmit}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 text-sm font-extrabold bg-brand hover:bg-brand-hover text-white rounded-input active:scale-95 transition-all duration-300 cursor-pointer shadow-md shadow-brand/20 disabled:opacity-60 disabled:pointer-events-none"
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold bg-brand hover:bg-brand-hover text-ink rounded-input active:scale-95 transition-all duration-300 cursor-pointer shadow-md shadow-brand/20 disabled:opacity-60 disabled:pointer-events-none"
             >
               {loading ? (
                 <>

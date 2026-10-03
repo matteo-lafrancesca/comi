@@ -148,7 +148,7 @@ export default function ModifierRepasPage() {
           <span className="text-xs font-bold text-text-light-muted dark:text-text-dark-muted uppercase tracking-wider">
             Mes recettes
           </span>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-text-light-main dark:text-text-dark-main flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-text-light-main dark:text-text-dark-main flex items-center gap-2">
             <Pencil className="h-6 w-6 text-brand" />
             Modifier le repas
           </h1>

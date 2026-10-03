@@ -36,7 +36,7 @@ export default function ParametresPage() {
       {/* ── Section Apparence ── */}
       <section className="bg-card-light dark:bg-card-dark rounded-card border border-neutral-200/40 dark:border-neutral-800/40 shadow-xs overflow-hidden">
         <div className="px-5 py-3.5 border-b border-neutral-100 dark:border-neutral-800/40">
-          <h2 className="text-xs font-extrabold uppercase tracking-widest text-text-light-muted dark:text-text-dark-muted">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-text-light-muted dark:text-text-dark-muted">
             Apparence
           </h2>
         </div>
@@ -74,7 +74,7 @@ export default function ParametresPage() {
       {/* ── Section Planning ── */}
       <section className="bg-card-light dark:bg-card-dark rounded-card border border-neutral-200/40 dark:border-neutral-800/40 shadow-xs overflow-hidden">
         <div className="px-5 py-3.5 border-b border-neutral-100 dark:border-neutral-800/40">
-          <h2 className="text-xs font-extrabold uppercase tracking-widest text-text-light-muted dark:text-text-dark-muted">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-text-light-muted dark:text-text-dark-muted">
             Planning
           </h2>
         </div>
@@ -100,7 +100,7 @@ export default function ParametresPage() {
                   onClick={() => setWeekStartDay(idx)}
                   className={`flex-shrink-0 snap-start px-3.5 py-2 rounded-input text-xs font-bold transition-all duration-200 cursor-pointer active:scale-95 ${
                     isSelected
-                      ? 'bg-brand text-white shadow-sm shadow-brand/25'
+                      ? 'bg-brand text-ink shadow-sm shadow-brand/25'
                       : 'bg-neutral-100 dark:bg-neutral-800 text-text-light-muted dark:text-text-dark-muted hover:bg-neutral-200 dark:hover:bg-neutral-700'
                   }`}
                 >
@@ -115,7 +115,7 @@ export default function ParametresPage() {
       {/* ── Section Compte ── */}
       <section className="bg-card-light dark:bg-card-dark rounded-card border border-neutral-200/40 dark:border-neutral-800/40 shadow-xs overflow-hidden">
         <div className="px-5 py-3.5 border-b border-neutral-100 dark:border-neutral-800/40">
-          <h2 className="text-xs font-extrabold uppercase tracking-widest text-text-light-muted dark:text-text-dark-muted">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-text-light-muted dark:text-text-dark-muted">
             Compte
           </h2>
         </div>
