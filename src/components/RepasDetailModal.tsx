@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { errorMessage } from '@/lib/errors';
 import Image from 'next/image';
 import { Utensils, ShoppingBasket, BookOpen, Pencil, Trash2, Loader2, RefreshCw, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -89,8 +90,8 @@ export default function RepasDetailModal({
       if (onUnschedule) {
         await onUnschedule(programmationId);
       }
-    } catch (err: any) {
-      alert(err.message || 'Une erreur est survenue lors de la déprogrammation.');
+    } catch (err) {
+      alert(errorMessage(err, 'Une erreur est survenue lors de la déprogrammation.'));
     } finally {
       setIsUnscheduling(false);
     }
@@ -109,8 +110,8 @@ export default function RepasDetailModal({
 
       onClose();
       if (onDeleted) onDeleted(id);
-    } catch (err: any) {
-      setDeleteError(err.message || 'Une erreur est survenue.');
+    } catch (err) {
+      setDeleteError(errorMessage(err, 'Une erreur est survenue.'));
     } finally {
       setIsDeleting(false);
     }

@@ -53,7 +53,6 @@ export default function RepasFormSteps({
     setTitre,
     photoUrl,
     localPreviewUrl,
-    selectedImageFile,
     isDragging,
     fileInputRef,
     isUploading,

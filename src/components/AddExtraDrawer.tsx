@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { errorMessage } from '@/lib/errors';
 import { Loader2, Utensils, Search, Plus, X } from 'lucide-react';
 import { CategorieIngredient, CATEGORY_DETAILS, normalizeCategory } from '@/types';
 import Drawer from '@/components/Drawer';
-import { formatIngredient } from '@/lib/shopping-list-utils';
 import { normalizeSearchText } from '@/lib/string-utils';
 import { apiFetch } from '@/lib/api';
 
@@ -17,20 +17,45 @@ interface AddExtraDrawerProps {
   onAdded: () => void;
 }
 
-export default function AddExtraDrawer({
-  isOpen,
-  onClose,
-  week,
-  year,
-  onAdded,
-}: AddExtraDrawerProps) {
+interface MealOption {
+  id: number;
+  titre: string;
+  photoUrl: string | null;
+}
+
+interface IngredientSuggestion {
+  id: number;
+  nom: string;
+  categorie: string;
+}
+
+interface ExtraPayload {
+  week: number;
+  year: number;
+  repasId?: number;
+  ingredientName?: string;
+  categorie?: string;
+  quantite?: number;
+  unite?: string;
+}
+
+/** Drawer d'ajout hors-planning. Le formulaire n'est monté que drawer ouvert : son état repart de zéro à chaque ouverture. */
+export default function AddExtraDrawer({ isOpen, onClose, week, year, onAdded }: AddExtraDrawerProps) {
+  return (
+    <Drawer isOpen={isOpen} onClose={onClose} title="Ajouter un article ou repas" maxWidth="sm:max-w-md">
+      <AddExtraForm onClose={onClose} week={week} year={year} onAdded={onAdded} />
+    </Drawer>
+  );
+}
+
+function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps, 'isOpen'>) {
   const [activeTab, setActiveTab] = useState<'repas' | 'ingredient'>('repas');
   const [formError, setFormError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
   // Repas tab
-  const [allMeals, setAllMeals] = useState<any[]>([]);
-  const [loadingMeals, setLoadingMeals] = useState(false);
+  const [allMeals, setAllMeals] = useState<MealOption[]>([]);
+  const [loadingMeals, setLoadingMeals] = useState(true);
   const [selectedRepasId, setSelectedRepasId] = useState('');
   const [searchMealQuery, setSearchMealQuery] = useState('');
 
@@ -41,39 +66,22 @@ export default function AddExtraDrawer({
     categorie: string;
   } | null>(null);
   const [ingredientNameInput, setIngredientNameInput] = useState('');
-  const [ingredientCategory, setIngredientCategory] = useState<CategorieIngredient>('epicerie-salee');
   const [ingredientQuantity, setIngredientQuantity] = useState('');
   const [ingredientUnite, setIngredientUnite] = useState('');
-  const [ingredientSuggestions, setIngredientSuggestions] = useState<any[]>([]);
+  const [ingredientSuggestions, setIngredientSuggestions] = useState<IngredientSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Load meals when drawer opens
   useEffect(() => {
-    if (isOpen) {
-      const fetchMeals = async () => {
-        try {
-          setLoadingMeals(true);
-          const res = await apiFetch('/api/repas');
-          if (res.ok) {
-            const data = await res.json();
-            setAllMeals(data.repas || []);
-          }
-        } catch (err) {
-          console.error(err);
-        } finally {
-          setLoadingMeals(false);
-        }
-      };
-      fetchMeals();
-    }
-  }, [isOpen]);
+    apiFetch('/api/repas')
+      .then((res) => (res.ok ? res.json() : { repas: [] }))
+      .then((data) => setAllMeals(data.repas || []))
+      .catch(console.error)
+      .finally(() => setLoadingMeals(false));
+  }, []);
 
   // Autocomplete for ingredient names
   useEffect(() => {
-    if (ingredientNameInput.trim().length < 2) {
-      setIngredientSuggestions([]);
-      return;
-    }
+    if (ingredientNameInput.trim().length < 2) return;
     const timer = setTimeout(async () => {
       try {
         const res = await apiFetch(`/api/ingredients?search=${encodeURIComponent(ingredientNameInput)}`);
@@ -95,12 +103,12 @@ export default function AddExtraDrawer({
     return () => window.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Reset form on open/close or tab switch
-  useEffect(() => {
+  const switchTab = (tab: 'repas' | 'ingredient') => {
+    setActiveTab(tab);
     setFormError(null);
     setSelectedIngredient(null);
     setIngredientNameInput('');
-  }, [isOpen, activeTab]);
+  };
 
   const filteredMeals = useMemo(() => {
     if (!searchMealQuery.trim()) return allMeals;
@@ -115,7 +123,7 @@ export default function AddExtraDrawer({
     setFormError(null);
     setAdding(true);
     try {
-      let body: any = { week, year };
+      const body: ExtraPayload = { week, year };
 
       if (activeTab === 'repas') {
         if (!selectedRepasId) {
@@ -147,34 +155,22 @@ export default function AddExtraDrawer({
         throw new Error(errData.error || "Erreur lors de l'ajout.");
       }
 
-      // Reset
-      setSelectedRepasId('');
-      setSelectedIngredient(null);
-      setIngredientNameInput('');
-      setIngredientQuantity('');
-      setIngredientUnite('');
       onClose();
       onAdded();
-    } catch (err: any) {
-      setFormError(err.message || 'Une erreur est survenue.');
+    } catch (err) {
+      setFormError(errorMessage(err, 'Une erreur est survenue.'));
     } finally {
       setAdding(false);
     }
   };
 
   return (
-    <Drawer
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Ajouter un article ou repas"
-      maxWidth="sm:max-w-md"
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Tabs */}
         <div className="flex bg-neutral-100 dark:bg-neutral-900/80 p-1 rounded-xl">
           <button
             type="button"
-            onClick={() => setActiveTab('repas')}
+            onClick={() => switchTab('repas')}
             className={`flex-1 py-2 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
               activeTab === 'repas'
                 ? 'bg-white dark:bg-neutral-800 text-brand shadow-xs'
@@ -185,7 +181,7 @@ export default function AddExtraDrawer({
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('ingredient')}
+            onClick={() => switchTab('ingredient')}
             className={`flex-1 py-2 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
               activeTab === 'ingredient'
                 ? 'bg-white dark:bg-neutral-800 text-brand shadow-xs'
@@ -413,6 +409,5 @@ export default function AddExtraDrawer({
           </button>
         </form>
       </div>
-    </Drawer>
   );
 }

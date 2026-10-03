@@ -19,7 +19,7 @@ import {
   Apple,
   Utensils,
 } from 'lucide-react';
-import { CategorieIngredient, CATEGORY_DETAILS, normalizeCategory, CategoryGroup, ShoppingListExtraItem } from '@/types';
+import { CategorieIngredient, CategoryGroup, ShoppingListExtraItem } from '@/types';
 import { getDatesForISOWeek, getCustomWeekRange, getAdjacentWeek } from '@/lib/date-utils';
 
 import { formatIngredient } from '@/lib/shopping-list-utils';

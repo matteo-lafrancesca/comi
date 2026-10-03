@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { errorMessage } from '@/lib/errors';
 import { useRouter } from 'next/navigation';
 import {
   Plus,
@@ -104,9 +105,9 @@ export default function NouveauRepasPage() {
       let finalPhotoUrl: string | null;
       try {
         finalPhotoUrl = await form.uploadImageIfNeeded();
-      } catch (err: any) {
+      } catch (err) {
         throw new Error(
-          `Échec du traitement/téléversement de l'image: ${err.message || err}`
+          `Échec du traitement/téléversement de l'image: ${errorMessage(err, String(err))}`
         );
       }
 
@@ -125,8 +126,8 @@ export default function NouveauRepasPage() {
 
       invalidateRepasCache();
       router.push('/repas');
-    } catch (err: any) {
-      form.setError(err.message || 'Une erreur inattendue est survenue.');
+    } catch (err) {
+      form.setError(errorMessage(err, 'Une erreur inattendue est survenue.'));
     } finally {
       form.setLoading(false);
     }

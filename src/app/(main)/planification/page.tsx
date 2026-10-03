@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { 
-  Utensils, 
   CalendarDays,
   CalendarPlus,
   Loader2
@@ -514,7 +513,7 @@ export default function PlanificationPage() {
                   }`}>
                     {isToday ? (
                       <span className="block text-xs font-extrabold text-brand">
-                        Aujourd'hui
+                        Aujourd&apos;hui
                       </span>
                     ) : (
                       <>

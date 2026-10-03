@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { errorMessage } from '@/lib/errors';
 import { Tag, Check, Loader2 } from 'lucide-react';
 import { CATEGORY_DETAILS, CategorieIngredient, normalizeCategory } from '@/types';
 import Drawer from '@/components/Drawer';
@@ -52,8 +53,8 @@ export default function CreateIngredientDrawer({
       const created: IngredientSuggestion = await res.json();
       onCreated(created);
       onClose();
-    } catch (err: any) {
-      alert(err.message || "Une erreur est survenue lors de la création de l'ingrédient.");
+    } catch (err) {
+      alert(errorMessage(err, "Une erreur est survenue lors de la création de l'ingrédient."));
     } finally {
       setCreating(false);
     }

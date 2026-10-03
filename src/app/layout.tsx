@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -80,7 +80,7 @@ export default function RootLayout({
           </svg>
           <h2 className="text-xl font-bold mb-2">Orientation non supportée</h2>
           <p className="text-sm text-text-light-muted dark:text-text-dark-muted max-w-xs">
-            Veuillez tourner votre appareil en mode portrait pour utiliser l'application.
+            Veuillez tourner votre appareil en mode portrait pour utiliser l&apos;application.
           </p>
         </div>
 

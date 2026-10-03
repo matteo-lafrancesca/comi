@@ -52,7 +52,7 @@ export default function ConfirmDeleteDrawer({
           {message}{highlightedName ? (
             <>
               {' '}
-              <span className="font-extrabold">"{highlightedName}"</span>
+              <span className="font-extrabold">&quot;{highlightedName}&quot;</span>
             </>
           ) : null} ?
           {warningText && (
