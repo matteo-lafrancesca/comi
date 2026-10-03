@@ -4,10 +4,10 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { db } from './db';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-at-least-32-chars-long';
+const JWT_SECRET = process.env.JWT_SECRET;
 
-if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
-  throw new Error('JWT_SECRET environment variable is required in production.');
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required.');
 }
 
 /** Clé de signature/vérification des JWT (partagée avec le proxy). */

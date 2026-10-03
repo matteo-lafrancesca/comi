@@ -6,10 +6,9 @@ Classée par risque, puis valeur, puis effort. Mis à jour après la passe de ne
 
 | # | Sujet | Détail | Effort |
 |---|---|---|---|
-| 1 | Aucun test | Ni unitaire ni e2e. Les routes critiques (`api/planning`, `api/shopping-list`, auth) et `lib/date-utils.ts` (semaines personnalisées) sont les premières à couvrir. | M |
-| 2 | Secret JWT de repli en dev | `src/lib/auth.ts` retombe sur une constante si `JWT_SECRET` est absent hors production. Acceptable en local ; à rendre bloquant partout si l'app est exposée. | S |
+| 1 | Tests partiels | `npm test` (node:test + tsx) couvre `lib/date-utils.ts` et la signature/vérification JWT. Restent sans test : `api/planning`, `api/shopping-list`, routes d'auth (nécessitent une base de test ou un mock Prisma). | M |
 | 3 | `POST /api/repas` : un 500 isolé | Observé une fois (création de 6 repas à la suite, aucune reproduction ensuite). Soupçon : course sur la création d'ingrédients partagés. À investiguer dans `src/app/api/repas/route.ts`. | S |
-| 4 | Garde-fous auth à auditer | Limitation de débit sur login/register, politique de mot de passe (6 caractères min.), durée des refresh tokens : non vérifiés dans cette passe. | M |
+| 4 | Garde-fous auth (audit fait, corrections à valider) | (a) aucune limitation de débit sur `login`/`register` : brute force possible ; (b) mot de passe : 6 caractères min., pas de max (bcrypt tronque à 72 octets) ; (c) refresh token : stocké en clair en base, jamais renouvelé (même valeur 30 jours glissants), pas de purge des expirés ; (d) `login` ne lance pas bcrypt si l'email est inconnu (écart de temps = énumération) et `register` révèle les emails existants ; (e) échecs de login renvoyés en 400 au lieu de 401. Corriger (a), (c) puis (d) en priorité. | M |
 
 ## Valeur / maintenabilité
 

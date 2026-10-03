@@ -1,3 +1,4 @@
+import './env';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SignJWT } from 'jose';
@@ -18,6 +19,6 @@ test('JWT : refuse un token falsifié, expiré ou mal signé', async () => {
   const old = await new SignJWT({ userId: 1, email: 'x' })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime(Math.floor(Date.now() / 1000) - 10)
-    .sign(new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-at-least-32-chars-long'));
+    .sign(new TextEncoder().encode(process.env.JWT_SECRET!));
   assert.equal(await verifyJWT(old), null);
 });
