@@ -155,7 +155,7 @@ export function getCustomWeekRange(
   const refDay = parisDate.getDay(); // 0=Dim, 1=Lun, ...
 
   // Nombre de jours à reculer pour atteindre le début de la semaine personnalisée
-  let diff = (refDay - jsWeekStartDay + 7) % 7;
+  const diff = (refDay - jsWeekStartDay + 7) % 7;
 
   const start = new Date(parisDate);
   start.setDate(parisDate.getDate() - diff);

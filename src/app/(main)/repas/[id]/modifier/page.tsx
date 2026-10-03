@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { errorMessage } from '@/lib/errors';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Pencil } from 'lucide-react';
-import Link from 'next/link';
 import { CategorieIngredient, RepasWithIngredients } from '@/types';
 import { useNavigationCache } from '@/contexts/NavigationCacheContext';
 import { useRepasForm } from '@/hooks/useRepasForm';
 import RepasFormSteps from '@/components/RepasFormSteps';
+import BackHeader from '@/components/BackHeader';
 import { apiFetch } from '@/lib/api';
 
 export default function ModifierRepasPage() {
@@ -61,8 +61,8 @@ export default function ModifierRepasPage() {
         } else {
           form.setSteps([{ id: 'init-step-1', text: '' }]);
         }
-      } catch (err: any) {
-        form.setError(err.message || 'Erreur lors du chargement du repas.');
+      } catch (err) {
+        form.setError(errorMessage(err, 'Erreur lors du chargement du repas.'));
       } finally {
         setInitialLoading(false);
       }
@@ -82,9 +82,9 @@ export default function ModifierRepasPage() {
       let finalPhotoUrl: string | null;
       try {
         finalPhotoUrl = await form.uploadImageIfNeeded();
-      } catch (err: any) {
+      } catch (err) {
         throw new Error(
-          `Échec du traitement/téléversement de l'image: ${err.message || err}`
+          `Échec du traitement/téléversement de l'image: ${errorMessage(err, String(err))}`
         );
       }
 
@@ -103,8 +103,8 @@ export default function ModifierRepasPage() {
 
       invalidateRepasCache();
       router.push('/repas');
-    } catch (err: any) {
-      form.setError(err.message || 'Une erreur inattendue est survenue.');
+    } catch (err) {
+      form.setError(errorMessage(err, 'Une erreur inattendue est survenue.'));
     } finally {
       form.setLoading(false);
     }
@@ -114,20 +114,10 @@ export default function ModifierRepasPage() {
 
   if (initialLoading) {
     return (
-      <div className="space-y-6 max-w-3xl mx-auto animate-pulse">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-neutral-200 dark:bg-neutral-800 rounded-full" />
-          <div className="space-y-2">
-            <div className="h-3 w-20 bg-neutral-200 dark:bg-neutral-800 rounded-full" />
-            <div className="h-7 w-48 bg-neutral-200 dark:bg-neutral-800 rounded-full" />
-          </div>
-        </div>
-        <div className="bg-card-light dark:bg-card-dark border border-neutral-200/40 dark:border-neutral-800/40 rounded-card shadow-xs p-6 md:p-8 space-y-6">
-          <div className="h-5 w-32 bg-neutral-200 dark:bg-neutral-800 rounded-full" />
-          <div className="h-1.5 w-full bg-neutral-200 dark:bg-neutral-800 rounded-full" />
-          <div className="h-12 w-full bg-neutral-200 dark:bg-neutral-800 rounded-xl" />
-          <div className="h-40 w-full bg-neutral-200 dark:bg-neutral-800 rounded-card" />
-        </div>
+      <div className="max-w-2xl mx-auto animate-pulse space-y-6">
+        <div className="h-9 w-56 bg-neutral-200 dark:bg-neutral-800 rounded" />
+        <div className="h-10 w-full bg-neutral-200 dark:bg-neutral-800 rounded" />
+        <div className="h-48 w-full bg-neutral-200 dark:bg-neutral-800 rounded-card" />
       </div>
     );
   }
@@ -135,33 +125,13 @@ export default function ModifierRepasPage() {
   // ── Formulaire multi-étapes ──────────────────────────────────────────────
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/repas"
-          className="p-2.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800/60 text-text-light-muted dark:text-text-dark-muted transition-colors active:scale-95 cursor-pointer"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div>
-          <span className="text-xs font-bold text-text-light-muted dark:text-text-dark-muted uppercase tracking-wider">
-            Mes recettes
-          </span>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-text-light-main dark:text-text-dark-main flex items-center gap-2">
-            <Pencil className="h-6 w-6 text-brand" />
-            Modifier le repas
-          </h1>
-        </div>
-      </div>
+    <div className="max-w-2xl mx-auto">
+      <BackHeader title="Modifier la recette" />
 
       <RepasFormSteps
         form={form}
-        submitLabel="Enregistrer les modifications"
-        submitLoadingLabel={
-          form.selectedImageFile && !form.photoUrl
-            ? "Envoi de l'image..."
-            : 'Enregistrement...'
-        }
+        submitLabel="Enregistrer"
+        submitLoadingLabel={form.selectedImageFile && !form.photoUrl ? "Envoi de l'image..." : 'Enregistrement...'}
         onSubmit={handleSubmit}
         onCancel={() => router.push('/repas')}
       />

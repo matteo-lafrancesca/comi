@@ -10,7 +10,8 @@ if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
   throw new Error('JWT_SECRET environment variable is required in production.');
 }
 
-const key = new TextEncoder().encode(JWT_SECRET);
+/** Clé de signature/vérification des JWT (partagée avec le proxy). */
+export const key = new TextEncoder().encode(JWT_SECRET);
 
 export interface TokenPayload {
   userId: number;

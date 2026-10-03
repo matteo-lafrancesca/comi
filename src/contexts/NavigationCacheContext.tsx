@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { RepasWithIngredients, ProgrammationWithRepas, CategoryGroup, ShoppingListExtraItem } from '@/types';
 import { useSettings } from './SettingsContext';
 
@@ -87,10 +87,12 @@ export function NavigationCacheProvider({ children }: { children: React.ReactNod
   const { weekStartDay } = useSettings();
 
   // Invalider planification & courses si le jour de début de semaine change
-  useEffect(() => {
+  const [prevWeekStartDay, setPrevWeekStartDay] = useState(weekStartDay);
+  if (prevWeekStartDay !== weekStartDay) {
+    setPrevWeekStartDay(weekStartDay);
     setPlanificationCache(initialPlanificationCache);
     setCoursesCache(initialCoursesCache);
-  }, [weekStartDay]);
+  }
 
   const updateRepasCache = useCallback((updates: Partial<RepasCache>) => {
     setRepasCache((prev) => ({ ...prev, ...updates }));

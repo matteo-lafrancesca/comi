@@ -225,7 +225,6 @@ export async function GET(request: Request) {
     let hasMore = false;
     if (search || sort === 'rarete') {
       // Pagination en mémoire
-      const totalInSearch = filteredMeals.length;
       filteredMeals = filteredMeals.slice(skip, skip + limit + 1);
       hasMore = filteredMeals.length > limit;
       filteredMeals = filteredMeals.slice(0, limit);

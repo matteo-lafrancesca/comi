@@ -1,18 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { 
-  Utensils, 
-  CalendarDays,
-  CalendarPlus,
-  Loader2
-} from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { ProgrammationWithRepas, RepasWithIngredients } from '@/types';
 import { getCustomWeekDays, getOrderedDayLabels, getAdjacentWeek, getParisDate } from '@/lib/date-utils';
 import RepasDetailModal from '@/components/RepasDetailModal';
 import WeekSelector from '@/components/WeekSelector';
-import PlanningSlot from '@/components/PlanningSlot';
+import PlanningDay from '@/components/PlanningDay';
+import PageHeader from '@/components/PageHeader';
+import Button from '@/components/ui/Button';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useNavigationCache } from '@/contexts/NavigationCacheContext';
 import { apiFetch } from '@/lib/api';
@@ -26,30 +23,15 @@ export default function PlanificationPage() {
 
   const targetDateParam = searchParams.get('targetDate');
 
-  const [activeScheduleRepas, setActiveScheduleRepas] = useState<{ id: number; titre?: string } | null>(() => {
-    const idParam = searchParams.get('scheduleRepasId');
-    const titleParam = searchParams.get('scheduleRepasTitle');
-    return idParam ? { id: parseInt(idParam, 10), titre: titleParam || undefined } : null;
-  });
-
-  // Synchroniser quand searchParams change
-  useEffect(() => {
-    const idParam = searchParams.get('scheduleRepasId');
-    const titleParam = searchParams.get('scheduleRepasTitle');
-    if (idParam) {
-      setActiveScheduleRepas({
-        id: parseInt(idParam, 10),
-        titre: titleParam || undefined,
-      });
-    } else {
-      setActiveScheduleRepas(null);
-    }
-  }, [searchParams]);
+  const scheduleRepasId = searchParams.get('scheduleRepasId');
+  const scheduleRepasTitleParam = searchParams.get('scheduleRepasTitle');
+  const activeScheduleRepas = useMemo(
+    () => (scheduleRepasId ? { id: parseInt(scheduleRepasId, 10), titre: scheduleRepasTitleParam || undefined } : null),
+    [scheduleRepasId, scheduleRepasTitleParam]
+  );
 
   const isSchedulingMode = Boolean(activeScheduleRepas);
-  const scheduleRepasTitle = activeScheduleRepas?.titre;
 
-  const [isScheduling, setIsScheduling] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const weekParam = searchParams.get('week') || 'current';
@@ -157,14 +139,6 @@ export default function PlanificationPage() {
     }
   };
 
-  // Helper to format date display (forcing UTC to avoid client timezone shifts)
-  const formatDateLabel = (date: Date) => {
-    return date.toLocaleDateString('fr-FR', { 
-      day: 'numeric', 
-      month: 'short', 
-      timeZone: 'UTC' 
-    });
-  };
 
   const formatDateRange = (startStr: string, endStr: string) => {
     const start = new Date(startStr);
@@ -191,10 +165,6 @@ export default function PlanificationPage() {
       : [];
   const dayLabels = getOrderedDayLabels(weekStartDay);
 
-  // Refs for scrolling to today
-  const todayMobileRef = useRef<HTMLDivElement | null>(null);
-  const todayDesktopRef = useRef<HTMLDivElement | null>(null);
-
   const todayParis = getParisDate();
   const todayStr = `${todayParis.getFullYear()}-${String(todayParis.getMonth() + 1).padStart(2, '0')}-${String(todayParis.getDate()).padStart(2, '0')}`;
 
@@ -202,7 +172,7 @@ export default function PlanificationPage() {
   const centerOnDate = (dateStr: string, behavior: ScrollBehavior = 'auto') => {
     const mainEl = document.querySelector('main');
     if (!mainEl) return;
-    const targetElement = document.getElementById(`day-card-${dateStr}`) || document.getElementById(`day-col-${dateStr}`);
+    const targetElement = document.getElementById(`day-card-${dateStr}`);
     if (targetElement) {
       const targetRect = targetElement.getBoundingClientRect();
       const mainRect = mainEl.getBoundingClientRect();
@@ -275,10 +245,11 @@ export default function PlanificationPage() {
       centerOnDate(todayStr, 'auto');
     }, 40);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cadrage volontairement déclenché sur ces seules dépendances
   }, [loading, days.length, targetDateParam, activeScheduleRepas, planificationCache.hasInitialScrolled, updatePlanificationCache, todayStr]);
 
   // Find a programmation for a given date and mealtime (0 = midi, 1 = soir)
-  const findProgrammation = (date: Date, heure: number) => {
+  const findProgrammation = (date: Date, heure: 0 | 1) => {
     const targetDateStr = date.toISOString().split('T')[0];
     return programmations.find((p) => {
       const pDateStr = new Date(p.date).toISOString().split('T')[0];
@@ -303,7 +274,6 @@ export default function PlanificationPage() {
   };
 
   const handleCancelScheduleMode = () => {
-    setActiveScheduleRepas(null);
     if (typeof window !== 'undefined') {
       const currentParams = new URLSearchParams(window.location.search);
       currentParams.delete('scheduleRepasId');
@@ -321,7 +291,6 @@ export default function PlanificationPage() {
     const currentScroll = mainEl ? mainEl.scrollTop : planificationCache.scrollPosition;
 
     try {
-      setIsScheduling(true);
       setActionError(null);
       const res = await apiFetch('/api/planning', {
         method: 'POST',
@@ -368,7 +337,6 @@ export default function PlanificationPage() {
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la programmation.');
     } finally {
-      setIsScheduling(false);
     }
   };
 
@@ -396,7 +364,7 @@ export default function PlanificationPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div>
       {/* 🔔 Floating error notification */}
       {actionError && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full px-4 animate-fade-in">
@@ -404,7 +372,7 @@ export default function PlanificationPage() {
             <span className="text-xs font-bold leading-normal">{actionError}</span>
             <button
               onClick={() => setActionError(null)}
-              className="text-text-light-muted dark:text-text-dark-muted hover:text-red-600 transition-colors font-extrabold text-xs cursor-pointer px-1.5 py-0.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/40"
+              className="text-text-light-muted dark:text-text-dark-muted hover:text-red-600 transition-colors font-semibold text-xs cursor-pointer px-1.5 py-0.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/40"
             >
               Fermer
             </button>
@@ -412,54 +380,16 @@ export default function PlanificationPage() {
         </div>
       )}
 
-      {/* Banner de programmation rapide flottant (sans décalage de page) */}
-      {isSchedulingMode && (
-        <div className="fixed top-16 md:top-6 left-1/2 -translate-x-1/2 z-40 max-w-lg w-full px-4 animate-fade-in pointer-events-none">
-          <div className="flex items-center justify-between gap-3 p-3.5 bg-card-light/95 dark:bg-card-dark/95 backdrop-blur-md border border-brand/40 rounded-card shadow-xl pointer-events-auto">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="h-8 w-8 rounded-full bg-brand/10 dark:bg-brand/20 flex items-center justify-center text-brand shrink-0">
-                {isScheduling ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <CalendarPlus className="h-4 w-4" />
-                )}
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-extrabold text-text-light-main dark:text-text-dark-main truncate">
-                  Programmation rapide
-                </span>
-                <span className="text-[11px] text-text-light-muted dark:text-text-dark-muted font-medium truncate">
-                  Cliquez sur un créneau pour :{' '}
-                  <span className="font-bold text-brand">{scheduleRepasTitle || 'ce repas'}</span>
-                </span>
-              </div>
-            </div>
-            <button
-              onClick={handleCancelScheduleMode}
-              disabled={isScheduling}
-              className="px-3 py-1.5 text-xs font-bold bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-text-light-main dark:text-text-dark-main rounded-input transition-all active:scale-95 cursor-pointer text-center shrink-0"
-            >
-              Annuler
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Title & Today Link */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-text-light-main dark:text-text-dark-main">
-          Mon Planning
-        </h1>
-        {currentWeek && (
-          <button
-            onClick={handleCurrentWeek}
-            className="flex items-center gap-1.5 px-4.5 py-2.5 text-xs font-bold transition-all border bg-card-light dark:bg-card-dark border-neutral-200/50 dark:border-neutral-800 rounded-input hover:bg-neutral-50 dark:hover:bg-neutral-800/60 text-text-light-main dark:text-text-dark-main cursor-pointer shadow-xs active:scale-95"
-          >
-            <CalendarDays className="h-4 w-4 text-brand shrink-0" />
-            <span>Semaine actuelle</span>
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="Planning"
+        action={
+          currentWeek ? (
+            <Button variant="secondary" size="sm" onClick={handleCurrentWeek}>
+              Aujourd&apos;hui
+            </Button>
+          ) : undefined
+        }
+      />
 
       {/* Week Selector Bar */}
       {weekInfo && currentWeek && currentYear && (
@@ -475,11 +405,8 @@ export default function PlanificationPage() {
       {/* Main Grid Content Area */}
       {loading ? (
         /* Loader state */
-        <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="h-10 w-10 text-brand animate-spin mb-3" />
-          <span className="text-sm font-medium text-text-light-muted dark:text-text-dark-muted animate-pulse">
-            Chargement de votre planning...
-          </span>
+        <div className="flex justify-center py-20">
+          <Loader2 className="h-6 w-6 animate-spin text-text-light-muted dark:text-text-dark-muted" />
         </div>
       ) : error ? (
         /* Error Alert Display */
@@ -493,127 +420,27 @@ export default function PlanificationPage() {
           </p>
         </div>
       ) : (
-        <>
-          {/* 💻 VUE PC : Grille à 7 Colonnes */}
-          <div className="hidden md:grid grid-cols-7 gap-4 animate-fade-in">
-            {days.map((day, idx) => {
-              const dayStr = day.toISOString().split('T')[0];
-              const isToday = dayStr === todayStr;
-              return (
-                <div 
-                  key={idx} 
-                  id={`day-col-${dayStr}`}
-                  ref={isToday ? todayDesktopRef : undefined}
-                  className="flex flex-col gap-3"
-                >
-                  {/* Day Header */}
-                  <div className={`text-center py-2.5 border rounded-xl shrink-0 flex flex-col items-center justify-center min-h-[46px] ${
-                    isToday 
-                      ? 'bg-brand-light/40 dark:bg-brand/15 border-brand/30 text-brand' 
-                      : 'bg-neutral-100/50 dark:bg-neutral-800/40 border-neutral-200/10 dark:border-neutral-800/10'
-                  }`}>
-                    {isToday ? (
-                      <span className="block text-xs font-extrabold text-brand">
-                        Aujourd'hui
-                      </span>
-                    ) : (
-                      <>
-                        <span className="block text-xs font-extrabold capitalize text-text-light-main dark:text-text-dark-main">
-                          {dayLabels[idx]}
-                        </span>
-                        <span className="block text-[10px] font-bold text-text-light-muted dark:text-text-dark-muted mt-0.5">
-                          {formatDateLabel(day)}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  
-                  {/* Slots */}
-                  <div className="flex flex-col gap-3">
-                    <PlanningSlot
-                      day={day}
-                      heure={0}
-                      label="Midi"
-                      programmation={findProgrammation(day, 0)}
-                      currentWeek={currentWeek!}
-                      currentYear={currentYear!}
-                      onOpenDetail={handleOpenSlotDetail}
-                      isSchedulingMode={isSchedulingMode}
-                      onScheduleRepas={handleDirectSchedule}
-                    />
-                    <PlanningSlot
-                      day={day}
-                      heure={1}
-                      label="Soir"
-                      programmation={findProgrammation(day, 1)}
-                      currentWeek={currentWeek!}
-                      currentYear={currentYear!}
-                      onOpenDetail={handleOpenSlotDetail}
-                      isSchedulingMode={isSchedulingMode}
-                      onScheduleRepas={handleDirectSchedule}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* 📱 VUE MOBILE : Liste Verticale de Jours */}
-          <div className="md:hidden space-y-4 animate-fade-in">
-            {days.map((day, idx) => {
-              const dayStr = day.toISOString().split('T')[0];
-              const isToday = dayStr === todayStr;
-              return (
-                <div 
-                  key={idx} 
-                  id={`day-card-${dayStr}`}
-                  ref={isToday ? todayMobileRef : undefined}
-                  className={`bg-card-light dark:bg-card-dark p-4 rounded-card border shadow-xs flex flex-col gap-3.5 ${
-                    isToday ? 'border-brand/40 dark:border-brand/30' : 'border-neutral-200/40 dark:border-neutral-800/40'
-                  }`}
-                >
-                  {/* Day Header */}
-                  <div className="flex items-baseline gap-2 pb-2 border-b border-neutral-100 dark:border-neutral-800/40">
-                    <h3 className={`font-extrabold text-base capitalize ${isToday ? 'text-brand' : 'text-text-light-main dark:text-text-dark-main'}`}>
-                      {isToday ? "Aujourd'hui" : dayLabels[idx]}
-                    </h3>
-                    {!isToday && (
-                      <span className="text-xs font-bold text-text-light-muted dark:text-text-dark-muted">
-                        {formatDateLabel(day)}
-                      </span>
-                    )}
-                  </div>
-                  
-                  {/* Slots side by side */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <PlanningSlot
-                      day={day}
-                      heure={0}
-                      label="Midi"
-                      programmation={findProgrammation(day, 0)}
-                      currentWeek={currentWeek!}
-                      currentYear={currentYear!}
-                      onOpenDetail={handleOpenSlotDetail}
-                      isSchedulingMode={isSchedulingMode}
-                      onScheduleRepas={handleDirectSchedule}
-                    />
-                    <PlanningSlot
-                      day={day}
-                      heure={1}
-                      label="Soir"
-                      programmation={findProgrammation(day, 1)}
-                      currentWeek={currentWeek!}
-                      currentYear={currentYear!}
-                      onOpenDetail={handleOpenSlotDetail}
-                      isSchedulingMode={isSchedulingMode}
-                      onScheduleRepas={handleDirectSchedule}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
+        <div className="animate-fade-in">
+          {days.map((day, idx) => {
+            const dayStr = day.toISOString().split('T')[0];
+            return (
+              <PlanningDay
+                key={dayStr}
+                day={day}
+                weekdayLabel={dayLabels[idx]}
+                dayNumber={String(day.getUTCDate())}
+                monthLabel={day.toLocaleDateString('fr-FR', { month: 'short', timeZone: 'UTC' })}
+                isToday={dayStr === todayStr}
+                currentWeek={currentWeek!}
+                currentYear={currentYear!}
+                findProgrammation={findProgrammation}
+                onOpenDetail={handleOpenSlotDetail}
+                isSchedulingMode={isSchedulingMode}
+                onScheduleRepas={handleDirectSchedule}
+              />
+            );
+          })}
+        </div>
       )}
 
       {/* Repas Detail Modal */}

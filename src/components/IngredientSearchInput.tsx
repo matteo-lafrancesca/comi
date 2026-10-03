@@ -27,7 +27,7 @@ export default function IngredientSearchInput({
   onSelect,
   onCreateNew,
   existingIngredients = [],
-  placeholder = 'Rechercher un ingrédient (ex: Tomate, Crème fraîche...)',
+  placeholder = 'Tomate, crème fraîche…',
   label = 'Ajouter un ingrédient',
 }: IngredientSearchInputProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -37,10 +37,7 @@ export default function IngredientSearchInput({
 
   // Debounced autocomplete search
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      return;
-    }
+    if (!searchQuery.trim()) return;
 
     const delayDebounceFn = setTimeout(async () => {
       try {
@@ -85,12 +82,10 @@ export default function IngredientSearchInput({
   };
 
   return (
-    <div className="space-y-2 relative">
-      <label className="text-sm font-bold text-text-light-main dark:text-text-dark-main">
-        {label}
-      </label>
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-text-light-muted dark:text-text-dark-muted" />
+    <div className="relative">
+      <label className="eyebrow block mb-1">{label}</label>
+      <div className="flex items-center gap-3 border-b border-neutral-300 dark:border-neutral-700 focus-within:border-text-light-main dark:focus-within:border-text-dark-main transition-colors">
+        <Search className="h-4 w-4 shrink-0 text-text-light-muted dark:text-text-dark-muted" />
         <input
           type="text"
           value={searchQuery}
@@ -98,56 +93,43 @@ export default function IngredientSearchInput({
           onFocus={() => setIsSearchFocused(true)}
           onBlur={() => setTimeout(() => setIsSearchFocused(false), 250)}
           placeholder={placeholder}
-          className="w-full pl-11 pr-5 py-3 text-sm transition-all border outline-none bg-bg-light dark:bg-bg-dark border-neutral-200/80 dark:border-neutral-800 rounded-xl focus:border-brand dark:focus:border-brand focus:ring-1 focus:ring-brand text-text-light-main dark:text-text-dark-main placeholder:text-text-light-muted dark:placeholder:text-text-dark-muted font-medium"
+          className="flex-1 min-w-0 py-2.5 text-base bg-transparent outline-none placeholder:text-text-light-muted/70 dark:placeholder:text-text-dark-muted/70"
         />
+        {searching && <Loader2 className="h-4 w-4 animate-spin text-text-light-muted dark:text-text-dark-muted" />}
       </div>
 
-      {/* Suggestions dropdown */}
       {isSearchFocused && searchQuery.trim() !== '' && (
-        <div className="absolute left-0 right-0 mt-1 bg-card-light dark:bg-card-dark border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-xl z-30 max-h-60 overflow-y-auto">
-          {/* Results matching */}
+        <ul className="absolute left-0 right-0 mt-1 bg-card-light dark:bg-card-dark border border-text-light-main dark:border-neutral-600 rounded-card shadow-lg z-30 max-h-60 overflow-y-auto divide-y divide-neutral-200 dark:divide-neutral-800">
           {searchResults.map((suggestion) => (
-            <button
-              key={suggestion.id}
-              type="button"
-              onClick={() => handleSelect(suggestion)}
-              className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/65 text-left text-text-light-main dark:text-text-dark-main font-semibold"
-            >
-              <span>{suggestion.nom}</span>
-              <span className="text-[10px] text-brand px-2 py-0.5 bg-brand-light dark:bg-brand/10 border border-brand/15 rounded-full font-bold">
-                {CATEGORY_DETAILS[suggestion.categorie as CategorieIngredient]?.label || suggestion.categorie}
-              </span>
-            </button>
+            <li key={suggestion.id}>
+              <button
+                type="button"
+                onClick={() => handleSelect(suggestion)}
+                className="w-full flex items-baseline justify-between gap-3 px-4 py-2.5 text-left cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800/60"
+              >
+                <span className="text-[15px]">{suggestion.nom}</span>
+                <span className="eyebrow shrink-0">
+                  {CATEGORY_DETAILS[suggestion.categorie as CategorieIngredient]?.label || suggestion.categorie}
+                </span>
+              </button>
+            </li>
           ))}
 
-          {/* Loading spinner */}
-          {searching && (
-            <div className="flex items-center justify-center p-4 text-text-light-muted dark:text-text-dark-muted">
-              <Loader2 className="h-5 w-5 animate-spin" />
-            </div>
-          )}
-
-          {/* Create custom ingredient trigger */}
           {!searching && !exactMatchExists && (
-            <button
-              type="button"
-              onClick={handleCreateNew}
-              className="w-full flex items-center justify-between px-4 py-3.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/60 transition-colors border-t border-neutral-100/50 dark:border-neutral-800/50 cursor-pointer text-left"
-            >
-              <div className="flex items-center gap-3 text-text-light-main dark:text-text-dark-main">
-                <div className="p-1.5 bg-brand-light dark:bg-brand/10 text-brand rounded-lg shrink-0">
-                  <Plus className="h-4.5 w-4.5" />
-                </div>
-                <span className="font-semibold">
-                  Ajouter <span className="font-extrabold text-brand">"{searchQuery}"</span> au dictionnaire
+            <li>
+              <button
+                type="button"
+                onClick={handleCreateNew}
+                className="w-full flex items-center gap-2 px-4 py-3 text-left text-[15px] cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800/60"
+              >
+                <Plus className="h-4 w-4 shrink-0" />
+                <span>
+                  Créer <strong>&laquo;&nbsp;{searchQuery.trim()}&nbsp;&raquo;</strong>
                 </span>
-              </div>
-              <span className="text-[10px] uppercase font-extrabold px-2.5 py-1 bg-neutral-100 dark:bg-neutral-800 text-text-light-muted dark:text-text-dark-muted rounded-full">
-                Nouveau
-              </span>
-            </button>
+              </button>
+            </li>
           )}
-        </div>
+        </ul>
       )}
     </div>
   );

@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Utensils } from 'lucide-react';
 import { RepasWithIngredients } from '@/types';
 
 interface RepasCardProps {
@@ -11,59 +10,39 @@ interface RepasCardProps {
   selectMode?: boolean;
 }
 
+/** Vignette d'une recette : photo en 4/5, titre en serif. Sans photo : initiale sur papier ligné. */
 export default function RepasCard({ repas, onClick, selectMode = false }: RepasCardProps) {
   const { titre, photoUrl } = repas;
   const [imageError, setImageError] = useState(false);
 
   return (
-    <article 
-      onClick={onClick}
-      className="flex flex-col justify-between p-4 transition-all duration-300 border border-neutral-200/45 dark:border-neutral-800/40 shadow-sm bg-card-light dark:bg-card-dark rounded-card hover:shadow-md hover:scale-[1.01] hover:border-neutral-300/60 dark:hover:border-neutral-700/60 active:scale-[0.99] cursor-pointer group"
-    >
-      {/* Conteneur d'image */}
-      <div className="relative w-full overflow-hidden aspect-square rounded-card bg-brand-light/50 dark:bg-neutral-800/50 mb-3.5 flex items-center justify-center border border-neutral-100 dark:border-neutral-800/20">
+    <button onClick={onClick} className="group text-left cursor-pointer flex flex-col gap-3">
+      <div className="relative w-full aspect-[4/5] overflow-hidden rounded-card bg-neutral-100 dark:bg-neutral-800/60 transition-shadow duration-300 group-hover:shadow-lg">
         {photoUrl && !imageError ? (
-          <Image 
-            src={photoUrl} 
-            alt={titre} 
+          <Image
+            src={photoUrl}
+            alt={titre}
             onError={() => setImageError(true)}
-            width={300}
-            height={300}
-            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105" 
+            width={400}
+            height={500}
+            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="flex flex-col items-center justify-center p-4 text-center">
-            <div className="p-3 bg-brand-light dark:bg-brand/10 text-brand rounded-full mb-2">
-              <Utensils className="h-6 w-6 stroke-[1.5]" />
-            </div>
-            <span className="text-[11px] font-semibold text-text-light-muted dark:text-text-dark-muted">
-              Pas de photo
+          <div className="flex items-center justify-center w-full h-full bg-[repeating-linear-gradient(transparent,transparent_27px,var(--color-neutral-200)_27px,var(--color-neutral-200)_28px)] dark:bg-[repeating-linear-gradient(transparent,transparent_27px,var(--color-neutral-800)_27px,var(--color-neutral-800)_28px)]">
+            <span className="font-display italic text-7xl text-neutral-400 dark:text-neutral-600 select-none">
+              {titre.trim().charAt(0).toUpperCase()}
             </span>
           </div>
         )}
+        {selectMode && (
+          <span className="absolute bottom-0 inset-x-0 py-2.5 text-center text-xs font-semibold bg-brand text-ink">
+            Choisir ce repas
+          </span>
+        )}
       </div>
-
-      {/* Titre */}
-      <h3 className="mb-4 text-base font-bold text-center line-clamp-2 text-text-light-main dark:text-text-dark-main px-1">
+      <h3 className="font-display text-lg leading-snug font-medium line-clamp-2 text-text-light-main dark:text-text-dark-main">
         {titre}
       </h3>
-
-      {/* Action / Bouton */}
-      <div className="flex items-center justify-center mt-auto w-full">
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            onClick();
-          }}
-          className={`w-full py-2.5 text-xs font-bold tracking-wide transition-all duration-300 rounded-input active:scale-95 cursor-pointer shadow-sm hover:shadow ${
-            selectMode 
-              ? 'bg-brand text-white hover:bg-brand-hover' 
-              : 'bg-neutral-100 dark:bg-neutral-800 hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white text-text-light-main dark:text-text-dark-main'
-          }`}
-        >
-          {selectMode ? 'Sélectionner' : 'Voir la recette'}
-        </button>
-      </div>
-    </article>
+    </button>
   );
 }

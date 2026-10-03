@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
-import { verifyAndRotateRefreshToken, setAuthCookies } from '@/lib/auth';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-at-least-32-chars-long';
-const key = new TextEncoder().encode(JWT_SECRET);
+import { verifyAndRotateRefreshToken, setAuthCookies, key } from '@/lib/auth';
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

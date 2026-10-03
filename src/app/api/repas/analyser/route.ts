@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth';
+import { errorMessage } from '@/lib/errors';
 
 /**
  * POST /api/repas/analyser
@@ -242,10 +243,10 @@ ${existingIngredientsList || "Aucun ingrédient pour le moment."}`;
     }
 
     return NextResponse.json(parsedData);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Erreur dans /api/repas/analyser:", error);
     return NextResponse.json(
-      { error: error.message || "Une erreur interne est survenue lors de l'analyse." },
+      { error: errorMessage(error, "Une erreur interne est survenue lors de l'analyse.") },
       { status: 500 }
     );
   }

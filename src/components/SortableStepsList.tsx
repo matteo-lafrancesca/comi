@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { GripVertical, Trash2, Plus } from 'lucide-react';
+import { GripVertical, X, Plus } from 'lucide-react';
+import Button from '@/components/ui/Button';
 
 /** Un élément d'étape de préparation */
 export interface StepItem {
@@ -293,15 +294,13 @@ export default function SortableStepsList({ steps, onChange }: SortableStepsList
 
   return (
     <div className="space-y-4">
-      {/* Label */}
-      <div className="flex justify-between items-center">
-        <span className="text-sm font-bold text-text-light-main dark:text-text-dark-main">
-          Étapes de préparation ({steps.length})
-        </span>
-      </div>
+      <h2 className="eyebrow pb-2 border-b border-text-light-main dark:border-text-dark-main">
+        Étapes ({steps.length})
+      </h2>
 
       {/* Liste */}
       <div className="relative" style={{ isolation: 'isolate' }}>
+        {/* eslint-disable-next-line react-hooks/refs -- géométrie de drag lue dans des refs (dette: la passer en state) */}
         {steps.map((s, idx) => {
           const isDragging = s.id === draggingId;
           // translateY pour les items NON-draggés (magnétique) — via React state
@@ -329,9 +328,9 @@ export default function SortableStepsList({ steps, onChange }: SortableStepsList
                     }
               }
               className={[
-                'flex gap-3 items-start py-3 border-b border-neutral-100 dark:border-neutral-800/40',
+                'flex gap-3 items-start py-4 border-b border-dashed border-neutral-300 dark:border-neutral-700',
                 isDragging
-                  ? 'rounded-2xl bg-card-light dark:bg-card-dark border border-neutral-200/60 dark:border-neutral-700/60 px-2'
+                  ? 'rounded-card bg-card-light dark:bg-card-dark border border-neutral-300 dark:border-neutral-600 shadow-lg px-2'
                   : '',
               ]
                 .filter(Boolean)
@@ -342,10 +341,10 @@ export default function SortableStepsList({ steps, onChange }: SortableStepsList
                 type="button"
                 aria-label="Réordonner l'étape"
                 className={[
-                  'shrink-0 mt-1.5 p-1 rounded-lg touch-none select-none transition-colors duration-150',
+                  'shrink-0 mt-1.5 p-1 touch-none select-none transition-colors duration-150',
                   isDragging
                     ? 'text-brand cursor-grabbing'
-                    : 'text-text-light-muted dark:text-text-dark-muted cursor-grab hover:text-brand hover:bg-brand-light/30 dark:hover:bg-brand/10 active:cursor-grabbing',
+                    : 'text-text-light-muted dark:text-text-dark-muted cursor-grab hover:text-text-light-main dark:hover:text-text-dark-main active:cursor-grabbing',
                 ]
                   .filter(Boolean)
                   .join(' ')}
@@ -358,7 +357,7 @@ export default function SortableStepsList({ steps, onChange }: SortableStepsList
               </button>
 
               {/* Numéro */}
-              <span className="flex items-center justify-center shrink-0 w-6 h-6 rounded-full bg-brand-light dark:bg-brand/10 text-brand text-xs font-extrabold border border-brand/15 mt-1.5 select-none">
+              <span className="shrink-0 w-6 text-right font-display italic text-3xl leading-none text-brand mt-1 select-none">
                 {idx + 1}
               </span>
 
@@ -368,17 +367,17 @@ export default function SortableStepsList({ steps, onChange }: SortableStepsList
                 onChange={(e) => handleUpdate(s.id, e.target.value)}
                 placeholder={`Description de l'étape ${idx + 1}...`}
                 rows={4}
-                className="flex-1 px-3 py-2 text-sm border border-neutral-200 dark:border-neutral-800 rounded-xl bg-card-light dark:bg-card-dark text-text-light-main dark:text-text-dark-main outline-none focus:border-brand font-medium min-h-[96px] resize-y"
+                className="flex-1 px-3 py-2 text-[15px] leading-relaxed border border-neutral-300 dark:border-neutral-700 rounded-input bg-transparent outline-none focus:border-text-light-main dark:focus:border-text-dark-main min-h-[96px] resize-y"
               />
 
               {/* Suppression */}
               <button
                 type="button"
                 onClick={() => handleRemove(s.id)}
-                className="shrink-0 mt-1.5 p-1 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer transition-colors duration-150"
-                title="Supprimer l'étape"
+                className="shrink-0 mt-1.5 p-1 text-text-light-muted dark:text-text-dark-muted hover:text-red-700 dark:hover:text-red-400 cursor-pointer transition-colors duration-150"
+                aria-label="Supprimer l'étape"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
           );
@@ -386,14 +385,10 @@ export default function SortableStepsList({ steps, onChange }: SortableStepsList
       </div>
 
       {/* Bouton Ajouter une étape */}
-      <button
-        type="button"
-        onClick={handleAdd}
-        className="w-full flex items-center justify-center gap-2 px-5 py-3 border border-dashed border-neutral-300 dark:border-neutral-800 rounded-2xl hover:border-brand/40 text-text-light-muted dark:text-text-dark-muted hover:text-brand font-bold text-sm transition-all duration-300 active:scale-98 cursor-pointer"
-      >
+      <Button variant="secondary" size="sm" onClick={handleAdd}>
         <Plus className="h-4 w-4" />
-        <span>Ajouter une étape</span>
-      </button>
+        Ajouter une étape
+      </Button>
     </div>
   );
 }

@@ -1,15 +1,13 @@
-import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import type { Metadata } from "next";
+import { DM_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { NavigationCacheProvider } from "@/contexts/NavigationCacheContext";
 import GestureBlocker from "@/components/GestureBlocker";
 
-const plusJakarta = Plus_Jakarta_Sans({
-  variable: "--font-sans",
-  subsets: ["latin"],
-});
+const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"] });
+const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], axes: ["opsz"] });
 
 export const metadata: Metadata = {
   title: "Comi",
@@ -35,7 +33,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${plusJakarta.variable} antialiased`}
+      className={`${dmSans.variable} ${fraunces.variable} antialiased`}
       suppressHydrationWarning
     >
       <head>
@@ -80,7 +78,7 @@ export default function RootLayout({
           </svg>
           <h2 className="text-xl font-bold mb-2">Orientation non supportée</h2>
           <p className="text-sm text-text-light-muted dark:text-text-dark-muted max-w-xs">
-            Veuillez tourner votre appareil en mode portrait pour utiliser l'application.
+            Veuillez tourner votre appareil en mode portrait pour utiliser l&apos;application.
           </p>
         </div>
 
