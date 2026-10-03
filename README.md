@@ -65,6 +65,7 @@ Ouvrez le fichier `.env` créé et configurez les variables suivantes :
 *   `DATABASE_URL` : L'adresse de votre base de données. Par défaut, elle est configurée sur SQLite local (`file:./dev.db`).
 *   `JWT_SECRET` : Une clé secrète forte et unique servant à signer les jetons d'authentification utilisateur.
 *   `UPLOADTHING_TOKEN` : Clé API Uploadthing pour l'hébergement et l'envoi des photos de plats (obtenez-la gratuitement sur [Uploadthing](https://uploadthing.com/)).
+*   `GEMINI_API_KEY` : Clé API Gemini, utilisée par l'analyse de photo de plat (« Je photographie le plat »). Facultative si vous n'utilisez pas cette fonction.
 
 > [!TIP]
 > Pour générer un `JWT_SECRET` sécurisé rapidement en ligne de commande :
@@ -101,7 +102,15 @@ Démarrez le serveur Next.js en mode développement :
 npm run dev
 ```
 
-L'application est maintenant accessible à l'adresse : **[http://localhost:3000](http://localhost:3000)**.
+L'application est accessible sur **[http://localhost:3000/comi](http://localhost:3000/comi)** (le projet est servi sous le `basePath` `/comi`).
+
+### 7. Contrôles qualité
+
+```bash
+npm run check      # ESLint + vérification TypeScript (exécuté en CI)
+npm run lint       # ESLint seul
+npm run typecheck  # tsc --noEmit
+```
 
 ---
 
@@ -129,13 +138,15 @@ Comi/
 │   └── manifest.json        # Configuration PWA
 ├── src/
 │   ├── app/                 # Routes Next.js App Router (Pages & API Routes)
-│   │   ├── (auth)/          # Pages de Connexion / Inscription
+│   │   ├── login/ register/ # Connexion / Inscription
 │   │   ├── (main)/          # Contenu principal (Planning, Repas, Courses)
 │   │   ├── api/             # Routes API (CRUD repas, ingrédients, planning)
 │   │   ├── layout.tsx       # Layout global de l'application
 │   │   └── globals.css      # Fichier CSS global avec directives Tailwind CSS v4
-│   ├── components/          # Composants React partagés (Drawers, Modales, Cartes, etc.)
+│   ├── components/          # Composants partagés (Drawers, cartes, formulaires) ; ui/ = primitives (Button, TextInput…)
+│   ├── contexts/ hooks/     # Auth, réglages, cache de navigation ; useRepasForm
 │   └── lib/                 # Utilitaires (Prisma client, Helpers de formatage, middleware auth)
-├── DESIGN_GUIDELINES.md     # Ligne directrice pour le respect de la charte graphique
+├── docs/                    # audit.md (état des lieux) et dette-technique.md (backlog)
+├── DESIGN_GUIDELINES.md     # Charte graphique « carnet de cuisine »
 └── AGENTS.md                # Directives de développement et d'architecture pour l'IA
 ```

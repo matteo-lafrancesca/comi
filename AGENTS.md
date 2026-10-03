@@ -5,7 +5,7 @@ Ce fichier configure le comportement de l'IA. Il inclut les règles d'architectu
 Tu es un développeur expert Full-Stack spécialisé en React, Next.js (App Router), Tailwind CSS v4, et la conception de PWA (Progressive Web Apps). Ton objectif est de générer un code robuste, propre, et avec une UI irréprochable basée sur la charte graphique du projet.
 
 ## ⚠️ 1. RÈGLES STRICTES D'INTERFACE (UI/UX)
-- **Lis impérativement le fichier `DESIGN_GUIDELINES.md` avant de générer la moindre interface.**
+- **Lis impérativement le fichier `DESIGN_GUIDELINES.md` avant de générer la moindre interface.** Le design est volontairement éditorial (« carnet de cuisine ») : ne pas retomber sur des cartes arrondies + pastilles d'icônes + pilules.
 - **Tailwind v4 :** Le projet utilise Tailwind v4 via la directive `@theme` dans `globals.css`. N'utilise **JAMAIS** de classes de couleurs arbitraires (pas de `bg-blue-500`, pas de `text-gray-900`). Utilise exclusivement les variables définies (ex: `bg-bg-light`, `text-text-dark-main`, `bg-brand`, `rounded-card`, `rounded-input`).
 - **Mode Sombre :** Assure-toi que chaque élément HTML possède son équivalent sombre avec le préfixe `dark:` (le projet utilise `darkMode: 'class'` ou l'équivalent v4).
 - **Icônes :** Utilise `lucide-react` pour toutes les icônes.
@@ -58,6 +58,12 @@ Avant de coder une interface, **analyse toujours si des éléments similaires ex
 | `RepasDetailModal` | Fiche détail d'un repas avec actions (modifier, supprimer, déprogrammer) |
 | `RepasCard` | Carte repas dans la grille |
 | `SortDrawer` | Drawer de tri pour la liste de repas |
+| `PlanningDay` / `PlanningSlot` | Une journée du planning / un créneau midi-soir |
+| `PageHeader` | Titre de page serif + action principale |
+| `BackHeader` | En-tête des pages secondaires (retour + titre) |
+| `ImageDropzone` | Zone de dépôt/aperçu de photo (création manuelle et import IA) |
+| `AuthShell` | Cadre des écrans connexion / inscription |
+| `ui/Button`, `ui/IconButton`, `ui/TextInput`, `ui/Alert` | Primitives de formulaire et d'action — **ne pas réécrire de classes de bouton/champ à la main** |
 
 ### Lors de l'ajout d'une nouvelle fonctionnalité
 1. **Vérifie** si un composant existant couvre déjà le besoin (avec une prop supplémentaire éventuelle).
@@ -78,3 +84,8 @@ Concision maximale : Si une explication est nécessaire, elle doit être brève 
 Ne pas réitérer : Ne reformulez pas les instructions déjà présentes dans ce fichier.
 
 Référence stricte : Si vous analysez une erreur, basez-vous uniquement sur les logs fournis ou les fichiers explicitement mentionnés. Ne supposez pas de contexte externe non fourni.
+## 7. Qualité
+- Avant de conclure une tâche : `npm run check` (ESLint + `tsc --noEmit`) doit passer sans erreur ni warning.
+- Pas de `any` ; pour un `catch`, utiliser `errorMessage(err, fallback)` (`src/lib/errors.ts`).
+- Pas de `setState` synchrone dans un `useEffect` : dériver l'état au rendu ou remonter un composant (voir `AddExtraDrawer`, `Drawer`). Les rares exceptions portent un `eslint-disable` justifié (listées dans `docs/dette-technique.md`).
+- Tous les appels réseau passent par `apiFetch` (gère le `basePath` `/comi`).
