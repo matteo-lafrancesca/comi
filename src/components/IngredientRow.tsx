@@ -2,16 +2,8 @@
 
 import React from 'react';
 import { X } from 'lucide-react';
-import { CategorieIngredient } from '@/types';
+import type { IngredientRowItem } from '@/types';
 
-export interface IngredientRowItem {
-  id: string; // client-side unique key
-  ingredientId?: number;
-  nom: string;
-  quantite: string;
-  unite: string;
-  categorie: CategorieIngredient;
-}
 
 interface IngredientRowProps {
   ingredient: IngredientRowItem;

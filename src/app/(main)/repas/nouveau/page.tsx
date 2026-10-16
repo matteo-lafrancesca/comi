@@ -1,199 +1,92 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { errorMessage } from '@/lib/errors';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PenLine, Camera, Loader2, Sparkles } from 'lucide-react';
+import { useCreateRepasMutation, useAnalyseImageMutation } from '@/lib/queries/mutations';
 import { compressImage } from '@/lib/image-compression';
-import { useInvalidateRepas } from '@/lib/queries/mutations';
+import { errorMessage } from '@/lib/errors';
+import { analysisToValues, clearDraft, loadDraft, saveDraft, type RepasDraft } from '@/lib/repas-form';
 import { useRepasForm } from '@/hooks/useRepasForm';
+import { useHydrated } from '@/hooks/useHydrated';
 import RepasFormSteps from '@/components/RepasFormSteps';
 import BackHeader from '@/components/BackHeader';
 import ImageDropzone from '@/components/ImageDropzone';
 import Button from '@/components/ui/Button';
 import Alert from '@/components/ui/Alert';
 import TextInput from '@/components/ui/TextInput';
-import { apiFetch } from '@/lib/api';
 
-const DRAFT_KEY = 'comi:repas-draft';
+type CreationMode = null | 'manuel' | 'ia_upload' | 'ia_form';
 
-function clearDraft() {
-  try {
-    localStorage.removeItem(DRAFT_KEY);
-  } catch {}
+const MODES = [
+  { mode: 'manuel' as const, title: 'Je la saisis', hint: 'Titre, ingrédients et étapes, à la main.', icon: PenLine },
+  { mode: 'ia_upload' as const, title: 'Je photographie le plat', hint: "L'IA propose une recette à relire.", icon: Camera },
+];
+
+/**
+ * Le brouillon vit dans localStorage : le formulaire n'est monté qu'après l'hydratation
+ * pour le lire à son initialisation. Changer `session` le remet à zéro (retour au choix du mode).
+ */
+export default function NouveauRepasPage() {
+  const hydrated = useHydrated();
+  const [session, setSession] = useState(0);
+
+  if (!hydrated) return <div className="max-w-2xl mx-auto" />;
+  return (
+    <NouveauRepas
+      key={session}
+      onRestart={() => {
+        clearDraft();
+        setSession((n) => n + 1);
+      }}
+    />
+  );
 }
 
-export default function NouveauRepasPage() {
+function NouveauRepas({ onRestart }: { onRestart: () => void }) {
   const router = useRouter();
-  const invalidateRepas = useInvalidateRepas();
-  const form = useRepasForm();
-  const { fileInputRef, handleFileChange, selectedImageFile } = form;
+  const [draft] = useState<RepasDraft | null>(loadDraft);
+  const [mode, setMode] = useState<CreationMode>(draft?.mode ?? null);
+  const form = useRepasForm({ values: draft?.values, step: draft?.step });
+  const createRepas = useCreateRepasMutation();
+  const analyse = useAnalyseImageMutation();
+  const { image } = form;
 
-  // État propre à cette page
-  const [creationMode, setCreationMode] = useState<null | 'manuel' | 'ia_upload' | 'ia_form'>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-
-  // ── Brouillon (localStorage) : survit à un rechargement ou à un changement de page.
-  // La photo n'est pas conservée (File non sérialisable).
-  const [draftRestored, setDraftRestored] = useState(false);
-
+  // Brouillon : sauvegardé à chaque modification (la photo n'est pas conservée)
   useEffect(() => {
+    if (mode === 'manuel' || mode === 'ia_form') saveDraft({ mode, step: form.step, values: form.values });
+  }, [mode, form.step, form.values]);
+
+  const handleAnalyze = async () => {
+    if (!image.file) return;
+    form.setError(null);
     try {
-      const d = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? 'null');
-      if (d && (d.mode === 'manuel' || d.mode === 'ia_form')) {
-        /* eslint-disable react-hooks/set-state-in-effect -- restauration unique du brouillon (localStorage indisponible au rendu serveur) */
-        form.setTitre(d.titre ?? '');
-        form.setSelectedIngredients(d.ingredients ?? []);
-        if (d.steps?.length) form.setSteps(d.steps);
-        form.setStep(d.step ?? 1);
-        setCreationMode(d.mode);
-      }
-    } catch {}
-    setDraftRestored(true);
-    /* eslint-enable react-hooks/set-state-in-effect */
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- uniquement au montage
-  }, []);
-
-  useEffect(() => {
-    if (!draftRestored || (creationMode !== 'manuel' && creationMode !== 'ia_form')) return;
-    try {
-      localStorage.setItem(
-        DRAFT_KEY,
-        JSON.stringify({
-          mode: creationMode,
-          step: form.step,
-          titre: form.titre,
-          ingredients: form.selectedIngredients,
-          steps: form.steps,
-        })
-      );
-    } catch {}
-  }, [draftRestored, creationMode, form.step, form.titre, form.selectedIngredients, form.steps]);
-
-  // ── Analyse de l'image par l'IA ──────────────────────────────────────────
-
-  const handleAnalyzeImage = async () => {
-    if (!selectedImageFile) return;
-
-    try {
-      setIsAnalyzing(true);
-      form.setError(null);
-
-      const compressedFile = await compressImage(selectedImageFile);
-
-      const formData = new FormData();
-      formData.append('image', compressedFile);
-      if (form.titre.trim()) {
-        formData.append('titre', form.titre.trim());
-      }
-
-      const res = await apiFetch('/api/repas/analyser', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Une erreur est survenue lors de l'analyse.");
-      }
-
-      const data = await res.json();
-
-      form.setTitre(data.titre || '');
-
-      if (data.ingredients && Array.isArray(data.ingredients)) {
-        form.setSelectedIngredients(
-          data.ingredients.map((ing: { nom: string; quantite: number | null | undefined; unite: string | null; categorie: string }) => ({
-            id: crypto.randomUUID(),
-            nom: ing.nom,
-            quantite:
-              ing.quantite !== null && ing.quantite !== undefined
-                ? String(ing.quantite)
-                : '',
-            unite: ing.unite || '',
-            categorie: ing.categorie,
-          }))
-        );
-      } else {
-        form.setSelectedIngredients([]);
-      }
-
-      if (data.recette && Array.isArray(data.recette)) {
-        const mappedSteps = data.recette.map((stepText: string) => ({
-          id: crypto.randomUUID(),
-          text: stepText,
-        }));
-        form.setSteps(
-          mappedSteps.length > 0 ? mappedSteps : [{ id: 'init-step-1', text: '' }]
-        );
-      } else {
-        form.setSteps([{ id: 'init-step-1', text: '' }]);
-      }
-
-      setCreationMode('ia_form');
-      form.setStep(1);
+      const result = await analyse.mutateAsync({ image: await compressImage(image.file), titre: form.titre });
+      form.replaceValues(analysisToValues(result));
+      setMode('ia_form');
     } catch (err) {
-      form.setError(err instanceof Error ? err.message : "Impossible d'analyser l'image.");
-    } finally {
-      setIsAnalyzing(false);
+      form.setError(errorMessage(err, "Impossible d'analyser l'image."));
     }
   };
 
-  // ── Soumission (POST /api/repas) ─────────────────────────────────────────
-
-  const handleSubmit = async () => {
-    try {
-      form.setLoading(true);
-      form.setError(null);
-
-      let finalPhotoUrl: string | null;
-      try {
-        finalPhotoUrl = await form.uploadImageIfNeeded();
-      } catch (err) {
-        throw new Error(
-          `Échec du traitement/téléversement de l'image: ${errorMessage(err, String(err))}`
-        );
-      }
-
-      const payload = form.buildSubmitPayload();
-
-      const res = await apiFetch('/api/repas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...payload, photoUrl: finalPhotoUrl }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Erreur lors de la création du repas.');
-      }
-
+  const handleSubmit = () =>
+    form.submit(async (payload) => {
+      await createRepas.mutateAsync(payload);
       clearDraft();
-      void invalidateRepas();
       router.push('/repas');
-    } catch (err) {
-      form.setError(errorMessage(err, 'Une erreur inattendue est survenue.'));
-    } finally {
-      form.setLoading(false);
-    }
-  };
+    });
 
-  // ── Écran de choix du mode de création ──────────────────────────────────
-
-  if (creationMode === null) {
+  if (mode === null) {
     return (
       <div className="max-w-2xl mx-auto">
         <BackHeader title="Nouvelle recette" />
 
         <ul className="border-t border-text-light-main dark:border-text-dark-main">
-          {[
-            { mode: 'manuel' as const, title: 'Je la saisis', hint: 'Titre, ingrédients et étapes, à la main.', icon: PenLine },
-            { mode: 'ia_upload' as const, title: 'Je photographie le plat', hint: "L'IA propose une recette à relire.", icon: Camera },
-          ].map(({ mode, title, hint, icon: Icon }, idx) => (
-            <li key={mode} className="border-b border-neutral-200 dark:border-neutral-800">
+          {MODES.map(({ mode: m, title, hint, icon: Icon }, idx) => (
+            <li key={m} className="border-b border-neutral-200 dark:border-neutral-800">
               <button
                 type="button"
-                onClick={() => setCreationMode(mode)}
+                onClick={() => setMode(m)}
                 className="group w-full flex items-center gap-5 py-6 text-left cursor-pointer"
               >
                 <span className="font-display italic text-3xl w-8 text-brand">{idx + 1}</span>
@@ -212,13 +105,11 @@ export default function NouveauRepasPage() {
     );
   }
 
-  // ── Écran d'upload pour l'analyse IA ────────────────────────────────────
-
-  if (creationMode === 'ia_upload') {
+  if (mode === 'ia_upload') {
     const backToChoice = () => {
       form.setError(null);
       form.setTitre('');
-      setCreationMode(null);
+      setMode(null);
     };
 
     return (
@@ -233,28 +124,17 @@ export default function NouveauRepasPage() {
             value={form.titre}
             onChange={(e) => form.setTitre(e.target.value)}
             placeholder="Pâtes carbonara…"
-            disabled={isAnalyzing}
+            disabled={analyse.isPending}
           />
 
-          <ImageDropzone
-            previewUrl={form.localPreviewUrl || form.photoUrl}
-            busy={isAnalyzing}
-            busyLabel="L'IA analyse votre plat…"
-            isDragging={form.isDragging}
-            inputRef={fileInputRef}
-            onFileChange={handleFileChange}
-            onDragOver={form.handleDragOver}
-            onDragLeave={form.handleDragLeave}
-            onDrop={form.handleDrop}
-            onRemove={form.removeImage}
-          />
+          <ImageDropzone {...image.dropzoneProps} busy={analyse.isPending} busyLabel="L'IA analyse votre plat…" />
 
           <div className="flex items-center justify-between gap-3 pt-6 border-t border-neutral-200 dark:border-neutral-800">
-            <Button variant="ghost" onClick={backToChoice} disabled={isAnalyzing}>
+            <Button variant="ghost" onClick={backToChoice} disabled={analyse.isPending}>
               Retour
             </Button>
-            <Button onClick={handleAnalyzeImage} disabled={!selectedImageFile || isAnalyzing}>
-              {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            <Button onClick={handleAnalyze} disabled={!image.file || analyse.isPending}>
+              {analyse.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               Analyser
             </Button>
           </div>
@@ -263,25 +143,17 @@ export default function NouveauRepasPage() {
     );
   }
 
-  // ── Formulaire multi-étapes (mode manuel ou ia_form) ─────────────────────
-
-  const backToChoice = () => {
-    clearDraft();
-    form.reset();
-    setCreationMode(null);
-  };
-
   return (
     <div className="max-w-2xl mx-auto">
-      <BackHeader title="Nouvelle recette" eyebrow={creationMode === 'ia_form' ? 'Proposée par IA' : undefined} onBack={backToChoice} />
+      <BackHeader title="Nouvelle recette" eyebrow={mode === 'ia_form' ? 'Proposée par IA' : undefined} onBack={onRestart} />
 
       <RepasFormSteps
         form={form}
         submitLabel="Créer la recette"
-        submitLoadingLabel={selectedImageFile && !form.photoUrl ? "Envoi de l'image..." : 'Enregistrement...'}
+        submitLoadingLabel={image.file ? "Envoi de l'image..." : 'Enregistrement...'}
         onSubmit={handleSubmit}
-        onCancel={backToChoice}
-        isModeIa={creationMode === 'ia_form'}
+        onCancel={onRestart}
+        isModeIa={mode === 'ia_form'}
       />
     </div>
   );

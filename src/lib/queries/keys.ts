@@ -28,5 +28,6 @@ export const queryKeys = {
     all: ['repas'] as const,
     list: (sort: string, search: string) => ['repas', 'list', { sort, search }] as const,
     options: (search: string) => ['repas', 'options', search] as const,
+    detail: (id: number) => ['repas', 'detail', id] as const,
   },
 };

@@ -3,11 +3,10 @@
 import React, { useState } from 'react';
 import { errorMessage } from '@/lib/errors';
 import { Loader2 } from 'lucide-react';
-import { CATEGORY_DETAILS, CategorieIngredient, normalizeCategory } from '@/types';
+import { CATEGORY_DETAILS, normalizeCategory, type CategorieIngredient, type IngredientSuggestion } from '@/types';
 import Drawer from '@/components/Drawer';
 import Button from '@/components/ui/Button';
 import TextInput from '@/components/ui/TextInput';
-import { IngredientSuggestion } from '@/components/IngredientSearchInput';
 import { apiFetch } from '@/lib/api';
 
 interface CreateIngredientDrawerProps {

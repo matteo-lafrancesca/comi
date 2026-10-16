@@ -30,8 +30,8 @@ export class ApiError extends Error {
   }
 }
 
-interface ApiJsonInit extends Omit<RequestInit, 'body'> {
-  /** Corps JSON ; ajoute l'en-tête Content-Type. */
+interface ApiJsonInit extends RequestInit {
+  /** Corps JSON ; ajoute l'en-tête Content-Type (sinon, `body` est transmis tel quel, ex. FormData). */
   json?: unknown;
   /** Message utilisé si la réponse d'erreur n'en contient pas. */
   fallbackError?: string;
@@ -40,11 +40,11 @@ interface ApiJsonInit extends Omit<RequestInit, 'body'> {
 /**
  * Appelle l'API et renvoie le JSON typé. Lève une `ApiError` si la réponse n'est pas OK.
  */
-export async function apiJson<T>(path: string, { json, fallbackError, headers, ...init }: ApiJsonInit = {}): Promise<T> {
+export async function apiJson<T>(path: string, { json, fallbackError, headers, body, ...init }: ApiJsonInit = {}): Promise<T> {
   const res = await apiFetch(path, {
     ...init,
     headers: json === undefined ? headers : { 'Content-Type': 'application/json', ...headers },
-    body: json === undefined ? undefined : JSON.stringify(json),
+    body: json === undefined ? body : JSON.stringify(json),
   });
 
   const data: unknown = await res.json().catch(() => null);
