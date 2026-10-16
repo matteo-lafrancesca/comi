@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck && npm test",
+    "seed:demo": "tsx prisma/seed_generated_meals.ts",
     "test": "tsx tests/setup.ts && node --import tsx --test tests/*.test.ts"
   },
   "prisma": {
