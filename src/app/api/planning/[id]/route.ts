@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth';
-import { getParisDate, normalizeToUTCDate } from '@/lib/date-utils';
+import { isValidYmd, toDbDate } from '@/lib/date-utils';
+import { formatProgrammationResponse, PROGRAMMATION_INCLUDE } from '@/lib/api-formatters';
 
 /**
  * PUT /api/planning/[id]
  * Modifie une programmation de repas existante.
- * Payload: { repasId?: number, date?: string, heure?: number }
+ * Payload: { repasId?: number, date?: 'AAAA-MM-JJ', heure?: 0 | 1 }
  */
 export async function PUT(
   request: Request,
@@ -105,15 +106,14 @@ export async function PUT(
         );
       }
 
-      const parsedDate = new Date(date);
-      if (isNaN(parsedDate.getTime())) {
+      if (!isValidYmd(date)) {
         return NextResponse.json(
-          { error: 'Format de date invalide.' },
+          { error: 'Format de date invalide (AAAA-MM-JJ attendu).' },
           { status: 400 }
         );
       }
 
-      updateData.date = normalizeToUTCDate(getParisDate(parsedDate));
+      updateData.date = toDbDate(date);
     }
 
     // 4. Si la date ou l'heure changent, vérifier qu'il n'y a pas de conflit avec un autre repas
@@ -142,39 +142,10 @@ export async function PUT(
     const updatedProg = await db.programmation.update({
       where: { id: progId },
       data: updateData,
-      include: {
-        repas: {
-          include: {
-            ingredients: {
-              include: {
-                ingredient: true,
-              },
-            },
-          },
-        },
-      },
+      include: PROGRAMMATION_INCLUDE,
     });
 
-    const responseProg = {
-      ...updatedProg,
-      repas: {
-        id: updatedProg.repas.id,
-        userId: updatedProg.repas.userId,
-        titre: updatedProg.repas.titre,
-        recette: updatedProg.repas.recette,
-        photoUrl: updatedProg.repas.photoUrl,
-        createdAt: updatedProg.repas.createdAt,
-        ingredients: updatedProg.repas.ingredients.map((ri) => ({
-          id: ri.id,
-          nom: ri.ingredient.nom,
-          quantite: ri.quantite,
-          unite: ri.unite,
-          categorie: ri.ingredient.categorie,
-        })),
-      },
-    };
-
-    return NextResponse.json(responseProg, { status: 200 });
+    return NextResponse.json(formatProgrammationResponse(updatedProg), { status: 200 });
   } catch (error) {
     console.error('Erreur lors de la mise à jour de la programmation:', error);
     return NextResponse.json(

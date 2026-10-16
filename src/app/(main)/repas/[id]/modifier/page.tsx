@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { errorMessage } from '@/lib/errors';
 import { useRouter, useParams } from 'next/navigation';
 import { CategorieIngredient, RepasWithIngredients } from '@/types';
-import { useNavigationCache } from '@/contexts/NavigationCacheContext';
+import { useInvalidateRepas } from '@/lib/queries/mutations';
 import { useRepasForm } from '@/hooks/useRepasForm';
 import RepasFormSteps from '@/components/RepasFormSteps';
 import BackHeader from '@/components/BackHeader';
@@ -14,7 +14,7 @@ export default function ModifierRepasPage() {
   const router = useRouter();
   const params = useParams();
   const repasId = params?.id as string;
-  const { invalidateRepasCache } = useNavigationCache();
+  const invalidateRepas = useInvalidateRepas();
   const form = useRepasForm();
 
   // État propre à cette page
@@ -101,7 +101,7 @@ export default function ModifierRepasPage() {
         throw new Error(data.error || 'Erreur lors de la mise à jour du repas.');
       }
 
-      invalidateRepasCache();
+      void invalidateRepas();
       router.push('/repas');
     } catch (err) {
       form.setError(errorMessage(err, 'Une erreur inattendue est survenue.'));

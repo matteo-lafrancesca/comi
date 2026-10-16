@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth';
 import { normalizeCategory } from '@/types';
+import { isValidWeekRef } from '@/lib/date-utils';
 
 /**
  * POST /api/shopping-list/extras
@@ -21,9 +22,9 @@ export async function POST(request: Request) {
     const { week, year, repasId, ingredientName, categorie, quantite, unite } = body;
 
     // Validation des paramètres de date de la semaine
-    if (!week || !year || typeof week !== 'number' || typeof year !== 'number') {
+    if (typeof week !== 'number' || typeof year !== 'number' || !isValidWeekRef({ week, year })) {
       return NextResponse.json(
-        { error: 'Les paramètres week et year sont obligatoires et doivent être des nombres.' },
+        { error: 'Les paramètres week et year sont obligatoires et doivent désigner une semaine valide.' },
         { status: 400 }
       );
     }

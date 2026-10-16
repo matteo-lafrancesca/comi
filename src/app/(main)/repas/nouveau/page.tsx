@@ -5,7 +5,7 @@ import { errorMessage } from '@/lib/errors';
 import { useRouter } from 'next/navigation';
 import { PenLine, Camera, Loader2, Sparkles } from 'lucide-react';
 import { compressImage } from '@/lib/image-compression';
-import { useNavigationCache } from '@/contexts/NavigationCacheContext';
+import { useInvalidateRepas } from '@/lib/queries/mutations';
 import { useRepasForm } from '@/hooks/useRepasForm';
 import RepasFormSteps from '@/components/RepasFormSteps';
 import BackHeader from '@/components/BackHeader';
@@ -25,7 +25,7 @@ function clearDraft() {
 
 export default function NouveauRepasPage() {
   const router = useRouter();
-  const { invalidateRepasCache } = useNavigationCache();
+  const invalidateRepas = useInvalidateRepas();
   const form = useRepasForm();
   const { fileInputRef, handleFileChange, selectedImageFile } = form;
 
@@ -169,7 +169,7 @@ export default function NouveauRepasPage() {
       }
 
       clearDraft();
-      invalidateRepasCache();
+      void invalidateRepas();
       router.push('/repas');
     } catch (err) {
       form.setError(errorMessage(err, 'Une erreur inattendue est survenue.'));

@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { ScrollContainerContext } from '@/contexts/ScrollContainerContext';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -25,6 +26,7 @@ export default function MainLayout({
 }) {
   const { loading } = useAuth();
   const pathname = usePathname();
+  const mainRef = useRef<HTMLElement>(null);
 
   const navItems: NavItem[] = [
     {
@@ -61,6 +63,7 @@ export default function MainLayout({
   }
 
   return (
+    <ScrollContainerContext.Provider value={mainRef}>
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-bg-light dark:bg-bg-dark text-text-light-main dark:text-text-dark-main">
       {/* Desktop : colonne de navigation */}
       <aside className="hidden md:flex flex-col w-60 fixed inset-y-0 left-0 border-r border-neutral-200 dark:border-neutral-800 px-8 py-10 z-40">
@@ -115,7 +118,7 @@ export default function MainLayout({
         </Link>
       </header>
 
-      <main className="flex-grow flex flex-col md:pl-60 min-h-0 overflow-y-auto overscroll-none">
+      <main ref={mainRef} className="flex-grow flex flex-col md:pl-60 min-h-0 overflow-y-auto overscroll-none">
         <div className="flex-1 px-5 pt-6 pb-28 md:px-12 md:py-12 max-w-5xl w-full mx-auto">{children}</div>
       </main>
 
@@ -143,6 +146,7 @@ export default function MainLayout({
         })}
       </nav>
     </div>
+    </ScrollContainerContext.Provider>
   );
 }
 

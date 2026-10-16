@@ -99,3 +99,69 @@ test('repas : ingrédient nouveau en double ou créé en parallèle -> 201 (pas 
   assert.deepEqual(res.map((r) => r.status), Array(6).fill(201));
   assert.equal(await db.ingredient.count({ where: { nom: nom2 } }), 1);
 });
+
+test('planning : GET renvoie la semaine calculée par le serveur (jours, précédente, suivante)', async () => {
+  await loginAs(2); // semaine démarrant mercredi
+  const data = await (await planning.GET(json('/api/planning?week=10&year=2025', 'GET'))).json();
+  assert.equal(data.weekStartDay, 2);
+  assert.equal(data.start, '2025-02-26');
+  assert.equal(data.end, '2025-03-04');
+  assert.equal(data.days.length, 7);
+  assert.deepEqual(data.prev, { week: 9, year: 2025 });
+  assert.deepEqual(data.next, { week: 11, year: 2025 });
+});
+
+test('planning : semaine ou année seule, semaine 53 inexistante, date mal formée -> 400', async () => {
+  const u = await loginAs();
+  assert.equal((await planning.GET(json('/api/planning?week=10', 'GET'))).status, 400);
+  assert.equal((await planning.GET(json('/api/planning?week=53&year=2025', 'GET'))).status, 400);
+  const r = await db.repas.create({ data: { userId: u.id, titre: 'D' } });
+  for (const date of ['2025-3-5', '2025-03-05T10:00:00Z', '2025-02-30']) {
+    assert.equal((await planning.POST(json('/api/planning', 'POST', { repasId: r.id, date, heure: 0 }))).status, 400, date);
+  }
+});
+
+test('planning : créneau écrit en parallèle -> une seule programmation', async () => {
+  const u = await loginAs();
+  const repasList = await Promise.all(['A', 'B', 'C', 'D'].map((titre) => db.repas.create({ data: { userId: u.id, titre } })));
+  const res = await Promise.all(
+    repasList.map((r) => planning.POST(json('/api/planning', 'POST', { repasId: r.id, date: '2025-03-06', heure: 1 })))
+  );
+  assert.ok(res.every((r) => r.status === 200 || r.status === 201));
+  assert.equal(await db.programmation.count({ where: { userId: u.id } }), 1);
+});
+
+test('liste de courses : synchronisations simultanées -> aucun doublon, case cochée conservée', async () => {
+  const u = await loginAs();
+  const sel = await db.ingredient.create({ data: { nom: `sel${Date.now()}`, categorie: 'epicerie-salee' } });
+  const r = await db.repas.create({
+    data: { userId: u.id, titre: 'S', ingredients: { create: { ingredientId: sel.id, quantite: null, unite: null } } },
+  });
+  await planning.POST(json('/api/planning', 'POST', { repasId: r.id, date: '2025-03-05', heure: 0 }));
+
+  const get = () => shopping.GET(json('/api/shopping-list?week=10&year=2025', 'GET'));
+  const results = await Promise.all(Array.from({ length: 6 }, get));
+  assert.ok(results.every((x) => x.status === 200));
+  assert.equal(await db.shoppingListItem.count({ where: { userId: u.id } }), 1);
+
+  const item = await db.shoppingListItem.findFirstOrThrow({ where: { userId: u.id } });
+  await shopping.PATCH(json('/api/shopping-list', 'PATCH', { items: [{ id: item.id, isChecked: true }] }));
+  await get();
+  assert.equal((await db.shoppingListItem.findUniqueOrThrow({ where: { id: item.id } })).isChecked, true);
+});
+
+test('liste de courses : repas déprogrammé -> article retiré', async () => {
+  const u = await loginAs();
+  const ing = await db.ingredient.create({ data: { nom: `poivre${Date.now()}`, categorie: 'epicerie-salee' } });
+  const r = await db.repas.create({
+    data: { userId: u.id, titre: 'P', ingredients: { create: { ingredientId: ing.id, quantite: 1, unite: 'g' } } },
+  });
+  const created = await planning.POST(json('/api/planning', 'POST', { repasId: r.id, date: '2025-03-05', heure: 0 }));
+  const { id } = await created.json();
+  await shopping.GET(json('/api/shopping-list?week=10&year=2025', 'GET'));
+  assert.equal(await db.shoppingListItem.count({ where: { userId: u.id } }), 1);
+
+  await db.programmation.delete({ where: { id } });
+  await shopping.GET(json('/api/shopping-list?week=10&year=2025', 'GET'));
+  assert.equal(await db.shoppingListItem.count({ where: { userId: u.id } }), 0);
+});

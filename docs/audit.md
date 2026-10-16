@@ -6,7 +6,7 @@
 - **Données** : Prisma + SQLite (`prisma/schema.prisma`, migrations versionnées). Modèles : `User`, `Repas`, `Ingredient`, `RepasIngredient`, `Programmation`, `ShoppingListItem`.
 - **Auth** : JWT d'accès 15 min + refresh token en base (rotation), cookies httpOnly, `src/proxy.ts` protège les pages et rafraîchit la session. Mots de passe hachés avec `bcryptjs`.
 - **Services externes** : Uploadthing (photos), Gemini (analyse photo → recette, `api/repas/analyser`).
-- **Front** : `src/app/(main)` (repas, planification, courses, paramètres), `src/components` (partagés, `ui/` pour les primitives), `src/contexts` (auth, réglages, cache de navigation), `src/hooks/useRepasForm.ts`, `src/lib` (dates, formatage, catégories).
+- **Front** : `src/app/(main)` (repas, planification, courses, paramètres), `src/components` (partagés, `ui/` pour les primitives), `src/contexts` (auth, réglages, conteneur de scroll), `src/lib/queries` (données serveur via TanStack Query), `src/hooks/useRepasForm.ts`, `src/lib` (dates, formatage, catégories).
 
 ## Variables d'environnement
 

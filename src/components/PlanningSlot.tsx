@@ -4,26 +4,25 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import type { ProgrammationWithRepas } from '@/types';
+import type { WeekRef, Ymd } from '@/lib/date-utils';
+import { repasSelectUrl } from '@/lib/routes';
 
 interface PlanningSlotProps {
-  /** Date du créneau */
-  day: Date;
+  /** Jour du créneau */
+  date: Ymd;
   /** 0 = Midi, 1 = Soir */
   heure: 0 | 1;
   /** Libellé du créneau (ex: "Midi" | "Soir") */
   label: string;
   /** Programmation existante pour ce créneau, ou undefined si vide */
   programmation?: ProgrammationWithRepas;
-  /** Semaine courante (pour les liens de navigation) */
-  currentWeek: number;
-  /** Année courante (pour les liens de navigation) */
-  currentYear: number;
+  /** Semaine affichée (pour revenir au bon endroit après le choix d'un repas) */
+  week: WeekRef;
   /** Appelé quand l'utilisateur clique sur un créneau occupé en mode normal */
-  onOpenDetail: (prog: ProgrammationWithRepas, dateStr: string) => void;
-  /** Mode programmation rapide actif */
+  onOpenDetail: (prog: ProgrammationWithRepas) => void;
+  /** Mode attribution actif : un clic programme directement le repas en attente */
   isSchedulingMode?: boolean;
-  /** Appelé pour programmer le repas directement sur ce créneau */
-  onScheduleRepas?: (dateStr: string, heure: 0 | 1) => void;
+  onScheduleRepas?: (date: Ymd, heure: 0 | 1) => void;
 }
 
 /**
@@ -31,29 +30,24 @@ interface PlanningSlotProps {
  * soit le repas programmé (cliquable), soit une invitation à en ajouter un.
  */
 export default function PlanningSlot({
-  day,
+  date,
   heure,
   label,
   programmation,
-  currentWeek,
-  currentYear,
+  week,
   onOpenDetail,
   isSchedulingMode = false,
   onScheduleRepas,
 }: PlanningSlotProps) {
   const router = useRouter();
-  const dateStr = day.toISOString().split('T')[0];
 
   const handleClickSlot = () => {
     if (isSchedulingMode && onScheduleRepas) {
-      onScheduleRepas(dateStr, heure);
-      return;
-    }
-
-    if (programmation) {
-      onOpenDetail(programmation, dateStr);
+      onScheduleRepas(date, heure);
+    } else if (programmation) {
+      onOpenDetail(programmation);
     } else {
-      router.push(`/repas?selectMode=true&date=${dateStr}&heure=${heure}&returnWeek=${currentWeek}&returnYear=${currentYear}`, { scroll: false });
+      router.push(repasSelectUrl({ date, heure, returnWeek: week }), { scroll: false });
     }
   };
 
@@ -86,12 +80,9 @@ export default function PlanningSlot({
         {repas ? (
           <span className="block font-display text-[17px] leading-snug line-clamp-2">{repas.titre}</span>
         ) : (
-          <span className="block text-sm text-text-light-muted dark:text-text-dark-muted">
-            Ajouter un repas
-          </span>
+          <span className="block text-sm text-text-light-muted dark:text-text-dark-muted">Ajouter un repas</span>
         )}
       </div>
-
     </button>
   );
 }

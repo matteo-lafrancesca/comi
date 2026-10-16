@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
-import type { RepasWithIngredients } from '@/types';
+import type { ProgrammationWithRepas, RepasWithIngredients } from '@/types';
+import { fromDbDate } from '@/lib/date-utils';
 
 /**
  * Type Prisma complet pour un repas avec ses ingrédients chargés.
@@ -33,5 +34,27 @@ export function formatRepasResponse(repas: RepasWithIngredientsPayload): RepasWi
       unite: ri.unite,
       categorie: ri.ingredient.categorie as RepasWithIngredients['ingredients'][number]['categorie'],
     })),
+  };
+}
+
+/** Programmation Prisma avec son repas complet. */
+export type ProgrammationPayload = Prisma.ProgrammationGetPayload<{
+  include: { repas: { include: { ingredients: { include: { ingredient: true } } } } };
+}>;
+
+/** Include Prisma à utiliser pour obtenir un `ProgrammationPayload`. */
+export const PROGRAMMATION_INCLUDE = {
+  repas: { include: { ingredients: { include: { ingredient: true } } } },
+} satisfies Prisma.ProgrammationInclude;
+
+/** Programmation Prisma -> réponse API (date calendaire « AAAA-MM-JJ »). */
+export function formatProgrammationResponse(prog: ProgrammationPayload): ProgrammationWithRepas {
+  return {
+    id: prog.id,
+    userId: prog.userId,
+    repasId: prog.repasId,
+    date: fromDbDate(prog.date),
+    heure: prog.heure === 1 ? 1 : 0,
+    repas: formatRepasResponse(prog.repas),
   };
 }

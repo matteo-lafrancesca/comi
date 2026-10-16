@@ -3,7 +3,7 @@ import { DM_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
-import { NavigationCacheProvider } from "@/contexts/NavigationCacheContext";
+import QueryProvider from "./providers";
 import GestureBlocker from "@/components/GestureBlocker";
 
 const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"] });
@@ -82,13 +82,11 @@ export default function RootLayout({
           </p>
         </div>
 
-        <AuthProvider>
-          <SettingsProvider>
-            <NavigationCacheProvider>
-              {children}
-            </NavigationCacheProvider>
-          </SettingsProvider>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <SettingsProvider>{children}</SettingsProvider>
+          </AuthProvider>
+        </QueryProvider>
 
       </body>
     </html>

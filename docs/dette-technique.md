@@ -1,6 +1,6 @@
 # Dette technique
 
-Classée par risque, puis valeur, puis effort. Mis à jour après la passe de nettoyage (branche `refactor/cleanup`).
+Classée par risque, puis valeur, puis effort. Mis à jour après la refonte navigation / dates / cache (branche `fix/navigation-refonte`).
 
 ## Risque
 
@@ -14,10 +14,7 @@ Classée par risque, puis valeur, puis effort. Mis à jour après la passe de ne
 
 | # | Sujet | Détail | Effort |
 |---|---|---|---|
-| 5 | Gros fichiers | `planification/page.tsx` (483 l.), `api/shopping-list/route.ts` (452), `repas/page.tsx` (434), `courses/page.tsx` (427). Extraire hooks de données (`usePlanning`, `useShoppingList`) et logique d'agrégation hors des routes. | M |
-| 6 | Data-fetching maison | Les pages gèrent fetch + cache + états de chargement à la main, d'où 3 `eslint-disable react-hooks/set-state-in-effect` / `exhaustive-deps` (`courses`, `repas`, `planification`). Migrer vers TanStack Query ou SWR supprimerait aussi `NavigationCacheContext`. | L |
 | 7 | `SortableStepsList` | Lit des refs pendant le rendu (`eslint-disable react-hooks/refs`) pour la géométrie du drag. Passer les rectangles en state ou utiliser `@dnd-kit`. | M |
-| 8 | `SettingsContext` | Thème lu depuis `localStorage` dans un effet (`eslint-disable`). Passer à `useSyncExternalStore`. | S |
 | 9 | `useRepasForm` (353 l.) | Un seul hook pour image, ingrédients, étapes et navigation. Scinder par étape. | M |
 | 10 | Types dupliqués | `IngredientSuggestion`, `MealOption`, `StepItem`… définis localement dans plusieurs fichiers ; centraliser dans `src/types`. | S |
 
