@@ -1,12 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { FRENCH_DAYS } from '@/lib/date-utils';
 import PageHeader from '@/components/PageHeader';
 import Button from '@/components/ui/Button';
+import Alert from '@/components/ui/Alert';
+import { errorMessage } from '@/lib/errors';
 
 /** Choix exclusif sous forme de cases accolées. */
 function choiceClasses(selected: boolean) {
@@ -20,6 +22,20 @@ function choiceClasses(selected: boolean) {
 export default function ParametresPage() {
   const { logout } = useAuth();
   const { weekStartDay, setWeekStartDay, theme, toggleTheme } = useSettings();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleWeekStartDay = async (day: number) => {
+    setSaving(true);
+    setError(null);
+    try {
+      await setWeekStartDay(day);
+    } catch (err) {
+      setError(errorMessage(err, 'Une erreur est survenue.'));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="max-w-lg">
@@ -45,7 +61,8 @@ export default function ParametresPage() {
               <button
                 key={idx}
                 id={`settings-weekday-${idx}`}
-                onClick={() => setWeekStartDay(idx)}
+                onClick={() => handleWeekStartDay(idx)}
+                disabled={saving}
                 aria-label={label}
                 aria-pressed={idx === weekStartDay}
                 className={choiceClasses(idx === weekStartDay)}
@@ -54,6 +71,11 @@ export default function ParametresPage() {
               </button>
             ))}
           </div>
+          {error && (
+            <div className="mt-3">
+              <Alert>{error}</Alert>
+            </div>
+          )}
         </section>
 
         <section>

@@ -7,40 +7,33 @@ import { Pencil, Trash2, Loader2, RefreshCw, Calendar, CalendarX } from 'lucide-
 import { useRouter } from 'next/navigation';
 import { RepasWithIngredients } from '@/types';
 import { formatIngredient } from '@/lib/shopping-list-utils';
-import { apiFetch } from '@/lib/api';
+import { planningUrl } from '@/lib/routes';
+import { useDeleteRepasMutation, useUnscheduleMutation } from '@/lib/queries/mutations';
 import Drawer from '@/components/Drawer';
 import IconButton from '@/components/ui/IconButton';
+import Alert from '@/components/ui/Alert';
 import ConfirmDeleteDrawer from '@/components/ConfirmDeleteDrawer';
 
 interface RepasDetailModalProps {
   repas: RepasWithIngredients | null;
   isOpen: boolean;
   onClose: () => void;
-  onDeleted?: (id: number) => void;
+  /** Présent quand le repas est affiché depuis un créneau du planning */
   programmationId?: number;
-  onUnschedule?: (id: number) => Promise<void>;
   onReprogram?: () => void;
 }
 
-export default function RepasDetailModal({ 
-  repas, 
-  isOpen, 
-  onClose, 
-  onDeleted, 
-  programmationId,
-  onUnschedule,
-  onReprogram
-}: RepasDetailModalProps) {
+export default function RepasDetailModal({ repas, isOpen, onClose, programmationId, onReprogram }: RepasDetailModalProps) {
   const router = useRouter();
   const [activeRepas, setActiveRepas] = useState<RepasWithIngredients | null>(null);
 
-  // Confirmation delete state
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  // Unschedule state
-  const [isUnscheduling, setIsUnscheduling] = useState(false);
+  const [unscheduleError, setUnscheduleError] = useState<string | null>(null);
+  const deleteMutation = useDeleteRepasMutation();
+  const unscheduleMutation = useUnscheduleMutation();
+  const isDeleting = deleteMutation.isPending;
+  const isUnscheduling = unscheduleMutation.isPending;
 
   // Conserve le dernier repas affiché pendant l'animation de fermeture
   if (repas && repas !== activeRepas) setActiveRepas(repas);
@@ -51,7 +44,7 @@ export default function RepasDetailModal({
         setActiveRepas(null);
         setIsDeleteConfirmOpen(false);
         setDeleteError(null);
-        setIsUnscheduling(false);
+        setUnscheduleError(null);
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -72,46 +65,27 @@ export default function RepasDetailModal({
 
   const handleSchedule = () => {
     onClose();
-    router.push(`/planification?scheduleRepasId=${id}&scheduleRepasTitle=${encodeURIComponent(titre)}`, { scroll: false });
+    router.push(planningUrl({ schedule: id }), { scroll: false });
   };
 
   const handleUnschedule = async () => {
     if (!programmationId) return;
+    setUnscheduleError(null);
     try {
-      setIsUnscheduling(true);
-      const res = await apiFetch(`/api/planning/${programmationId}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Erreur lors de la déprogrammation.');
-      }
+      await unscheduleMutation.mutateAsync(programmationId);
       onClose();
-      if (onUnschedule) {
-        await onUnschedule(programmationId);
-      }
     } catch (err) {
-      alert(errorMessage(err, 'Une erreur est survenue lors de la déprogrammation.'));
-    } finally {
-      setIsUnscheduling(false);
+      setUnscheduleError(errorMessage(err, 'Une erreur est survenue lors de la déprogrammation.'));
     }
   };
 
   const handleDeleteConfirm = async () => {
+    setDeleteError(null);
     try {
-      setIsDeleting(true);
-      setDeleteError(null);
-
-      const res = await apiFetch(`/api/repas/${id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Erreur lors de la suppression.');
-      }
-
+      await deleteMutation.mutateAsync(id);
       onClose();
-      if (onDeleted) onDeleted(id);
     } catch (err) {
       setDeleteError(errorMessage(err, 'Une erreur est survenue.'));
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -149,6 +123,7 @@ export default function RepasDetailModal({
         maxHeight="max-h-[96dvh] sm:max-h-[90vh]"
       >
         <div className="space-y-8">
+          {unscheduleError && <Alert>{unscheduleError}</Alert>}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-tight leading-tight">{titre}</h2>
 

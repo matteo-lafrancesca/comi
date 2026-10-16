@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Check, Loader2, X } from 'lucide-react';
 import { CategorieIngredient, CATEGORY_DETAILS, normalizeCategory } from '@/types';
 import Drawer from '@/components/Drawer';
@@ -9,53 +9,36 @@ import Button from '@/components/ui/Button';
 import Alert from '@/components/ui/Alert';
 import TextInput from '@/components/ui/TextInput';
 import { errorMessage } from '@/lib/errors';
-import { normalizeSearchText } from '@/lib/string-utils';
-import { apiFetch } from '@/lib/api';
+import type { WeekRef } from '@/lib/date-utils';
+import { useRepasOptions } from '@/lib/queries/queries';
+import { useAddExtraMutation, type ExtraInput } from '@/lib/queries/mutations';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 interface AddExtraDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  week: number | null;
-  year: number | null;
-  /** Called after a successful add so the parent can refresh its data */
-  onAdded: () => void;
-}
-
-interface MealOption {
-  id: number;
-  titre: string;
-  photoUrl: string | null;
-}
-
-interface ExtraPayload {
-  week: number;
-  year: number;
-  repasId?: number;
-  ingredientName?: string;
-  categorie?: string;
-  quantite?: number;
-  unite?: string;
+  /** Semaine de la liste à compléter (`null` tant qu'elle n'est pas chargée) */
+  week: WeekRef | null;
 }
 
 type Tab = 'repas' | 'ingredient';
 
 /** Drawer d'ajout hors-planning. Le formulaire n'est monté que drawer ouvert : son état repart de zéro à chaque ouverture. */
-export default function AddExtraDrawer({ isOpen, onClose, week, year, onAdded }: AddExtraDrawerProps) {
+export default function AddExtraDrawer({ isOpen, onClose, week }: AddExtraDrawerProps) {
   return (
     <Drawer isOpen={isOpen} onClose={onClose} title="Ajouter à la liste" maxWidth="sm:max-w-md">
-      <AddExtraForm onClose={onClose} week={week} year={year} onAdded={onAdded} />
+      <AddExtraForm onClose={onClose} week={week} />
     </Drawer>
   );
 }
 
-function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps, 'isOpen'>) {
+function AddExtraForm({ onClose, week }: Omit<AddExtraDrawerProps, 'isOpen'>) {
   const [activeTab, setActiveTab] = useState<Tab>('repas');
   const [formError, setFormError] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
+  const addExtra = useAddExtraMutation();
+  const adding = addExtra.isPending;
 
   // Onglet recette
-  const [allMeals, setAllMeals] = useState<MealOption[]>([]);
-  const [loadingMeals, setLoadingMeals] = useState(true);
   const [selectedRepasId, setSelectedRepasId] = useState<number | null>(null);
   const [searchMealQuery, setSearchMealQuery] = useState('');
 
@@ -64,19 +47,7 @@ function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps
   const [ingredientQuantity, setIngredientQuantity] = useState('');
   const [ingredientUnite, setIngredientUnite] = useState('');
 
-  useEffect(() => {
-    apiFetch('/api/repas')
-      .then((res) => (res.ok ? res.json() : { repas: [] }))
-      .then((data) => setAllMeals(data.repas || []))
-      .catch(console.error)
-      .finally(() => setLoadingMeals(false));
-  }, []);
-
-  const filteredMeals = useMemo(() => {
-    if (!searchMealQuery.trim()) return allMeals;
-    const q = normalizeSearchText(searchMealQuery);
-    return allMeals.filter((meal) => normalizeSearchText(meal.titre).includes(q));
-  }, [allMeals, searchMealQuery]);
+  const { data: filteredMeals = [], isPending: loadingMeals } = useRepasOptions(useDebouncedValue(searchMealQuery));
 
   const switchTab = (tab: Tab) => {
     setActiveTab(tab);
@@ -85,9 +56,9 @@ function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (week === null || year === null) return;
+    if (week === null) return;
 
-    const body: ExtraPayload = { week, year };
+    const body: ExtraInput = { week: week.week, year: week.year };
     if (activeTab === 'repas') {
       if (selectedRepasId === null) return setFormError('Choisissez une recette.');
       body.repasId = selectedRepasId;
@@ -100,25 +71,11 @@ function AddExtraForm({ onClose, week, year, onAdded }: Omit<AddExtraDrawerProps
     }
 
     setFormError(null);
-    setAdding(true);
     try {
-      const res = await apiFetch('/api/shopping-list/extras', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Erreur lors de l'ajout.");
-      }
-
+      await addExtra.mutateAsync(body);
       onClose();
-      onAdded();
     } catch (err) {
       setFormError(errorMessage(err, 'Une erreur est survenue.'));
-    } finally {
-      setAdding(false);
     }
   };
 

@@ -18,3 +18,40 @@ export function apiUrl(path: string): string {
 export async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
   return fetch(apiUrl(input), init);
 }
+
+/** Erreur renvoyée par l'API (message lisible issu du champ `error` de la réponse). */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+interface ApiJsonInit extends Omit<RequestInit, 'body'> {
+  /** Corps JSON ; ajoute l'en-tête Content-Type. */
+  json?: unknown;
+  /** Message utilisé si la réponse d'erreur n'en contient pas. */
+  fallbackError?: string;
+}
+
+/**
+ * Appelle l'API et renvoie le JSON typé. Lève une `ApiError` si la réponse n'est pas OK.
+ */
+export async function apiJson<T>(path: string, { json, fallbackError, headers, ...init }: ApiJsonInit = {}): Promise<T> {
+  const res = await apiFetch(path, {
+    ...init,
+    headers: json === undefined ? headers : { 'Content-Type': 'application/json', ...headers },
+    body: json === undefined ? undefined : JSON.stringify(json),
+  });
+
+  const data: unknown = await res.json().catch(() => null);
+  if (!res.ok) {
+    const message =
+      data && typeof data === 'object' && 'error' in data && typeof data.error === 'string' ? data.error : null;
+    throw new ApiError(message ?? fallbackError ?? `Erreur ${res.status}`, res.status);
+  }
+  return data as T;
+}

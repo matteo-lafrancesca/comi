@@ -13,7 +13,6 @@ import {
   weekRefOf,
   weekRange,
   adjacentWeek,
-  getOrderedDayLabels,
 } from '../src/lib/date-utils';
 
 const TIMEZONES = ['UTC', 'Europe/Paris', 'America/New_York', 'Pacific/Auckland'];
@@ -134,6 +133,3 @@ test('adjacentWeek : passage d\'année et semaine 53', () => {
   assert.deepEqual(adjacentWeek({ week: 53, year: 2020 }, 'next'), { week: 1, year: 2021 });
 });
 
-test('getOrderedDayLabels', () => {
-  assert.deepEqual(getOrderedDayLabels(2), ['Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche', 'Lundi', 'Mardi']);
-});

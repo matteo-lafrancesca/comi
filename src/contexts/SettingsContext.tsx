@@ -1,98 +1,73 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { apiFetch } from '@/lib/api';
+import React, { createContext, useCallback, useContext, useSyncExternalStore } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { apiJson } from '@/lib/api';
+import { queryKeys } from '@/lib/queries/keys';
+import { useAuth } from './AuthContext';
+
+type Theme = 'light' | 'dark';
 
 interface SettingsContextType {
   /** Jour de début de semaine : 0=Lun, 1=Mar, 2=Mer, 3=Jeu, 4=Ven, 5=Sam, 6=Dim */
   weekStartDay: number;
-  /** Met à jour le jour de début en base de données */
+  /** Enregistre le jour de début de semaine. Lève une erreur si l'enregistrement échoue. */
   setWeekStartDay: (day: number) => Promise<void>;
-  theme: 'light' | 'dark';
+  theme: Theme;
   toggleTheme: () => void;
-  settingsLoading: boolean;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
+// ── Thème : la classe `dark` de <html> est la source de vérité (posée avant l'hydratation par le script du <head>)
+
+const THEME_EVENT = 'comi:theme';
+
+function subscribeTheme(onChange: () => void) {
+  window.addEventListener(THEME_EVENT, onChange);
+  return () => window.removeEventListener(THEME_EVENT, onChange);
+}
+
+const readTheme = (): Theme => (document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [weekStartDay, setWeekStartDayState] = useState<number>(0);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [settingsLoading, setSettingsLoading] = useState(true);
+  const { user, updateUser } = useAuth();
+  const queryClient = useQueryClient();
+  const theme = useSyncExternalStore(subscribeTheme, readTheme, () => 'light' as Theme);
 
-  // Initialise le thème depuis localStorage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const isDark =
-      savedTheme === 'dark' ||
-      (!savedTheme && document.documentElement.classList.contains('dark'));
-    const resolvedTheme = isDark ? 'dark' : 'light';
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- lecture de localStorage impossible au rendu serveur (hydratation)
-    setTheme(resolvedTheme);
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
+  // Le jour de début de semaine vient de la session : il est connu dès que l'utilisateur l'est.
+  const weekStartDay = user?.weekStartDay ?? 0;
 
-  // Charge weekStartDay depuis l'API
-  useEffect(() => {
-    let active = true;
-    const load = async () => {
-      try {
-        const res = await apiFetch('/api/settings');
-        if (res.ok) {
-          const data = await res.json();
-          if (active) setWeekStartDayState(data.weekStartDay ?? 0);
-        }
-      } catch {
-        // fallback silencieux : on garde 0 (lundi)
-      } finally {
-        if (active) setSettingsLoading(false);
-      }
-    };
-    load();
-    return () => { active = false; };
-  }, []);
-
-  const setWeekStartDay = useCallback(async (day: number) => {
-    // Optimistic update
-    setWeekStartDayState(day);
-    try {
-      const res = await apiFetch('/api/settings', {
+  const setWeekStartDay = useCallback(
+    async (day: number) => {
+      if (day === weekStartDay) return;
+      // Pas de mise à jour optimiste : les requêtes de semaine dépendent de cette valeur et le serveur
+      // doit l'avoir enregistrée avant qu'elles repartent.
+      await apiJson<unknown>('/api/settings', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weekStartDay: day }),
+        json: { weekStartDay: day },
+        fallbackError: 'Impossible d’enregistrer le jour de début de semaine.',
       });
-      if (!res.ok) {
-        // Rollback si erreur
-        const prev = weekStartDay;
-        setWeekStartDayState(prev);
-        console.error('Erreur lors de la sauvegarde du jour de début de semaine.');
-      }
-    } catch {
-      setWeekStartDayState(weekStartDay);
-      console.error('Erreur réseau lors de la sauvegarde du jour de début de semaine.');
-    }
-  }, [weekStartDay]);
+      queryClient.removeQueries({ queryKey: queryKeys.planning.all });
+      queryClient.removeQueries({ queryKey: queryKeys.shopping.all });
+      updateUser({ weekStartDay: day });
+    },
+    [weekStartDay, queryClient, updateUser]
+  );
 
   const toggleTheme = useCallback(() => {
-    const nextTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(nextTheme);
-    if (nextTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+    const next: Theme = readTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.classList.toggle('dark', next === 'dark');
+    try {
+      localStorage.setItem('theme', next);
+    } catch {
+      // stockage indisponible (navigation privée) : le thème vaut pour la session seulement
     }
-  }, [theme]);
+    window.dispatchEvent(new Event(THEME_EVENT));
+  }, []);
 
   return (
-    <SettingsContext.Provider
-      value={{ weekStartDay, setWeekStartDay, theme, toggleTheme, settingsLoading }}
-    >
+    <SettingsContext.Provider value={{ weekStartDay, setWeekStartDay, theme, toggleTheme }}>
       {children}
     </SettingsContext.Provider>
   );

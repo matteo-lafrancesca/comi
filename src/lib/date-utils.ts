@@ -127,10 +127,3 @@ export function adjacentWeek(ref: WeekRef, direction: 'prev' | 'next'): WeekRef 
   return isoWeekOf(addDays(mondayOfIsoWeek(ref), direction === 'prev' ? -7 : 7));
 }
 
-/**
- * Libellés de jours ordonnés à partir de weekStartDay.
- * Exemple : weekStartDay = 2 → ['Mercredi', 'Jeudi', …, 'Mardi'].
- */
-export function getOrderedDayLabels(weekStartDay: number): string[] {
-  return Array.from({ length: 7 }, (_, i) => FRENCH_DAYS[(weekStartDay + i) % 7]);
-}
