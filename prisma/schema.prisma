@@ -72,6 +72,7 @@ model Programmation {
   date    DateTime
   heure   Int      // 0 = midi, 1 = soir
 
+  @@unique([userId, date, heure])
   @@map("programmation")
   @@index([userId])
   @@index([repasId])
@@ -85,12 +86,14 @@ model ShoppingListItem {
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
   quantite     Float?
   unite        String?
+  /// Unité normalisée (minuscules, "" si absente) : sert de clé d'unicité, car NULL est distinct en SQL.
+  uniteKey     String     @default("") @map("unite_key")
   isChecked    Boolean    @default(false) @map("is_checked")
   week         Int
   year         Int
   createdAt    DateTime   @default(now()) @map("created_at")
 
-  @@unique([userId, week, year, ingredientId, unite])
+  @@unique([userId, week, year, ingredientId, uniteKey])
   @@map("shopping_list_items")
 }
 

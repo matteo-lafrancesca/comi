@@ -1,114 +1,42 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth';
-import {
-  getParisDate,
-  normalizeToUTCDate,
-  getCustomWeekDetails,
-  getCustomWeekDetailsFromWeek,
-} from '@/lib/date-utils';
-
+import { isValidYmd, toDbDate } from '@/lib/date-utils';
+import { resolveWeek } from '@/lib/week-context';
+import { formatProgrammationResponse, PROGRAMMATION_INCLUDE } from '@/lib/api-formatters';
+import type { PlanningResponse } from '@/types';
 
 /**
  * GET /api/planning
- * Récupère les programmations pour une semaine donnée.
- * Query params optionnels : week (1-53), year (ex: 2026)
+ * Récupère les programmations d'une semaine, avec les informations de semaine calculées côté serveur.
+ * Query params optionnels (ensemble) : week (1-53), year (ex: 2026). Sans eux : semaine courante à Paris.
  */
 export async function GET(request: Request) {
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
-      return NextResponse.json(
-        { error: 'Non autorisé. Veuillez vous connecter.' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Non autorisé. Veuillez vous connecter.' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const weekParam = searchParams.get('week');
-    const yearParam = searchParams.get('year');
-
-    let week: number;
-    let year: number;
-    let start: Date;
-    let end: Date;
-
-    const weekStartDay: number = sessionUser.weekStartDay ?? 0;
-
-    if (weekParam && yearParam) {
-      week = parseInt(weekParam, 10);
-      year = parseInt(yearParam, 10);
-
-      if (isNaN(week) || isNaN(year) || week < 1 || week > 53) {
-        return NextResponse.json(
-          { error: 'Paramètres week ou year invalides.' },
-          { status: 400 }
-        );
-      }
-
-      const details = getCustomWeekDetailsFromWeek(week, year, weekStartDay);
-      start = details.start;
-      end = details.end;
-    } else {
-      const nowParis = getParisDate();
-      const details = getCustomWeekDetails(nowParis, weekStartDay);
-      week = details.week;
-      year = details.year;
-      start = details.start;
-      end = details.end;
+    const weekInfo = resolveWeek(new URL(request.url).searchParams, sessionUser.weekStartDay ?? 0);
+    if (!weekInfo) {
+      return NextResponse.json({ error: 'Paramètres week ou year invalides.' }, { status: 400 });
     }
 
     const programmations = await db.programmation.findMany({
       where: {
         userId: sessionUser.id,
-        date: {
-          gte: start,
-          lte: end,
-        },
+        date: { gte: toDbDate(weekInfo.start), lte: toDbDate(weekInfo.end) },
       },
-      include: {
-        repas: {
-          include: {
-            ingredients: {
-              include: {
-                ingredient: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: [
-        { date: 'asc' },
-        { heure: 'asc' },
-      ],
+      include: PROGRAMMATION_INCLUDE,
+      orderBy: [{ date: 'asc' }, { heure: 'asc' }],
     });
 
-    const responseProgrammations = programmations.map((p) => ({
-      ...p,
-      repas: {
-        id: p.repas.id,
-        userId: p.repas.userId,
-        titre: p.repas.titre,
-        recette: p.repas.recette,
-        photoUrl: p.repas.photoUrl,
-        createdAt: p.repas.createdAt,
-        ingredients: p.repas.ingredients.map((ri) => ({
-          id: ri.id,
-          nom: ri.ingredient.nom,
-          quantite: ri.quantite,
-          unite: ri.unite,
-          categorie: ri.ingredient.categorie,
-        })),
-      },
-    }));
-
-    return NextResponse.json({
-      week,
-      year,
-      start: start.toISOString(),
-      end: end.toISOString(),
-      programmations: responseProgrammations,
-    });
+    const body: PlanningResponse = {
+      ...weekInfo,
+      programmations: programmations.map(formatProgrammationResponse),
+    };
+    return NextResponse.json(body);
   } catch (error) {
     console.error('Erreur lors de la récupération du planning:', error);
     return NextResponse.json(
@@ -120,160 +48,52 @@ export async function GET(request: Request) {
 
 /**
  * POST /api/planning
- * Ajoute ou met à jour une programmation de repas pour un créneau (date + heure).
- * Payload: { repasId: number, date: string, heure: number }
+ * Programme un repas sur un créneau (date + heure) ; remplace le repas déjà présent sur ce créneau.
+ * Payload: { repasId: number, date: 'AAAA-MM-JJ', heure: 0 | 1 }
  */
 export async function POST(request: Request) {
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
-      return NextResponse.json(
-        { error: 'Non autorisé. Veuillez vous connecter.' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Non autorisé. Veuillez vous connecter.' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { repasId, date, heure } = body;
+    const { repasId, date, heure } = await request.json();
 
-    // Validation des types de base
     if (typeof repasId !== 'number' || !date || typeof heure !== 'number') {
-      return NextResponse.json(
-        { error: 'Paramètres manquants ou invalides (repasId, date, heure).' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Paramètres manquants ou invalides (repasId, date, heure).' }, { status: 400 });
     }
-
     if (heure !== 0 && heure !== 1) {
-      return NextResponse.json(
-        { error: "L'heure doit être 0 (midi) ou 1 (soir)." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "L'heure doit être 0 (midi) ou 1 (soir)." }, { status: 400 });
+    }
+    if (!isValidYmd(date)) {
+      return NextResponse.json({ error: 'Format de date invalide (AAAA-MM-JJ attendu).' }, { status: 400 });
     }
 
-    // Validation de la date
-    const parsedDate = new Date(date);
-    if (isNaN(parsedDate.getTime())) {
-      return NextResponse.json(
-        { error: 'Format de date invalide.' },
-        { status: 400 }
-      );
-    }
-
-    const normalizedDate = normalizeToUTCDate(getParisDate(parsedDate));
-
-    // Validation de l'existence du repas et de sa possession
-    const repas = await db.repas.findUnique({
-      where: { id: repasId },
-    });
-
+    const repas = await db.repas.findUnique({ where: { id: repasId } });
     if (!repas) {
-      return NextResponse.json(
-        { error: 'Le repas spécifié est introuvable.' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Le repas spécifié est introuvable.' }, { status: 404 });
     }
-
     if (repas.userId !== sessionUser.id) {
-      return NextResponse.json(
-        { error: "Vous n'êtes pas autorisé à programmer ce repas." },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Vous n'êtes pas autorisé à programmer ce repas." }, { status: 403 });
     }
 
-    // Prévention des doublons : check s'il existe déjà une programmation sur ce créneau pour cet utilisateur
-    const existing = await db.programmation.findFirst({
-      where: {
-        userId: sessionUser.id,
-        date: normalizedDate,
-        heure,
-      },
+    // Unicité (userId, date, heure) garantie en base : l'upsert est sûr en cas de requêtes simultanées.
+    const dbDate = toDbDate(date);
+    const existing = await db.programmation.findUnique({
+      where: { userId_date_heure: { userId: sessionUser.id, date: dbDate, heure } },
+      select: { id: true },
+    });
+    const programmation = await db.programmation.upsert({
+      where: { userId_date_heure: { userId: sessionUser.id, date: dbDate, heure } },
+      create: { userId: sessionUser.id, repasId, date: dbDate, heure },
+      update: { repasId },
+      include: PROGRAMMATION_INCLUDE,
     });
 
-    if (existing) {
-      const updated = await db.programmation.update({
-        where: { id: existing.id },
-        data: { repasId },
-        include: {
-          repas: {
-            include: {
-              ingredients: {
-                include: {
-                  ingredient: true,
-                },
-              },
-            },
-          },
-        },
-      });
-
-      const responseProg = {
-        ...updated,
-        repas: {
-          id: updated.repas.id,
-          userId: updated.repas.userId,
-          titre: updated.repas.titre,
-          recette: updated.repas.recette,
-          photoUrl: updated.repas.photoUrl,
-          createdAt: updated.repas.createdAt,
-          ingredients: updated.repas.ingredients.map((ri) => ({
-            id: ri.id,
-            nom: ri.ingredient.nom,
-            quantite: ri.quantite,
-            unite: ri.unite,
-            categorie: ri.ingredient.categorie,
-          })),
-        },
-      };
-
-      return NextResponse.json(responseProg, { status: 200 });
-    }
-
-    const created = await db.programmation.create({
-      data: {
-        userId: sessionUser.id,
-        repasId,
-        date: normalizedDate,
-        heure,
-      },
-      include: {
-        repas: {
-          include: {
-            ingredients: {
-              include: {
-                ingredient: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    const responseProg = {
-      ...created,
-      repas: {
-        id: created.repas.id,
-        userId: created.repas.userId,
-        titre: created.repas.titre,
-        recette: created.repas.recette,
-        photoUrl: created.repas.photoUrl,
-        createdAt: created.repas.createdAt,
-        ingredients: created.repas.ingredients.map((ri) => ({
-          id: ri.id,
-          nom: ri.ingredient.nom,
-          quantite: ri.quantite,
-          unite: ri.unite,
-          categorie: ri.ingredient.categorie,
-        })),
-      },
-    };
-
-    return NextResponse.json(responseProg, { status: 201 });
+    return NextResponse.json(formatProgrammationResponse(programmation), { status: existing ? 200 : 201 });
   } catch (error) {
     console.error('Erreur lors de la création/mise à jour de la programmation:', error);
-    return NextResponse.json(
-      { error: 'Une erreur interne est survenue.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
 }

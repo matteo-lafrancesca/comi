@@ -9,6 +9,7 @@ import type {
 
 // Ré-export pour compatibilité des imports existants (logique dans lib/category-utils.ts)
 export { normalizeCategory } from '@/lib/category-utils';
+import type { Ymd, WeekRef } from '@/lib/date-utils';
 
 // Modèles principaux réexportés depuis Prisma
 export type User = PrismaUser;
@@ -47,9 +48,37 @@ export type RepasWithIngredients = Repas & {
   }[];
 };
 
-export type ProgrammationWithRepas = Programmation & {
+/** Repas programmé tel que renvoyé par l'API planning (date calendaire « AAAA-MM-JJ »). */
+export interface ProgrammationWithRepas {
+  id: number;
+  userId: number;
+  repasId: number;
+  date: Ymd;
+  /** 0 = midi, 1 = soir */
+  heure: 0 | 1;
   repas: RepasWithIngredients;
-};
+}
+
+/** Semaine telle que calculée par le serveur : le client n'a aucun calcul de date à faire. */
+export interface WeekInfo extends WeekRef {
+  /** Jour de début de semaine utilisé pour ce calcul (0 = lundi … 6 = dimanche) */
+  weekStartDay: number;
+  start: Ymd;
+  end: Ymd;
+  /** Les 7 jours, dans l'ordre d'affichage */
+  days: Ymd[];
+  prev: WeekRef;
+  next: WeekRef;
+}
+
+export interface PlanningResponse extends WeekInfo {
+  programmations: ProgrammationWithRepas[];
+}
+
+export interface ShoppingListResponse extends WeekInfo {
+  categories: CategoryGroup[];
+  extras: ShoppingListExtraItem[];
+}
 
 export type UserWithRelations = User & {
   repas: Repas[];

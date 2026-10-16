@@ -1,251 +1,136 @@
 /**
- * Utilitaires pour la gestion des dates dans l'application de planning.
- * Tous les calculs de jour et de semaine sont basés sur le fuseau horaire de Paris (Europe/Paris).
+ * Dates et semaines.
+ *
+ * Règles :
+ * - une date calendaire est une chaîne « AAAA-MM-JJ » (type `Ymd`), sans fuseau ;
+ * - toute l'arithmétique passe par `Date.UTC` / `getUTC*` : le fuseau du serveur ou du
+ *   navigateur n'a donc aucune influence ;
+ * - le seul calcul dépendant d'un fuseau est `todayParis` (une seule conversion) ;
+ * - en base, une date est un minuit UTC (`toDbDate` / `fromDbDate`).
+ *
+ * Une semaine est identifiée par `{ week, year }` : la semaine ISO du lundi qu'elle contient.
+ * Elle peut commencer un autre jour (`weekStartDay`), mais contient toujours exactement un lundi,
+ * ce qui garde l'identifiant stable quel que soit le jour de début choisi.
  */
 
 export const FRENCH_DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
-/**
- * Prend une date d'entrée (ou la date actuelle) et retourne un nouvel objet Date
- * dont les champs locaux (getFullYear, getMonth, getDate, getHours, etc.) 
- * correspondent à l'heure locale de Paris.
- */
-export function getParisDate(dateInput?: Date | string | number): Date {
-  const date = dateInput !== undefined ? new Date(dateInput) : new Date();
-  
-  if (isNaN(date.getTime())) {
-    throw new Error(`Date invalide fournie : ${dateInput}`);
-  }
+/** Date calendaire « AAAA-MM-JJ ». */
+export type Ymd = string;
 
-  // Formatage de la date en anglais (US) dans le fuseau horaire de Paris
-  // pour un parsing stable et sans ambiguïté locale
-  const formatter = new Intl.DateTimeFormat('en-US', {
+/** Identifiant d'une semaine : semaine ISO du lundi qu'elle contient. */
+export interface WeekRef {
+  week: number;
+  year: number;
+}
+
+export interface WeekRange extends WeekRef {
+  /** Premier jour (selon weekStartDay) */
+  start: Ymd;
+  /** Dernier jour */
+  end: Ymd;
+  /** Les 7 jours, dans l'ordre */
+  days: Ymd[];
+}
+
+const DAY_MS = 86_400_000;
+const YMD_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+const toMs = (ymd: Ymd): number => {
+  const m = YMD_RE.exec(ymd);
+  if (!m) throw new Error(`Date invalide : ${ymd}`);
+  return Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+};
+
+const fromMs = (ms: number): Ymd => new Date(ms).toISOString().slice(0, 10);
+
+/** Vrai si la chaîne est une date calendaire réelle au format AAAA-MM-JJ. */
+export function isValidYmd(value: unknown): value is Ymd {
+  if (typeof value !== 'string' || !YMD_RE.test(value)) return false;
+  return fromMs(toMs(value)) === value;
+}
+
+/** Date du jour à Paris. Seul point où le fuseau intervient. */
+export function todayParis(now: Date = new Date()): Ymd {
+  const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Paris',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
+  }).formatToParts(now);
+  const get = (type: string) => parts.find((p) => p.type === type)!.value;
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
 
-  const parts = formatter.formatToParts(date);
-  const partMap = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+export function addDays(ymd: Ymd, n: number): Ymd {
+  return fromMs(toMs(ymd) + n * DAY_MS);
+}
 
-  // Création d'un objet Date où l'heure locale correspond à l'heure locale de Paris
-  return new Date(
-    parseInt(partMap.year, 10),
-    parseInt(partMap.month, 10) - 1, // les mois en JS sont indexés à partir de 0
-    parseInt(partMap.day, 10),
-    parseInt(partMap.hour, 10),
-    parseInt(partMap.minute, 10),
-    parseInt(partMap.second, 10)
-  );
+/** 0 = lundi … 6 = dimanche. */
+export function weekdayIndex(ymd: Ymd): number {
+  return (new Date(toMs(ymd)).getUTCDay() + 6) % 7;
+}
+
+/** Date → minuit UTC, pour la base. */
+export function toDbDate(ymd: Ymd): Date {
+  return new Date(toMs(ymd));
+}
+
+/** Minuit UTC de la base → date calendaire. */
+export function fromDbDate(date: Date): Ymd {
+  return date.toISOString().slice(0, 10);
+}
+
+/** Semaine ISO (numéro et année ISO) d'une date. */
+export function isoWeekOf(ymd: Ymd): WeekRef {
+  const thursday = addDays(ymd, 3 - weekdayIndex(ymd));
+  const year = Number(thursday.slice(0, 4));
+  const dayOfYear = (toMs(thursday) - Date.UTC(year, 0, 1)) / DAY_MS;
+  return { week: Math.floor(dayOfYear / 7) + 1, year };
+}
+
+/** Lundi de la semaine ISO donnée. */
+export function mondayOfIsoWeek({ week, year }: WeekRef): Ymd {
+  const jan4 = `${String(year).padStart(4, '0')}-01-04`;
+  return addDays(jan4, -weekdayIndex(jan4) + (week - 1) * 7);
+}
+
+/** Vrai si `{ week, year }` désigne une vraie semaine ISO (53 n'existe pas toutes les années). */
+export function isValidWeekRef(ref: WeekRef): boolean {
+  if (!Number.isInteger(ref.week) || !Number.isInteger(ref.year)) return false;
+  if (ref.week < 1 || ref.week > 53 || ref.year < 1900 || ref.year > 2200) return false;
+  const back = isoWeekOf(mondayOfIsoWeek(ref));
+  return back.week === ref.week && back.year === ref.year;
+}
+
+/** Premier jour de la semaine personnalisée contenant `ymd` (weekStartDay : 0 = lundi … 6 = dimanche). */
+function customWeekStart(ymd: Ymd, weekStartDay: number): Ymd {
+  return addDays(ymd, -((weekdayIndex(ymd) - weekStartDay + 7) % 7));
+}
+
+/** Identifiant de la semaine contenant `ymd`. */
+export function weekRefOf(ymd: Ymd, weekStartDay: number): WeekRef {
+  const start = customWeekStart(ymd, weekStartDay);
+  const monday = addDays(start, (7 - weekdayIndex(start)) % 7);
+  return isoWeekOf(monday);
+}
+
+/** Plage de 7 jours de la semaine `ref`. */
+export function weekRange(ref: WeekRef, weekStartDay: number): WeekRange {
+  const start = customWeekStart(mondayOfIsoWeek(ref), weekStartDay);
+  const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  return { week: ref.week, year: ref.year, start, end: days[6], days };
+}
+
+/** Semaine précédente ou suivante. */
+export function adjacentWeek(ref: WeekRef, direction: 'prev' | 'next'): WeekRef {
+  return isoWeekOf(addDays(mondayOfIsoWeek(ref), direction === 'prev' ? -7 : 7));
 }
 
 /**
- * Normalise une date ajustée (en heure locale de Paris) vers une date à minuit UTC (00:00:00.000Z).
- * Utilisé pour stocker des dates de planification propres en DB ou faire des requêtes précises.
- */
-export function normalizeToUTCDate(date: Date): Date {
-  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
-}
-
-/**
- * Calcule le numéro de semaine ISO-8601 et l'année ISO correspondante pour une date donnée.
- * La date doit être préalablement ajustée à l'heure de Paris si on souhaite obtenir la semaine à Paris.
- */
-export function getISOWeekAndYear(date: Date): { week: number; year: number } {
-  const parisDate = getParisDate(date);
-  // On clone la date pour ne pas la modifier
-  const d = new Date(parisDate.getFullYear(), parisDate.getMonth(), parisDate.getDate());
-  
-  // Définit le jour le plus proche du jeudi de la même semaine : date + 4 - numéro du jour
-  // En ISO 8601, les semaines commencent par le Lundi (1) et se terminent par le Dimanche (7)
-  const dayNum = d.getDay() || 7;
-  d.setDate(d.getDate() + 4 - dayNum);
-  
-  // Date de début d'année de cette semaine
-  const yearStart = new Date(d.getFullYear(), 0, 1);
-  
-  // Calcul du nombre de semaines
-  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-  
-  return { week: weekNo, year: d.getFullYear() };
-}
-
-/**
- * Calcule les dates de début (Lundi 00:00 UTC) et de fin (Dimanche 23:59:59.999 UTC)
- * pour une semaine ISO et une année données.
- */
-export function getDatesForISOWeek(week: number, year: number): { start: Date; end: Date } {
-  // Le 4 Janvier fait toujours partie de la semaine 1 de la même année ISO
-  const jan4 = new Date(year, 0, 4);
-  const dayOfWeek = jan4.getDay() || 7;
-  
-  // Lundi de la semaine 1
-  const monday = new Date(jan4.getTime());
-  monday.setDate(jan4.getDate() - dayOfWeek + 1);
-  
-  // Lundi de la semaine demandée
-  monday.setDate(monday.getDate() + (week - 1) * 7);
-  
-  // Dimanche de la semaine demandée
-  const sunday = new Date(monday.getTime());
-  sunday.setDate(monday.getDate() + 6);
-  
-  const start = new Date(Date.UTC(monday.getFullYear(), monday.getMonth(), monday.getDate(), 0, 0, 0, 0));
-  const end = new Date(Date.UTC(sunday.getFullYear(), sunday.getMonth(), sunday.getDate(), 23, 59, 59, 999));
-  
-  return { start, end };
-}
-
-/**
- * Renvoie un tableau de 7 objets Date normalisés à minuit UTC,
- * représentant chaque jour de la semaine demandée (du Lundi au Dimanche).
- */
-export function getDaysOfWeek(week: number, year: number): Date[] {
-  const jan4 = new Date(year, 0, 4);
-  const dayOfWeek = jan4.getDay() || 7;
-  
-  const monday = new Date(jan4.getTime());
-  monday.setDate(jan4.getDate() - dayOfWeek + 1);
-  monday.setDate(monday.getDate() + (week - 1) * 7);
-  
-  const days: Date[] = [];
-  for (let i = 0; i < 7; i++) {
-    const day = new Date(monday.getTime());
-    day.setDate(monday.getDate() + i);
-    days.push(new Date(Date.UTC(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, 0, 0)));
-  }
-  
-  return days;
-}
-
-/**
- * Retourne les labels de jours ordonnés à partir de weekStartDay.
- * weekStartDay: 0=Lundi, 1=Mardi, ..., 6=Dimanche
- * Exemple : weekStartDay=2 (Mercredi) → ['Mercredi','Jeudi','Vendredi','Samedi','Dimanche','Lundi','Mardi']
+ * Libellés de jours ordonnés à partir de weekStartDay.
+ * Exemple : weekStartDay = 2 → ['Mercredi', 'Jeudi', …, 'Mardi'].
  */
 export function getOrderedDayLabels(weekStartDay: number): string[] {
-  const labels: string[] = [];
-  for (let i = 0; i < 7; i++) {
-    labels.push(FRENCH_DAYS[(weekStartDay + i) % 7]);
-  }
-  return labels;
+  return Array.from({ length: 7 }, (_, i) => FRENCH_DAYS[(weekStartDay + i) % 7]);
 }
-
-/**
- * Retourne {start, end} UTC de la "semaine personnalisée" de 7 jours
- * contenant `referenceDate`, avec `weekStartDay` comme premier jour.
- * weekStartDay: 0=Lundi, 1=Mardi, ..., 6=Dimanche
- */
-export function getCustomWeekRange(
-  referenceDate: Date,
-  weekStartDay: number
-): { start: Date; end: Date } {
-  const parisDate = getParisDate(referenceDate);
-
-  // JS getDay() : 0=Dim, 1=Lun, ..., 6=Sam
-  // On convertit weekStartDay (0=Lun) vers JS convention (0=Dim)
-  const jsWeekStartDay = weekStartDay === 6 ? 0 : weekStartDay + 1;
-
-  // Jour JS de referenceDate
-  const refDay = parisDate.getDay(); // 0=Dim, 1=Lun, ...
-
-  // Nombre de jours à reculer pour atteindre le début de la semaine personnalisée
-  const diff = (refDay - jsWeekStartDay + 7) % 7;
-
-  const start = new Date(parisDate);
-  start.setDate(parisDate.getDate() - diff);
-
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-
-  return {
-    start: new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0)),
-    end: new Date(Date.UTC(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999)),
-  };
-}
-
-/**
- * Retourne les 7 Date[] normalisées UTC de la "semaine personnalisée"
- * contenant `referenceDate`, ordonnées de weekStartDay à weekStartDay+6.
- */
-export function getCustomWeekDays(
-  referenceDate: Date,
-  weekStartDay: number
-): Date[] {
-  const { start } = getCustomWeekRange(referenceDate, weekStartDay);
-
-  const days: Date[] = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(start);
-    d.setUTCDate(start.getUTCDate() + i);
-    days.push(d);
-  }
-  return days;
-}
-
-/**
- * Calcule la semaine (ISO) précédente ou suivante par rapport à une semaine et une année données.
- */
-export function getAdjacentWeek(
-  week: number,
-  year: number,
-  direction: 'prev' | 'next'
-): { week: number; year: number } {
-  const isoRange = getDatesForISOWeek(week, year);
-  const targetDate = new Date(isoRange.start);
-  targetDate.setUTCDate(targetDate.getUTCDate() + (direction === 'prev' ? -7 : 7));
-  return getISOWeekAndYear(targetDate);
-}
-
-/**
- * Calcule les détails de la semaine personnalisée contenant une date donnée,
- * avec une identification unique et stable sous forme de (week, year).
- * weekStartDay: 0=Lundi, 1=Mardi, ..., 6=Dimanche
- */
-export function getCustomWeekDetails(
-  referenceDate: Date,
-  weekStartDay: number
-): { week: number; year: number; start: Date; end: Date } {
-  const { start, end } = getCustomWeekRange(referenceDate, weekStartDay);
-
-  // Trouver le lundi dans cet intervalle de 7 jours (représenté en UTC/minuit)
-  let customMonday = new Date(start);
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(start.getTime() + i * 86400000);
-    if (d.getUTCDay() === 1) { // 1 = Lundi
-      customMonday = d;
-      break;
-    }
-  }
-
-  // Récupérer la semaine ISO et l'année de ce lundi unique
-  const { week, year } = getISOWeekAndYear(customMonday);
-
-  return { week, year, start, end };
-}
-
-/**
- * Reconstruit les détails d'une semaine personnalisée à partir de son numéro de semaine
- * et année d'identification uniques (qui correspondent à la semaine ISO du lundi qu'elle contient).
- */
-export function getCustomWeekDetailsFromWeek(
-  week: number,
-  year: number,
-  weekStartDay: number
-): { week: number; year: number; start: Date; end: Date } {
-  // Le lundi ISO correspondant aux paramètres
-  const isoRange = getDatesForISOWeek(week, year);
-  const isoMonday = new Date(isoRange.start);
-
-  // Le customRange contenant ce lundi
-  const { start, end } = getCustomWeekRange(isoMonday, weekStartDay);
-
-  return { week, year, start, end };
-}
-
-
