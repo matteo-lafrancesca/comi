@@ -21,6 +21,7 @@ L'application est conçue avec une approche **Mobile-First** (optimisée pour ê
 *   **Framework** : [Next.js 16](https://nextjs.org/) (App Router) & [React 19](https://react.dev/)
 *   **Styles** : [Tailwind CSS v4](https://tailwindcss.com/) (avec design system personnalisé dans `globals.css`)
 *   **Base de Données** : SQLite avec [Prisma ORM](https://www.prisma.io/)
+*   **Validation** : [zod](https://zod.dev/) (schémas partagés client/serveur)
 *   **Authentification** : JWT (avec cookies sécurisés et `jose`) & Hashage `bcryptjs`
 *   **Stockage Image** : [Uploadthing](https://uploadthing.com/)
 *   **Icônes** : [Lucide React](https://lucide.dev/)
@@ -107,7 +108,8 @@ L'application est accessible sur **[http://localhost:3000/comi](http://localhost
 ### 7. Contrôles qualité
 
 ```bash
-npm run check      # ESLint + vérification TypeScript (exécuté en CI)
+npm run check      # ESLint + TypeScript + tests (exécuté en CI)
+npm test           # tests seuls (base SQLite jetable tests/test.db)
 npm run lint       # ESLint seul
 npm run typecheck  # tsc --noEmit
 ```
@@ -133,7 +135,8 @@ Pour tester ou utiliser l'application comme une application native sur votre sma
 Comi/
 ├── prisma/                  # Schéma de base de données SQLite & scripts de migration/seeding
 │   ├── schema.prisma        # Schéma Prisma
-│   └── seed.ts              # Script de seeding des ingrédients
+│   ├── seed.ts              # Script de seeding des ingrédients
+│   └── seed_generated_meals.ts # Données de démo (npm run seed:demo)
 ├── public/                  # Assets statiques (icônes PWA, manifeste public)
 │   └── manifest.json        # Configuration PWA
 ├── src/
@@ -145,7 +148,7 @@ Comi/
 │   │   └── globals.css      # Fichier CSS global avec directives Tailwind CSS v4
 │   ├── components/          # Composants partagés (Drawers, cartes, formulaires) ; ui/ = primitives (Button, TextInput…)
 │   ├── contexts/ hooks/     # Auth, réglages, conteneur de scroll ; hooks de données et de navigation
-│   └── lib/                 # Utilitaires (Prisma client, Helpers de formatage, middleware auth)
+│   └── lib/                 # Prisma client, auth/session, api-handler (withAuth), schemas (zod), repas-form, dates, requêtes TanStack
 ├── docs/                    # audit.md (état des lieux) et dette-technique.md (backlog)
 ├── DESIGN_GUIDELINES.md     # Charte graphique « carnet de cuisine »
 └── AGENTS.md                # Directives de développement et d'architecture pour l'IA
