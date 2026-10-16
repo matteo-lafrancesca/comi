@@ -26,7 +26,9 @@ interface Options {
 
 /**
  * Mémorise la position de défilement de chaque écran et la restaure à son retour.
- * Ordre à l'arrivée : `first`, puis position mémorisée, puis `fallback`, puis haut de page.
+ * Ordre à l'arrivée sur l'écran : `first`, puis position mémorisée, puis `fallback`, puis haut de page.
+ * Quand la clé change sans quitter l'écran (autre semaine, autre filtre), la position mémorisée est
+ * ignorée : on repart de `fallback` ou du haut, comme pour un nouveau contenu.
  */
 export function useScrollRestoration({ key, ready, first, fallback }: Options) {
   const containerRef = useScrollContainer();
@@ -62,11 +64,12 @@ export function useScrollRestoration({ key, ready, first, fallback }: Options) {
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container || !ready || appliedKeyRef.current === key) return;
+    const isArrival = appliedKeyRef.current === null;
     appliedKeyRef.current = key;
 
     const { first: handleFirst, fallback: handleFallback } = callbacksRef.current;
     if (handleFirst?.(container)) return;
-    const saved = savedPositions.get(key);
+    const saved = isArrival ? savedPositions.get(key) : undefined;
     if (saved !== undefined) container.scrollTo({ top: saved, behavior: 'auto' });
     else if (handleFallback) handleFallback(container);
     else container.scrollTo({ top: 0, behavior: 'auto' });

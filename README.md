@@ -144,7 +144,7 @@ Comi/
 │   │   ├── layout.tsx       # Layout global de l'application
 │   │   └── globals.css      # Fichier CSS global avec directives Tailwind CSS v4
 │   ├── components/          # Composants partagés (Drawers, cartes, formulaires) ; ui/ = primitives (Button, TextInput…)
-│   ├── contexts/ hooks/     # Auth, réglages, cache de navigation ; useRepasForm
+│   ├── contexts/ hooks/     # Auth, réglages, conteneur de scroll ; hooks de données et de navigation
 │   └── lib/                 # Utilitaires (Prisma client, Helpers de formatage, middleware auth)
 ├── docs/                    # audit.md (état des lieux) et dette-technique.md (backlog)
 ├── DESIGN_GUIDELINES.md     # Charte graphique « carnet de cuisine »

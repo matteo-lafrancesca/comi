@@ -88,4 +88,6 @@ Référence stricte : Si vous analysez une erreur, basez-vous uniquement sur les
 - Avant de conclure une tâche : `npm run check` (ESLint + `tsc --noEmit`) doit passer sans erreur ni warning.
 - Pas de `any` ; pour un `catch`, utiliser `errorMessage(err, fallback)` (`src/lib/errors.ts`).
 - Pas de `setState` synchrone dans un `useEffect` : dériver l'état au rendu ou remonter un composant (voir `AddExtraDrawer`, `Drawer`). Les rares exceptions portent un `eslint-disable` justifié (listées dans `docs/dette-technique.md`).
-- Tous les appels réseau passent par `apiFetch` (gère le `basePath` `/comi`).
+- Tous les appels réseau passent par `apiFetch` / `apiJson` (gèrent le `basePath` `/comi`). Les données serveur se lisent avec les hooks de `src/lib/queries` (TanStack Query) et s'écrivent avec ses mutations ; les règles d'invalidation sont dans `src/lib/queries/keys.ts`. Pas de `fetch` + `useState` dans les pages.
+- Dates : une date calendaire est une chaîne `AAAA-MM-JJ` (`Ymd`), toute l'arithmétique passe par `src/lib/date-utils.ts` (UTC pur). Jamais de `new Date(...)` / `getParisDate` pour raisonner sur un jour ou une semaine. Les semaines (`start`, `end`, `days`, `prev`, `next`) viennent du serveur (`resolveWeek`).
+- L'état de navigation (semaine, mode d'attribution, jour à centrer) vit dans l'URL ; les URLs se construisent avec `src/lib/routes.ts`. Le scroll se mémorise avec `useScrollRestoration`, jamais avec `document.querySelector('main')`.
