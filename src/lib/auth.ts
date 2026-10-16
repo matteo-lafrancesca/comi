@@ -10,8 +10,8 @@ if (!JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required.');
 }
 
-/** Clé de signature/vérification des JWT (partagée avec le proxy). */
-export const key = new TextEncoder().encode(JWT_SECRET);
+/** Clé de signature/vérification des JWT. */
+const key = new TextEncoder().encode(JWT_SECRET);
 
 /** Seul le hash SHA-256 du refresh token est stocké en base. */
 const hashToken = (token: string) => crypto.createHash('sha256').update(token).digest('hex');
@@ -72,10 +72,10 @@ export async function createRefreshToken(userId: number): Promise<string> {
 }
 
 /**
- * Vérifie un Refresh Token en BDD, renouvelle sa date d'expiration (30 jours glissants)
- * et génère un nouvel Access Token.
+ * Vérifie un Refresh Token en BDD, repousse son expiration (30 jours glissants) et émet un
+ * nouvel Access Token. Le token lui-même n'est PAS renouvelé (voir docs/dette-technique.md).
  */
-export async function verifyAndRotateRefreshToken(tokenString: string) {
+export async function renewRefreshToken(tokenString: string) {
   try {
     const storedToken = await db.refreshToken.findUnique({
       where: { token: hashToken(tokenString) },
@@ -133,111 +133,91 @@ export async function revokeRefreshToken(tokenString: string) {
   }
 }
 
-/**
- * Définit de manière centralisée les cookies HTTP-Only de session
- */
-export function setAuthCookies(
-  response: NextResponse,
-  accessToken: string,
-  refreshToken: string
-) {
-  const isProd = process.env.NODE_ENV === 'production';
-
-  // Cookie Access Token (15 min)
-  response.cookies.set('token', accessToken, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: ACCESS_TOKEN_EXPIRY_SECONDS,
-  });
-
-  // Cookie Refresh Token (30 jours)
-  response.cookies.set('refresh_token', refreshToken, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60,
-  });
+/** Utilisateur de la session courante. */
+export interface SessionUser {
+  id: number;
+  email: string;
+  createdAt: Date;
+  weekStartDay: number;
 }
 
-/**
- * Efface les cookies d'authentification
- */
+const SESSION_USER_SELECT = { id: true, email: true, createdAt: true, weekStartDay: true } as const;
+
+/** Cookies de session (nom, valeur, options) : source unique pour set sur Response ou cookieStore. */
+function sessionCookies(accessToken: string, refreshToken: string) {
+  const base = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+  };
+  return [
+    { name: 'token', value: accessToken, options: { ...base, maxAge: ACCESS_TOKEN_EXPIRY_SECONDS } },
+    { name: 'refresh_token', value: refreshToken, options: { ...base, maxAge: REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 } },
+  ];
+}
+
+/** Pose les cookies HTTP-Only de session sur une réponse. */
+export function setAuthCookies(response: NextResponse, accessToken: string, refreshToken: string) {
+  for (const { name, value, options } of sessionCookies(accessToken, refreshToken)) {
+    response.cookies.set(name, value, options);
+  }
+}
+
+/** Efface les cookies d'authentification. */
 export function clearAuthCookies(response: NextResponse) {
-  const isProd = process.env.NODE_ENV === 'production';
+  for (const { name, options } of sessionCookies('', '')) {
+    response.cookies.set(name, '', { ...options, maxAge: undefined, expires: new Date(0) });
+  }
+}
 
-  response.cookies.set('token', '', {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
-    path: '/',
-    expires: new Date(0),
-  });
-
-  response.cookies.set('refresh_token', '', {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
-    path: '/',
-    expires: new Date(0),
-  });
+export interface ResolvedSession {
+  user: SessionUser;
+  /** Nouveaux cookies à poser si la session a été rafraîchie via le refresh token. */
+  renewed: { accessToken: string; refreshToken: string } | null;
 }
 
 /**
- * Récupère l'utilisateur connecté depuis les cookies de session.
- * Si le token d'accès est expiré ou absent, tente un rafraîchissement silencieux via le refresh_token.
+ * Point d'entrée unique pour retrouver l'utilisateur d'une session : access token valide,
+ * sinon rafraîchissement via le refresh token. Renvoie null si la session est invalide.
  */
-export async function getSessionUser() {
+export async function resolveSession(token?: string, refreshToken?: string): Promise<ResolvedSession | null> {
+  if (token) {
+    const payload = await verifyJWT(token);
+    if (payload) {
+      const user = await db.user.findUnique({ where: { id: payload.userId }, select: SESSION_USER_SELECT });
+      if (user) return { user, renewed: null };
+    }
+  }
+  if (!refreshToken) return null;
+
+  const refreshed = await renewRefreshToken(refreshToken);
+  if (!refreshed) return null;
+  return {
+    user: refreshed.user,
+    renewed: { accessToken: refreshed.accessToken, refreshToken: refreshed.refreshToken },
+  };
+}
+
+/**
+ * Utilisateur connecté d'après les cookies de la requête (Server Components et routes API).
+ */
+export async function getSessionUser(): Promise<SessionUser | null> {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
+    const session = await resolveSession(cookieStore.get('token')?.value, cookieStore.get('refresh_token')?.value);
+    if (!session) return null;
 
-    if (token) {
-      const payload = await verifyJWT(token);
-      if (payload) {
-        const user = await db.user.findUnique({
-          where: { id: payload.userId },
-          select: {
-            id: true,
-            email: true,
-            createdAt: true,
-            weekStartDay: true,
-          },
-        });
-        if (user) return user;
+    if (session.renewed) {
+      try {
+        for (const { name, value, options } of sessionCookies(session.renewed.accessToken, session.renewed.refreshToken)) {
+          cookieStore.set(name, value, options);
+        }
+      } catch {
+        // Cookies en lecture seule (Server Component) : la session sera rafraîchie par la prochaine route/proxy.
       }
     }
-
-    // Si pas de token valide, on essaye avec le refresh_token
-    const refreshToken = cookieStore.get('refresh_token')?.value;
-    if (!refreshToken) return null;
-
-    const refreshed = await verifyAndRotateRefreshToken(refreshToken);
-    if (!refreshed) return null;
-
-    // Tenter de rafraîchir les cookies de la requête courante si le cookieStore le permet
-    try {
-      cookieStore.set('token', refreshed.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: ACCESS_TOKEN_EXPIRY_SECONDS,
-      });
-      cookieStore.set('refresh_token', refreshed.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60,
-      });
-    } catch {
-      // Dans certains contextes en lecture seule de Next.js, cookieStore.set peut lever une erreur
-    }
-
-    return refreshed.user;
+    return session.user;
   } catch {
     return null;
   }

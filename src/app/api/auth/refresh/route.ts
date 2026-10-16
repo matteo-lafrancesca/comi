@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { verifyAndRotateRefreshToken, setAuthCookies, clearAuthCookies } from '@/lib/auth';
+import { renewRefreshToken, setAuthCookies, clearAuthCookies } from '@/lib/auth';
 
 export async function POST() {
   try {
@@ -16,7 +16,7 @@ export async function POST() {
       return response;
     }
 
-    const result = await verifyAndRotateRefreshToken(refreshToken);
+    const result = await renewRefreshToken(refreshToken);
 
     if (!result) {
       const response = NextResponse.json(
