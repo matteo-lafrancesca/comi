@@ -10,11 +10,11 @@ import ImageDropzone from '@/components/ImageDropzone';
 import Button from '@/components/ui/Button';
 import Alert from '@/components/ui/Alert';
 import TextInput from '@/components/ui/TextInput';
-import type { RepasFormReturn } from '@/hooks/useRepasForm';
+import type { RepasForm } from '@/hooks/useRepasForm';
 
 interface RepasFormStepsProps {
-  /** Tout l'état et les handlers issus de useRepasForm */
-  form: RepasFormReturn;
+  /** Formulaire issu de useRepasForm */
+  form: RepasForm;
   /** Texte du bouton de validation finale (ex: "Créer la recette") */
   submitLabel: string;
   /** Texte du bouton pendant le chargement (ex: "Enregistrement...") */
@@ -41,36 +41,7 @@ export default function RepasFormSteps({
   onCancel,
   isModeIa = false,
 }: RepasFormStepsProps) {
-  const {
-    step,
-    error,
-    loading,
-    titre,
-    setTitre,
-    photoUrl,
-    localPreviewUrl,
-    isDragging,
-    fileInputRef,
-    isUploading,
-    selectedIngredients,
-    isCreateDrawerOpen,
-    setIsCreateDrawerOpen,
-    newIngredientInitialName,
-    steps,
-    setSteps,
-    handleFileChange,
-    handleDragOver,
-    handleDragLeave,
-    handleDrop,
-    removeImage,
-    handleNext,
-    handlePrev,
-    handleSelectIngredient,
-    handleRemoveIngredient,
-    updateMealIngredient,
-    openCreateIngredientDrawer,
-    handleIngredientCreated,
-  } = form;
+  const { step, error, loading, image } = form;
 
   return (
     <>
@@ -102,47 +73,36 @@ export default function RepasFormSteps({
 
             <TextInput
               label="Nom du repas"
-              value={titre}
-              onChange={(e) => setTitre(e.target.value)}
+              value={form.titre}
+              onChange={(e) => form.setTitre(e.target.value)}
               placeholder="Tarte tatin, filet mignon…"
               className="font-display text-2xl"
             />
 
-            <ImageDropzone
-              previewUrl={localPreviewUrl || photoUrl}
-              busy={isUploading}
-              busyLabel="Téléversement de la photo…"
-              isDragging={isDragging}
-              inputRef={fileInputRef}
-              onFileChange={handleFileChange}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onRemove={removeImage}
-            />
+            <ImageDropzone {...image.dropzoneProps} busy={image.isUploading} busyLabel="Téléversement de la photo…" />
           </div>
         )}
 
         {step === 2 && (
           <div className="space-y-8 animate-fade-in">
             <IngredientSearchInput
-              onSelect={handleSelectIngredient}
-              onCreateNew={openCreateIngredientDrawer}
-              existingIngredients={selectedIngredients}
+              onSelect={form.addIngredient}
+              onCreateNew={form.openNewIngredient}
+              existingIngredients={form.ingredients}
             />
 
             <section>
               <h2 className="eyebrow pb-2 border-b border-text-light-main dark:border-text-dark-main">
-                Dans la recette ({selectedIngredients.length})
+                Dans la recette ({form.ingredients.length})
               </h2>
-              {selectedIngredients.length === 0 ? (
+              {form.ingredients.length === 0 ? (
                 <p className="py-4 text-sm text-text-light-muted dark:text-text-dark-muted">
                   Cherchez un ingrédient ci-dessus pour l&apos;ajouter.
                 </p>
               ) : (
                 <div className="divide-y divide-dashed divide-neutral-300 dark:divide-neutral-700">
-                  {selectedIngredients.map((ing) => (
-                    <IngredientRow key={ing.id} ingredient={ing} onChange={updateMealIngredient} onRemove={handleRemoveIngredient} />
+                  {form.ingredients.map((ing) => (
+                    <IngredientRow key={ing.id} ingredient={ing} onChange={form.updateIngredient} onRemove={form.removeIngredient} />
                   ))}
                 </div>
               )}
@@ -152,18 +112,18 @@ export default function RepasFormSteps({
 
         {step === 3 && (
           <div className="animate-fade-in">
-            <SortableStepsList steps={steps} onChange={setSteps} />
+            <SortableStepsList steps={form.steps} onChange={form.setSteps} />
           </div>
         )}
 
         {/* Navigation */}
         <div className="flex items-center justify-between gap-3 pt-6 border-t border-neutral-200 dark:border-neutral-800">
-          <Button variant="ghost" onClick={step > 1 ? handlePrev : onCancel}>
+          <Button variant="ghost" onClick={step > 1 ? form.prev : onCancel}>
             {step > 1 ? 'Précédent' : 'Annuler'}
           </Button>
 
           {step < 3 ? (
-            <Button onClick={handleNext}>Suivant</Button>
+            <Button onClick={form.next}>Suivant</Button>
           ) : (
             <Button onClick={onSubmit} disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -175,10 +135,10 @@ export default function RepasFormSteps({
 
       {/* Création d'un ingrédient manquant à la volée */}
       <CreateIngredientDrawer
-        isOpen={isCreateDrawerOpen}
-        onClose={() => setIsCreateDrawerOpen(false)}
-        initialName={newIngredientInitialName}
-        onCreated={handleIngredientCreated}
+        isOpen={form.newIngredientName !== null}
+        onClose={form.closeNewIngredient}
+        initialName={form.newIngredientName ?? ''}
+        onCreated={form.addIngredient}
       />
     </>
   );

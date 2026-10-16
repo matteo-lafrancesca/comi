@@ -3,7 +3,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiJson } from '@/lib/api';
 import type { Ymd } from '@/lib/date-utils';
-import type { ProgrammationWithRepas } from '@/types';
+import type { RepasPayload } from '@/lib/schemas';
+import type { AnalysisResult } from '@/lib/repas-form';
+import type { ProgrammationWithRepas, RepasWithIngredients } from '@/types';
 import { queryKeys } from './keys';
 
 /** Invalide planning et courses (les deux dépendent des programmations). */
@@ -47,6 +49,48 @@ export function useUnscheduleMutation() {
         fallbackError: 'Erreur lors de la déprogrammation.',
       }),
     onSuccess: invalidate,
+  });
+}
+
+export function useCreateRepasMutation() {
+  const invalidateRepas = useInvalidateRepas();
+  return useMutation({
+    mutationFn: (payload: RepasPayload) =>
+      apiJson<RepasWithIngredients>('/api/repas', {
+        method: 'POST',
+        json: payload,
+        fallbackError: 'Erreur lors de la création du repas.',
+      }),
+    onSuccess: invalidateRepas,
+  });
+}
+
+export function useUpdateRepasMutation(repasId: number) {
+  const invalidateRepas = useInvalidateRepas();
+  return useMutation({
+    mutationFn: (payload: RepasPayload) =>
+      apiJson<RepasWithIngredients>(`/api/repas/${repasId}`, {
+        method: 'PATCH',
+        json: payload,
+        fallbackError: 'Erreur lors de la mise à jour du repas.',
+      }),
+    onSuccess: invalidateRepas,
+  });
+}
+
+/** Analyse d'une photo de plat par l'IA : renvoie une recette à relire. */
+export function useAnalyseImageMutation() {
+  return useMutation({
+    mutationFn: ({ image, titre }: { image: File; titre: string }) => {
+      const body = new FormData();
+      body.append('image', image);
+      if (titre.trim()) body.append('titre', titre.trim());
+      return apiJson<AnalysisResult>('/api/repas/analyser', {
+        method: 'POST',
+        body,
+        fallbackError: "Une erreur est survenue lors de l'analyse.",
+      });
+    },
   });
 }
 

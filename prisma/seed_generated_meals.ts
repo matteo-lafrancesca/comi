@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
+import { addDays, todayParis, toDbDate } from '../src/lib/date-utils';
 
 const prisma = new PrismaClient();
 
@@ -480,11 +481,9 @@ async function main() {
       take: 8,
     });
 
-    const now = new Date();
+    const today = todayParis();
     for (let i = 0; i < createdMeals.length; i++) {
-      const progDate = new Date(now);
-      progDate.setDate(now.getDate() + Math.floor(i / 2));
-      progDate.setHours(0, 0, 0, 0);
+      const progDate = toDbDate(addDays(today, Math.floor(i / 2)));
 
       await prisma.programmation.create({
         data: {

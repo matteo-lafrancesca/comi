@@ -81,3 +81,17 @@ export function useRepasOptions(search: string) {
     select: (data) => data.repas,
   });
 }
+
+/**
+ * Un repas, pour pré-remplir le formulaire de modification. Pas de cache (`gcTime: 0`) : le formulaire
+ * prend une copie à son montage, elle doit venir du serveur et non d'une version périmée.
+ */
+export function useRepasQuery(id: number) {
+  return useQuery({
+    queryKey: queryKeys.repas.detail(id),
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+    queryFn: () =>
+      apiJson<RepasWithIngredients>(`/api/repas/${id}`, { fallbackError: 'Repas introuvable ou accès non autorisé.' }),
+  });
+}

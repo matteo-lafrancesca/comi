@@ -119,3 +119,29 @@ export interface ShoppingListExtraItem {
   ingredient?: { id: number; nom: string; categorie: string } | null;
 }
 
+
+// ── Types du formulaire de repas ────────────────────────────────────────────
+
+/** Ingrédient proposé par la recherche / renvoyé par la création (`/api/ingredients`). */
+export interface IngredientSuggestion {
+  id: number;
+  nom: string;
+  categorie: string;
+}
+
+/** Ligne d'ingrédient éditée dans le formulaire (quantité et unité en texte tel que saisi). */
+export interface IngredientRowItem {
+  /** Clé unique côté client */
+  id: string;
+  ingredientId?: number;
+  nom: string;
+  quantite: string;
+  unite: string;
+  categorie: CategorieIngredient;
+}
+
+/** Une étape de préparation éditée dans le formulaire. */
+export interface StepItem {
+  id: string;
+  text: string;
+}

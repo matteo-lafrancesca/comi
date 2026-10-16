@@ -21,3 +21,13 @@ export const json = (url: string, method: string, body?: unknown, headers: Recor
     headers: { 'Content-Type': 'application/json', ...headers },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
+
+type Handler = (request: Request, ctx: { params: Promise<Record<string, never>> }) => Promise<Response>;
+
+/** Module de route -> handlers appelables avec la seule requête (contexte de route vide fourni). */
+export function routes<T extends Record<string, unknown>>(mod: T): { [K in keyof T]: T[K] extends Handler ? (request: Request) => Promise<Response> : T[K] } {
+  const emptyCtx = { params: Promise.resolve({}) };
+  return Object.fromEntries(
+    Object.entries(mod).map(([k, v]) => [k, typeof v === 'function' ? (request: Request) => (v as Handler)(request, emptyCtx) : v])
+  ) as never;
+}

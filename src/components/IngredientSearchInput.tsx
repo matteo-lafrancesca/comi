@@ -2,15 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Loader2 } from 'lucide-react';
-import { CATEGORY_DETAILS, CategorieIngredient } from '@/types';
+import { CATEGORY_DETAILS, type CategorieIngredient, type IngredientSuggestion } from '@/types';
 import { normalizeSearchText } from '@/lib/string-utils';
 import { apiFetch } from '@/lib/api';
-
-export interface IngredientSuggestion {
-  id: number;
-  nom: string;
-  categorie: string;
-}
 
 interface IngredientSearchInputProps {
   /** Called when the user selects an existing ingredient from the dropdown */

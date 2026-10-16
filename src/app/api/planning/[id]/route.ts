@@ -1,219 +1,68 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { getSessionUser } from '@/lib/auth';
-import { isValidYmd, toDbDate } from '@/lib/date-utils';
+import { HttpError, assertOwned, parseBody, parseId, withAuth } from '@/lib/api-handler';
+import { toDbDate } from '@/lib/date-utils';
+import { updateProgrammationSchema } from '@/lib/schemas';
 import { formatProgrammationResponse, PROGRAMMATION_INCLUDE } from '@/lib/api-formatters';
+
+type Params = { id: string };
+const ID_INVALIDE = "L'identifiant de la programmation doit être un nombre valide.";
 
 /**
  * PUT /api/planning/[id]
  * Modifie une programmation de repas existante.
  * Payload: { repasId?: number, date?: 'AAAA-MM-JJ', heure?: 0 | 1 }
  */
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const progId = parseInt(id, 10);
-    if (isNaN(progId)) {
-      return NextResponse.json(
-        { error: "L'identifiant de la programmation doit être un nombre valide." },
-        { status: 400 }
-      );
-    }
+export const PUT = withAuth<Params>(async (request, user, { id }) => {
+  const progId = parseId(id, ID_INVALIDE);
+  const existing = assertOwned(await db.programmation.findUnique({ where: { id: progId } }), user.id, {
+    notFound: 'Programmation non trouvée.',
+    forbidden: "Vous n'êtes pas autorisé à modifier cette programmation.",
+  });
 
-    const sessionUser = await getSessionUser();
-    if (!sessionUser) {
-      return NextResponse.json(
-        { error: 'Non autorisé. Veuillez vous connecter.' },
-        { status: 401 }
-      );
-    }
+  const { repasId, date, heure } = await parseBody(request, updateProgrammationSchema);
 
-    // Récupérer la programmation existante pour valider la possession
-    const existingProg = await db.programmation.findUnique({
-      where: { id: progId },
+  if (repasId !== undefined) {
+    assertOwned(await db.repas.findUnique({ where: { id: repasId } }), user.id, {
+      notFound: 'Le repas spécifié est introuvable.',
+      forbidden: "Vous n'êtes pas autorisé à programmer ce repas.",
     });
-
-    if (!existingProg) {
-      return NextResponse.json(
-        { error: 'Programmation non trouvée.' },
-        { status: 404 }
-      );
-    }
-
-    if (existingProg.userId !== sessionUser.id) {
-      return NextResponse.json(
-        { error: "Vous n'êtes pas autorisé à modifier cette programmation." },
-        { status: 403 }
-      );
-    }
-
-    const body = await request.json();
-    const { repasId, date, heure } = body;
-
-    const updateData: { repasId?: number; date?: Date; heure?: number } = {};
-
-    // 1. Validation du repasId si fourni
-    if (repasId !== undefined) {
-      if (typeof repasId !== 'number') {
-        return NextResponse.json(
-          { error: 'repasId doit être un nombre.' },
-          { status: 400 }
-        );
-      }
-
-      // Vérification que le repas existe et appartient à l'utilisateur
-      const repas = await db.repas.findUnique({
-        where: { id: repasId },
-      });
-
-      if (!repas) {
-        return NextResponse.json(
-          { error: 'Le repas spécifié est introuvable.' },
-          { status: 404 }
-        );
-      }
-
-      if (repas.userId !== sessionUser.id) {
-        return NextResponse.json(
-          { error: "Vous n'êtes pas autorisé à programmer ce repas." },
-          { status: 403 }
-        );
-      }
-
-      updateData.repasId = repasId;
-    }
-
-    // 2. Validation de l'heure si fournie
-    if (heure !== undefined) {
-      if (typeof heure !== 'number' || (heure !== 0 && heure !== 1)) {
-        return NextResponse.json(
-          { error: "L'heure doit être 0 (midi) ou 1 (soir)." },
-          { status: 400 }
-        );
-      }
-      updateData.heure = heure;
-    }
-
-    // 3. Validation de la date si fournie
-    if (date !== undefined) {
-      if (!date) {
-        return NextResponse.json(
-          { error: 'La date ne peut pas être vide.' },
-          { status: 400 }
-        );
-      }
-
-      if (!isValidYmd(date)) {
-        return NextResponse.json(
-          { error: 'Format de date invalide (AAAA-MM-JJ attendu).' },
-          { status: 400 }
-        );
-      }
-
-      updateData.date = toDbDate(date);
-    }
-
-    // 4. Si la date ou l'heure changent, vérifier qu'il n'y a pas de conflit avec un autre repas
-    const targetDate = updateData.date || existingProg.date;
-    const targetHeure = updateData.heure !== undefined ? updateData.heure : existingProg.heure;
-
-    if (updateData.date !== undefined || updateData.heure !== undefined) {
-      const conflict = await db.programmation.findFirst({
-        where: {
-          userId: sessionUser.id,
-          date: targetDate,
-          heure: targetHeure,
-          id: { not: progId },
-        },
-      });
-
-      if (conflict) {
-        return NextResponse.json(
-          { error: 'Ce créneau est déjà programmé pour un autre repas.' },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Effectuer la mise à jour
-    const updatedProg = await db.programmation.update({
-      where: { id: progId },
-      data: updateData,
-      include: PROGRAMMATION_INCLUDE,
-    });
-
-    return NextResponse.json(formatProgrammationResponse(updatedProg), { status: 200 });
-  } catch (error) {
-    console.error('Erreur lors de la mise à jour de la programmation:', error);
-    return NextResponse.json(
-      { error: 'Une erreur interne est survenue.' },
-      { status: 500 }
-    );
   }
-}
+
+  const targetDate = date !== undefined ? toDbDate(date) : existing.date;
+  const targetHeure = heure ?? existing.heure;
+
+  // Si la date ou l'heure changent, le créneau visé ne doit pas déjà être pris
+  if (date !== undefined || heure !== undefined) {
+    const conflict = await db.programmation.findFirst({
+      where: { userId: user.id, date: targetDate, heure: targetHeure, id: { not: progId } },
+    });
+    if (conflict) throw new HttpError(400, 'Ce créneau est déjà programmé pour un autre repas.');
+  }
+
+  const updated = await db.programmation.update({
+    where: { id: progId },
+    data: {
+      ...(repasId !== undefined && { repasId }),
+      ...(date !== undefined && { date: targetDate }),
+      ...(heure !== undefined && { heure }),
+    },
+    include: PROGRAMMATION_INCLUDE,
+  });
+  return NextResponse.json(formatProgrammationResponse(updated), { status: 200 });
+});
 
 /**
  * DELETE /api/planning/[id]
  * Supprime une programmation existante (déprogrammation).
  */
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const progId = parseInt(id, 10);
-    if (isNaN(progId)) {
-      return NextResponse.json(
-        { error: "L'identifiant de la programmation doit être un nombre valide." },
-        { status: 400 }
-      );
-    }
+export const DELETE = withAuth<Params>(async (_request, user, { id }) => {
+  const progId = parseId(id, ID_INVALIDE);
+  assertOwned(await db.programmation.findUnique({ where: { id: progId } }), user.id, {
+    notFound: 'Programmation non trouvée.',
+    forbidden: "Vous n'êtes pas autorisé à supprimer cette programmation.",
+  });
 
-    const sessionUser = await getSessionUser();
-    if (!sessionUser) {
-      return NextResponse.json(
-        { error: 'Non autorisé. Veuillez vous connecter.' },
-        { status: 401 }
-      );
-    }
-
-    // Récupérer la programmation existante pour valider la possession
-    const existingProg = await db.programmation.findUnique({
-      where: { id: progId },
-    });
-
-    if (!existingProg) {
-      return NextResponse.json(
-        { error: 'Programmation non trouvée.' },
-        { status: 404 }
-      );
-    }
-
-    if (existingProg.userId !== sessionUser.id) {
-      return NextResponse.json(
-        { error: "Vous n'êtes pas autorisé à supprimer cette programmation." },
-        { status: 403 }
-      );
-    }
-
-    // Supprimer la programmation de la base de données
-    await db.programmation.delete({
-      where: { id: progId },
-    });
-
-    return NextResponse.json(
-      { message: 'Programmation supprimée avec succès.' },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Erreur lors de la suppression de la programmation:', error);
-    return NextResponse.json(
-      { error: 'Une erreur interne est survenue.' },
-      { status: 500 }
-    );
-  }
-}
+  await db.programmation.delete({ where: { id: progId } });
+  return NextResponse.json({ message: 'Programmation supprimée avec succès.' }, { status: 200 });
+});

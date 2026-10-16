@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
-import { verifyAndRotateRefreshToken, setAuthCookies, key } from '@/lib/auth';
+import { renewRefreshToken, setAuthCookies, verifyJWT } from '@/lib/auth';
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -14,19 +13,13 @@ export async function proxy(request: NextRequest) {
   let newCookiesToSet: { accessToken: string; refreshToken: string } | null = null;
 
   if (token) {
-    try {
-      await jwtVerify(token, key, { algorithms: ['HS256'] });
-      isAuthenticated = true;
-    } catch {
-      // Le token d'accès est invalide ou expiré
-      isAuthenticated = false;
-    }
+    isAuthenticated = (await verifyJWT(token)) !== null;
   }
 
   // Si l'Access Token n'est plus valide mais qu'un Refresh Token est présent,
   // tenter un rafraîchissement transparent de la session.
   if (!isAuthenticated && refreshToken) {
-    const refreshed = await verifyAndRotateRefreshToken(refreshToken);
+    const refreshed = await renewRefreshToken(refreshToken);
     if (refreshed) {
       isAuthenticated = true;
       newCookiesToSet = {

@@ -1,15 +1,20 @@
 import './env';
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { db, loginAs, json, clearCookies } from './helpers';
-import * as repas from '../src/app/api/repas/route';
-import * as planning from '../src/app/api/planning/route';
-import * as shopping from '../src/app/api/shopping-list/route';
+import { db, loginAs, json, clearCookies, routes } from './helpers';
+import * as repasMod from '../src/app/api/repas/route';
+import * as planningMod from '../src/app/api/planning/route';
+import * as shoppingMod from '../src/app/api/shopping-list/route';
+import * as repasId from '../src/app/api/repas/[id]/route';
 import * as register from '../src/app/api/auth/register/route';
 import * as login from '../src/app/api/auth/login/route';
 import * as refresh from '../src/app/api/auth/refresh/route';
 import * as logout from '../src/app/api/auth/logout/route';
 import { setCookie } from './env';
+
+const repas = routes(repasMod);
+const planning = routes(planningMod);
+const shopping = routes(shoppingMod);
 
 beforeEach(() => clearCookies());
 
@@ -164,4 +169,69 @@ test('liste de courses : repas déprogrammé -> article retiré', async () => {
   await db.programmation.delete({ where: { id } });
   await shopping.GET(json('/api/shopping-list?week=10&year=2025', 'GET'));
   assert.equal(await db.shoppingListItem.count({ where: { userId: u.id } }), 0);
+});
+
+// ── /api/repas/[id] et validation partagée ──────────────────────────────────
+
+const byId = (id: number) => ({ params: Promise.resolve({ id: String(id) }) });
+
+test('repas : validation (400), userId du body ignoré, PATCH partiel conserve les champs omis', async () => {
+  const u = await loginAs();
+  const other = await loginAs();
+  const { signJWT } = await import('../src/lib/auth');
+  setCookie('token', await signJWT({ userId: u.id, email: u.email }));
+
+  assert.equal((await repas.POST(json('/api/repas', 'POST', { titre: '  ' }))).status, 400);
+  assert.equal((await repas.POST(json('/api/repas', 'POST', { titre: 'T', ingredients: 'x' }))).status, 400);
+  assert.equal((await repas.POST(json('/api/repas', 'POST', { titre: 'T', ingredients: [{ nom: 'a' }] }))).status, 400);
+
+  const created = await repas.POST(
+    json('/api/repas', 'POST', { titre: ' Gratin ', recette: 'étape 1', photoUrl: 'https://x/y.jpg', userId: other.id })
+  );
+  assert.equal(created.status, 201);
+  const meal = await created.json();
+  assert.equal(meal.userId, u.id);
+  assert.equal(meal.titre, 'Gratin');
+
+  const patched = await repasId.PATCH(json(`/api/repas/${meal.id}`, 'PATCH', { titre: 'Gratin 2' }), byId(meal.id));
+  assert.equal(patched.status, 200);
+  const row = await db.repas.findUniqueOrThrow({ where: { id: meal.id } });
+  assert.deepEqual([row.titre, row.recette, row.photoUrl], ['Gratin 2', 'étape 1', 'https://x/y.jpg']);
+
+  await repasId.PATCH(json(`/api/repas/${meal.id}`, 'PATCH', { photoUrl: null }), byId(meal.id));
+  assert.equal((await db.repas.findUniqueOrThrow({ where: { id: meal.id } })).photoUrl, null);
+});
+
+test('repas/[id] : 400 id invalide, 404, 403 autre utilisateur, suppression', async () => {
+  const owner = await loginAs();
+  const mine = await db.repas.create({ data: { userId: owner.id, titre: 'M' } });
+  await loginAs(); // autre utilisateur connecté
+
+  assert.equal((await repasId.GET(json('/api/repas/abc', 'GET'), { params: Promise.resolve({ id: 'abc' }) })).status, 400);
+  assert.equal((await repasId.GET(json('/api/repas/999999', 'GET'), byId(999999))).status, 404);
+  assert.equal((await repasId.GET(json(`/api/repas/${mine.id}`, 'GET'), byId(mine.id))).status, 403);
+  assert.equal((await repasId.DELETE(json(`/api/repas/${mine.id}`, 'DELETE'), byId(mine.id))).status, 403);
+
+  const { signJWT } = await import('../src/lib/auth');
+  setCookie('token', await signJWT({ userId: owner.id, email: owner.email }));
+  assert.equal((await repasId.DELETE(json(`/api/repas/${mine.id}`, 'DELETE'), byId(mine.id))).status, 200);
+  assert.equal(await db.repas.count({ where: { id: mine.id } }), 0);
+});
+
+test('resolveSession : access token valide, sinon refresh token (cookies renvoyés), sinon null', async () => {
+  const { resolveSession, signJWT, createRefreshToken } = await import('../src/lib/auth');
+  const u = await loginAs();
+  const access = await signJWT({ userId: u.id, email: u.email });
+  const refreshToken = await createRefreshToken(u.id);
+
+  const direct = await resolveSession(access, undefined);
+  assert.equal(direct?.user.id, u.id);
+  assert.equal(direct?.renewed, null);
+
+  const viaRefresh = await resolveSession('jwt.invalide.ici', refreshToken);
+  assert.equal(viaRefresh?.user.id, u.id);
+  assert.ok(viaRefresh?.renewed?.accessToken);
+
+  assert.equal(await resolveSession(undefined, 'inconnu'), null);
+  assert.equal(await resolveSession(undefined, undefined), null);
 });

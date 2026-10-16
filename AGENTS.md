@@ -61,7 +61,9 @@ Avant de coder une interface, **analyse toujours si des éléments similaires ex
 | `PlanningDay` / `PlanningSlot` | Une journée du planning / un créneau midi-soir |
 | `PageHeader` | Titre de page serif + action principale |
 | `BackHeader` | En-tête des pages secondaires (retour + titre) |
-| `ImageDropzone` | Zone de dépôt/aperçu de photo (création manuelle et import IA) |
+| `ImageDropzone` | Zone de dépôt/aperçu de photo (création manuelle et import IA) ; props prêtes via `useImageUpload().dropzoneProps` |
+| `SortableStepsList` | Étapes de recette réordonnables (`@dnd-kit`) |
+| `RepasFormSteps` | Formulaire de repas en 3 étapes, partagé par « nouveau » et « modifier » |
 | `AuthShell` | Cadre des écrans connexion / inscription |
 | `ui/Button`, `ui/IconButton`, `ui/TextInput`, `ui/Alert` | Primitives de formulaire et d'action — **ne pas réécrire de classes de bouton/champ à la main** |
 
@@ -85,9 +87,12 @@ Ne pas réitérer : Ne reformulez pas les instructions déjà présentes dans ce
 
 Référence stricte : Si vous analysez une erreur, basez-vous uniquement sur les logs fournis ou les fichiers explicitement mentionnés. Ne supposez pas de contexte externe non fourni.
 ## 7. Qualité
-- Avant de conclure une tâche : `npm run check` (ESLint + `tsc --noEmit`) doit passer sans erreur ni warning.
+- Avant de conclure une tâche : `npm run check` (ESLint + `tsc --noEmit` + tests) doit passer sans erreur ni warning.
 - Pas de `any` ; pour un `catch`, utiliser `errorMessage(err, fallback)` (`src/lib/errors.ts`).
-- Pas de `setState` synchrone dans un `useEffect` : dériver l'état au rendu ou remonter un composant (voir `AddExtraDrawer`, `Drawer`). Les rares exceptions portent un `eslint-disable` justifié (listées dans `docs/dette-technique.md`).
+- Pas de `setState` synchrone dans un `useEffect` : dériver l'état au rendu ou remonter un composant (voir `AddExtraDrawer`, `Drawer`). Un `eslint-disable` n'est admis qu'avec une justification écrite et une entrée dans `docs/dette-technique.md` (il n'y en a aucun aujourd'hui).
 - Tous les appels réseau passent par `apiFetch` / `apiJson` (gèrent le `basePath` `/comi`). Les données serveur se lisent avec les hooks de `src/lib/queries` (TanStack Query) et s'écrivent avec ses mutations ; les règles d'invalidation sont dans `src/lib/queries/keys.ts`. Pas de `fetch` + `useState` dans les pages.
+- Routes API : toute route authentifiée est `withAuth(...)` (`src/lib/api-handler.ts`) : pas de try/catch ni de test de session à la main. Les erreurs attendues se lèvent avec `HttpError`, la propriété d'une ressource se vérifie avec `assertOwned`, l'id d'URL avec `parseId`. Le corps de requête se valide avec un schéma zod de `src/lib/schemas.ts` via `parseBody` ; le type côté client est `z.input` du même schéma (`RepasPayload`). Ne jamais lire un `userId` dans le corps : c'est celui de la session.
+- Session : `resolveSession` (`src/lib/auth.ts`) est le seul endroit qui transforme les cookies en utilisateur ; les options de cookies vivent dans `sessionCookies`.
+- Formulaires complexes : l'état est un reducer pur dans `src/lib/repas-form.ts` (testé dans `tests/`) ; le hook ne l'expose que sous forme d'actions nommées, jamais de setter brut. Un formulaire se monte une fois ses données prêtes (valeurs initiales passées au hook), jamais en les injectant par effet. Les types partagés vivent dans `src/types`, pas dans les composants.
 - Dates : une date calendaire est une chaîne `AAAA-MM-JJ` (`Ymd`), toute l'arithmétique passe par `src/lib/date-utils.ts` (UTC pur). Jamais de `new Date(...)` / `getParisDate` pour raisonner sur un jour ou une semaine. Les semaines (`start`, `end`, `days`, `prev`, `next`) viennent du serveur (`resolveWeek`).
 - L'état de navigation (semaine, mode d'attribution, jour à centrer) vit dans l'URL ; les URLs se construisent avec `src/lib/routes.ts`. Le scroll se mémorise avec `useScrollRestoration`, jamais avec `document.querySelector('main')`.
