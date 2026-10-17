@@ -31,14 +31,6 @@ export default function WeekSelector({ week, dateRange, onPrev, onNext, onReset,
       <div className="text-center print:text-left">
         <span className="block font-display text-2xl font-semibold leading-none">Semaine {week}</span>
         <span className="block mt-1.5 text-xs text-text-light-muted dark:text-text-dark-muted">{dateRange}</span>
-        {onReset && (
-          <button
-            onClick={onReset}
-            className="mt-1.5 text-xs font-semibold underline underline-offset-4 decoration-brand decoration-2 cursor-pointer print:hidden"
-          >
-            Revenir à cette semaine
-          </button>
-        )}
       </div>
 
       <button onClick={onNext} aria-label="Semaine suivante" className={arrow}>
