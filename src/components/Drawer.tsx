@@ -39,6 +39,8 @@ interface DrawerProps {
   maxWidth?: string; // e.g., 'sm:max-w-3xl' or 'sm:max-w-md'
   height?: string; // e.g., 'h-[80dvh]' or 'h-auto'
   maxHeight?: string; // e.g., 'max-h-[95dvh]'
+  /** Sur mobile, le panneau occupe tout l'écran (formulaires avec clavier) ; inchangé dès `sm:`. */
+  fullScreenMobile?: boolean;
 }
 
 export default function Drawer({
@@ -48,8 +50,9 @@ export default function Drawer({
   children,
   headerImage,
   maxWidth = 'sm:max-w-2xl',
-  height = 'h-[80dvh] sm:h-auto',
-  maxHeight = 'max-h-[94dvh] sm:max-h-[90vh]'
+  fullScreenMobile = false,
+  height = fullScreenMobile ? 'h-dvh sm:h-auto' : 'h-[80dvh] sm:h-auto',
+  maxHeight = fullScreenMobile ? 'max-h-dvh sm:max-h-[90vh]' : 'max-h-[94dvh] sm:max-h-[90vh]'
 }: DrawerProps) {
   // Montage différé : le panneau reste monté pendant l'animation de fermeture
   const [mounted, setMounted] = useState(isOpen);
@@ -127,8 +130,13 @@ export default function Drawer({
   // Touch handlers for responsive swipe-to-close gestures
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartRef.current = e.touches[0].clientY;
-    // Record current scroll position of the scrollable container
-    scrollStartRef.current = scrollRef.current ? scrollRef.current.scrollTop : 0;
+    // Scroll le plus haut entre le conteneur et les listes défilantes imbriquées touchées :
+    // sans ça, remonter une liste interne déplacerait le panneau au lieu de la liste.
+    let scrollTop = 0;
+    for (let el = e.target as HTMLElement | null; el && el !== panelRef.current; el = el.parentElement) {
+      scrollTop = Math.max(scrollTop, el.scrollTop);
+    }
+    scrollStartRef.current = scrollTop;
     draggingRef.current = true;
     setIsDragging(true);
   };
@@ -187,7 +195,7 @@ export default function Drawer({
       <div
         ref={panelRef}
         style={panelStyle}
-        className={`fixed bottom-0 left-0 right-0 sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:right-auto bg-card-light dark:bg-card-dark rounded-t-card sm:rounded-card shadow-2xl flex flex-col overflow-hidden border-t sm:border border-neutral-200 dark:border-neutral-800 z-10 w-full ${maxWidth} ${height} ${maxHeight} transition-all duration-300 ease-out select-none ${
+        className={`fixed bottom-0 left-0 right-0 sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:right-auto bg-card-light dark:bg-card-dark ${fullScreenMobile ? 'rounded-none pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] sm:pt-0 sm:pb-0' : 'rounded-t-card'} sm:rounded-card shadow-2xl flex flex-col overflow-hidden border-t sm:border border-neutral-200 dark:border-neutral-800 z-10 w-full ${maxWidth} ${height} ${maxHeight} transition-all duration-300 ease-out select-none ${
           visible 
             ? 'translate-y-0 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:scale-100 sm:opacity-100' 
             : 'translate-y-full sm:translate-y-4 sm:-translate-x-1/2 sm:-translate-y-[45%] sm:scale-95 sm:opacity-0'
@@ -258,7 +266,7 @@ export default function Drawer({
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onTouchCancel={handleTouchCancel}
-          className={`overflow-y-auto overscroll-y-contain flex-1 select-text${headerImage ? 'p-0' : 'p-6'}`}
+          className={`overflow-y-auto overscroll-y-contain flex-1 select-text ${headerImage ? 'p-0' : 'p-6'}`}
         >
           {headerImage && (
             <div className="relative w-full overflow-hidden shrink-0 select-none">

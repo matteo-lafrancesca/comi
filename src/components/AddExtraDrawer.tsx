@@ -27,7 +27,7 @@ type Tab = 'repas' | 'ingredient';
 /** Drawer d'ajout hors-planning. Le formulaire n'est monté que drawer ouvert : son état repart de zéro à chaque ouverture. */
 export default function AddExtraDrawer({ isOpen, onClose, week }: AddExtraDrawerProps) {
   return (
-    <Drawer isOpen={isOpen} onClose={onClose} title="Ajouter à la liste" maxWidth="sm:max-w-md">
+    <Drawer isOpen={isOpen} onClose={onClose} title="Ajouter à la liste" maxWidth="sm:max-w-md" fullScreenMobile>
       <AddExtraForm onClose={onClose} week={week} />
     </Drawer>
   );
@@ -116,7 +116,7 @@ function AddExtraForm({ onClose, week }: Omit<AddExtraDrawerProps, 'isOpen'>) {
           ) : filteredMeals.length === 0 ? (
             <p className="py-4 text-sm text-text-light-muted dark:text-text-dark-muted">Aucune recette trouvée.</p>
           ) : (
-            <ul className="max-h-60 overflow-y-auto divide-y divide-neutral-200 dark:divide-neutral-800">
+            <ul className="max-h-[45dvh] sm:max-h-60 overflow-y-auto overscroll-contain divide-y divide-neutral-200 dark:divide-neutral-800">
               {filteredMeals.map((meal) => {
                 const selected = selectedRepasId === meal.id;
                 return (

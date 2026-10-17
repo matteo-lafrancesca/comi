@@ -33,22 +33,27 @@ export default function IngredientSearchInput({
   useEffect(() => {
     if (!searchQuery.trim()) return;
 
+    // `stale` : la réponse tardive d'une frappe précédente ne doit pas écraser la plus récente
+    let stale = false;
     const delayDebounceFn = setTimeout(async () => {
       try {
         setSearching(true);
         const res = await apiFetch(`/api/ingredients?search=${encodeURIComponent(searchQuery)}`);
         if (res.ok) {
           const data = await res.json();
-          setSearchResults(data);
+          if (!stale) setSearchResults(data);
         }
       } catch (err) {
         console.error('Erreur autocomplete:', err);
       } finally {
-        setSearching(false);
+        if (!stale) setSearching(false);
       }
     }, 300);
 
-    return () => clearTimeout(delayDebounceFn);
+    return () => {
+      stale = true;
+      clearTimeout(delayDebounceFn);
+    };
   }, [searchQuery]);
 
   const exactMatchExists = searchResults.some(
@@ -89,7 +94,7 @@ export default function IngredientSearchInput({
           placeholder={placeholder}
           className="flex-1 min-w-0 py-2.5 text-base bg-transparent outline-none placeholder:text-text-light-muted/70 dark:placeholder:text-text-dark-muted/70"
         />
-        {searching && <Loader2 className="h-4 w-4 animate-spin text-text-light-muted dark:text-text-dark-muted" />}
+        {searching && searchQuery.trim() !== '' && <Loader2 className="h-4 w-4 animate-spin text-text-light-muted dark:text-text-dark-muted" />}
       </div>
 
       {isSearchFocused && searchQuery.trim() !== '' && (
