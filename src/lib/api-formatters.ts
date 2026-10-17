@@ -1,25 +1,33 @@
 import type { Prisma } from '@prisma/client';
-import type { ProgrammationWithRepas, RepasWithIngredients } from '@/types';
+import type { FriendSummary, ProgrammationWithRepas, RepasWithIngredients } from '@/types';
 import { fromDbDate } from '@/lib/date-utils';
 
-/**
- * Type Prisma complet pour un repas avec ses ingrédients chargés.
- */
-export type RepasWithIngredientsPayload = Prisma.RepasGetPayload<{
-  include: {
-    ingredients: {
-      include: {
-        ingredient: true;
-      };
-    };
-  };
-}>;
+/** Colonnes d'un `FriendSummary` : ce qu'un utilisateur montre aux autres (jamais l'e-mail). */
+export const FRIEND_SUMMARY_SELECT = { id: true, pseudo: true, photoUrl: true } as const;
+
+/** Les utilisateurs montrés aux autres ont toujours un pseudo (requis pour les amis). */
+export const toFriendSummary = (u: { id: number; pseudo: string | null; photoUrl: string | null }): FriendSummary => ({
+  id: u.id,
+  pseudo: u.pseudo ?? '',
+  photoUrl: u.photoUrl,
+});
+
+/** Include Prisma d'un repas : ingrédients, auteur et nombre de carnets d'amis où il figure. */
+export const REPAS_INCLUDE = {
+  ingredients: { include: { ingredient: true } },
+  user: { select: FRIEND_SUMMARY_SELECT },
+  _count: { select: { savedBy: true } },
+} satisfies Prisma.RepasInclude;
+
+/** Type Prisma complet pour un repas chargé avec `REPAS_INCLUDE`. */
+export type RepasWithIngredientsPayload = Prisma.RepasGetPayload<{ include: typeof REPAS_INCLUDE }>;
 
 /**
- * Formate un repas Prisma vers le format de réponse API `RepasWithIngredients`.
- * Élimine la duplication du mapping dans toutes les routes API.
+ * Formate un repas Prisma vers le format de réponse API `RepasWithIngredients`, vu par `viewerId` :
+ * `owner` est null pour ses propres repas, et `savedCount` n'est communiqué qu'à l'auteur.
  */
-export function formatRepasResponse(repas: RepasWithIngredientsPayload): RepasWithIngredients {
+export function formatRepasResponse(repas: RepasWithIngredientsPayload, viewerId: number): RepasWithIngredients {
+  const isMine = repas.userId === viewerId;
   return {
     id: repas.id,
     userId: repas.userId,
@@ -28,6 +36,8 @@ export function formatRepasResponse(repas: RepasWithIngredientsPayload): RepasWi
     photoUrl: repas.photoUrl,
     isPublic: repas.isPublic,
     createdAt: repas.createdAt,
+    owner: isMine ? null : toFriendSummary(repas.user),
+    savedCount: isMine ? repas._count.savedBy : 0,
     ingredients: repas.ingredients.map((ri) => ({
       id: ri.id,
       nom: ri.ingredient.nom,
@@ -38,17 +48,13 @@ export function formatRepasResponse(repas: RepasWithIngredientsPayload): RepasWi
   };
 }
 
-/** Programmation Prisma avec son repas complet. */
-export type ProgrammationPayload = Prisma.ProgrammationGetPayload<{
-  include: { repas: { include: { ingredients: { include: { ingredient: true } } } } };
-}>;
-
 /** Include Prisma à utiliser pour obtenir un `ProgrammationPayload`. */
-export const PROGRAMMATION_INCLUDE = {
-  repas: { include: { ingredients: { include: { ingredient: true } } } },
-} satisfies Prisma.ProgrammationInclude;
+export const PROGRAMMATION_INCLUDE = { repas: { include: REPAS_INCLUDE } } satisfies Prisma.ProgrammationInclude;
 
-/** Programmation Prisma -> réponse API (date calendaire « AAAA-MM-JJ »). */
+/** Programmation Prisma avec son repas complet. */
+export type ProgrammationPayload = Prisma.ProgrammationGetPayload<{ include: typeof PROGRAMMATION_INCLUDE }>;
+
+/** Programmation Prisma -> réponse API (date calendaire « AAAA-MM-JJ »), vue par son propriétaire. */
 export function formatProgrammationResponse(prog: ProgrammationPayload): ProgrammationWithRepas {
   return {
     id: prog.id,
@@ -56,6 +62,6 @@ export function formatProgrammationResponse(prog: ProgrammationPayload): Program
     repasId: prog.repasId,
     date: fromDbDate(prog.date),
     heure: prog.heure === 1 ? 1 : 0,
-    repas: formatRepasResponse(prog.repas),
+    repas: formatRepasResponse(prog.repas, prog.userId),
   };
 }

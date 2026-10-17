@@ -108,6 +108,19 @@ export function useRepasVisibilityMutation() {
   });
 }
 
+/** Retire la recette d'un ami de mon carnet (et de mon planning / mes courses). */
+export function useUnsaveRepasMutation() {
+  const invalidateRepas = useInvalidateRepas();
+  return useMutation({
+    mutationFn: (repasId: number) =>
+      apiJson<unknown>(`/api/repas/${repasId}/save`, {
+        method: 'DELETE',
+        fallbackError: 'Impossible de retirer cette recette de votre carnet.',
+      }),
+    onSuccess: invalidateRepas,
+  });
+}
+
 export function useDeleteRepasMutation() {
   const invalidateRepas = useInvalidateRepas();
   return useMutation({

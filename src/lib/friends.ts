@@ -2,17 +2,9 @@ import type { Prisma } from '@prisma/client';
 import { db } from './db';
 import { HttpError } from './api-handler';
 import type { SessionUser } from './auth';
-import type { FriendRelation, FriendSummary } from '@/types';
+import type { FriendRelation } from '@/types';
 
-/** Colonnes d'un `FriendSummary` (jamais l'e-mail). */
-export const FRIEND_SUMMARY_SELECT = { id: true, pseudo: true, photoUrl: true } as const;
-
-/** Les utilisateurs listés ont toujours un pseudo (requis pour envoyer ou accepter une demande). */
-export const toFriendSummary = (u: { id: number; pseudo: string | null; photoUrl: string | null }): FriendSummary => ({
-  id: u.id,
-  pseudo: u.pseudo ?? '',
-  photoUrl: u.photoUrl,
-});
+export { FRIEND_SUMMARY_SELECT, toFriendSummary } from './api-formatters';
 
 /** Les fonctions « amis » exigent un pseudo : c'est sous ce nom qu'on apparaît chez les autres. */
 export function requirePseudo(user: SessionUser) {
@@ -43,6 +35,20 @@ export function relationOf(
   if (!friendship) return 'none';
   if (friendship.status === 'accepted') return 'friend';
   return friendship.requesterId === me ? 'sent' : 'received';
+}
+
+/**
+ * Garantit qu'un utilisateur peut utiliser un repas (programmer, ajouter aux courses) : le sien, ou
+ * celui d'un ami qu'il a ajouté à son carnet. L'accès se perd avec le carnet (`purgeSharedAccess`),
+ * inutile donc de revérifier l'amitié ou le caractère public.
+ */
+export async function assertUsableRepas(repasId: number, userId: number, messages: { notFound: string; forbidden: string }) {
+  const repas = await db.repas.findUnique({
+    where: { id: repasId },
+    select: { userId: true, savedBy: { where: { userId }, select: { id: true } } },
+  });
+  if (!repas) throw new HttpError(404, messages.notFound);
+  if (repas.userId !== userId && repas.savedBy.length === 0) throw new HttpError(403, messages.forbidden);
 }
 
 /** Garantit que deux utilisateurs sont amis (403 sinon). */

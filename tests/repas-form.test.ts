@@ -49,6 +49,8 @@ test('repasToValues -> valuesToPayload : aller-retour', () => {
     recette: 'Éplucher\n\nCuire',
     photoUrl: null,
     isPublic: false,
+    owner: null,
+    savedCount: 0,
     createdAt: new Date(),
     ingredients: [
       { id: 7, nom: 'Pomme de terre', quantite: 500, unite: 'g', categorie: 'fruits-legumes' as const },

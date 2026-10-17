@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { HttpError, parseId, withAuth } from '@/lib/api-handler';
-import { REPAS_INCLUDE } from '@/lib/repas-input';
-import { formatRepasResponse } from '@/lib/api-formatters';
+import { REPAS_INCLUDE, formatRepasResponse } from '@/lib/api-formatters';
 import { FRIEND_SUMMARY_SELECT, assertFriends, findFriendship, purgeSharedAccess, toFriendSummary } from '@/lib/friends';
 import type { FriendProfile } from '@/types';
 
@@ -31,7 +30,7 @@ export const GET = withAuth<Params>(async (_request, user, { userId }) => {
 
   const body: FriendProfile = {
     ...toFriendSummary(friend),
-    repas: friend.repas.map((r) => ({ ...formatRepasResponse(r), savedByMe: r.savedBy.length > 0 })),
+    repas: friend.repas.map((r) => ({ ...formatRepasResponse(r, user.id), savedByMe: r.savedBy.length > 0 })),
   };
   return NextResponse.json(body);
 });

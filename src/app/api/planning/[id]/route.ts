@@ -4,6 +4,7 @@ import { HttpError, assertOwned, parseBody, parseId, withAuth } from '@/lib/api-
 import { toDbDate } from '@/lib/date-utils';
 import { updateProgrammationSchema } from '@/lib/schemas';
 import { formatProgrammationResponse, PROGRAMMATION_INCLUDE } from '@/lib/api-formatters';
+import { assertUsableRepas } from '@/lib/friends';
 
 type Params = { id: string };
 const ID_INVALIDE = "L'identifiant de la programmation doit être un nombre valide.";
@@ -23,7 +24,7 @@ export const PUT = withAuth<Params>(async (request, user, { id }) => {
   const { repasId, date, heure } = await parseBody(request, updateProgrammationSchema);
 
   if (repasId !== undefined) {
-    assertOwned(await db.repas.findUnique({ where: { id: repasId } }), user.id, {
+    await assertUsableRepas(repasId, user.id, {
       notFound: 'Le repas spécifié est introuvable.',
       forbidden: "Vous n'êtes pas autorisé à programmer ce repas.",
     });

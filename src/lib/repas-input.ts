@@ -2,9 +2,6 @@ import type { Prisma } from '@prisma/client';
 import { normalizeCategory } from '@/lib/category-utils';
 import type { IngredientPayload } from '@/lib/schemas';
 
-/** Include Prisma d'un repas avec ses ingrédients. */
-export const REPAS_INCLUDE = { ingredients: { include: { ingredient: true } } } satisfies Prisma.RepasInclude;
-
 /** Texte nettoyé : espaces retirés, chaîne vide -> null. */
 export const cleanText = (value: string | null | undefined): string | null => value?.trim() || null;
 

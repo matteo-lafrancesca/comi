@@ -9,6 +9,11 @@ import * as requestId from '../src/app/api/friends/requests/[id]/route';
 import * as acceptMod from '../src/app/api/friends/requests/[id]/accept/route';
 import * as friendId from '../src/app/api/friends/[userId]/route';
 import type { FriendCard, FriendProfile, FriendRequestsResponse, UserSearchResult } from '../src/types';
+import * as repasListMod from '../src/app/api/repas/route';
+import * as planningMod from '../src/app/api/planning/route';
+import * as extrasMod from '../src/app/api/shopping-list/extras/route';
+import * as saveMod from '../src/app/api/repas/[id]/save/route';
+import type { RepasWithIngredients } from '../src/types';
 
 const search = routes(searchMod);
 const requests = routes(requestsMod);
@@ -175,4 +180,98 @@ test('retirer un ami : recettes retirées des deux côtés, données personnelle
   );
   assert.equal(await db.shoppingListExtra.count({ where: { userId: a.id } }), 0);
   assert.equal((await remove()).status, 404);
+});
+
+// ── Carnet : recettes d'amis ────────────────────────────────────────────────
+
+const repasList = routes(repasListMod);
+const planning = routes(planningMod);
+const extras = routes(extrasMod);
+const save = (id: number) => saveMod.POST(json(`/api/repas/${id}/save`, 'POST'), byId(id));
+const unsave = (id: number) => saveMod.DELETE(json(`/api/repas/${id}/save`, 'DELETE'), byId(id));
+const myCarnet = async (sort = 'date_creation'): Promise<RepasWithIngredients[]> =>
+  (await (await repasList.GET(json(`/api/repas?sort=${sort}&limit=50`, 'GET'))).json()).repas;
+
+test('carnet : ajouter une recette réservé aux recettes publiques d amis, idempotent', async () => {
+  const a = await loginAs();
+  const b = await loginAs();
+  const pub = await db.repas.create({ data: { userId: b.id, titre: 'Pub', isPublic: true } });
+  const priv = await db.repas.create({ data: { userId: b.id, titre: 'Privé' } });
+  const own = await db.repas.create({ data: { userId: a.id, titre: 'À moi' } });
+
+  await actAs(a);
+  assert.equal((await save(pub.id)).status, 403); // pas encore amis
+  await makeFriends(a, b);
+  assert.equal((await save(priv.id)).status, 403);
+  assert.equal((await save(own.id)).status, 400);
+  assert.equal((await save(99999999)).status, 404);
+  assert.equal((await save(pub.id)).status, 201);
+  assert.equal((await save(pub.id)).status, 201);
+  assert.equal(await db.repasSaved.count({ where: { userId: a.id } }), 1);
+});
+
+test('carnet : liste avec auteur, savedCount réservé à l auteur, utilisable au planning et aux courses', async () => {
+  const a = await loginAs();
+  const b = await loginAs();
+  const fromB = await db.repas.create({ data: { userId: b.id, titre: 'De B', isPublic: true } });
+  const notSaved = await db.repas.create({ data: { userId: b.id, titre: 'Pas ajouté', isPublic: true } });
+  const mine = await db.repas.create({ data: { userId: a.id, titre: 'À moi' } });
+  await makeFriends(a, b);
+  await save(fromB.id);
+
+  const carnet = await myCarnet();
+  assert.deepEqual(carnet.map((r) => r.id).sort(), [fromB.id, mine.id].sort());
+  const friendMeal = carnet.find((r) => r.id === fromB.id)!;
+  assert.deepEqual(friendMeal.owner, { id: b.id, pseudo: b.pseudo, photoUrl: null });
+  assert.equal(friendMeal.savedCount, 0); // caché à celui qui n'est pas l'auteur
+  assert.equal(carnet.find((r) => r.id === mine.id)!.owner, null);
+
+  const slot = (repasId: number) => planning.POST(json('/api/planning', 'POST', { repasId, date: '2025-03-05', heure: 0 }));
+  assert.equal((await slot(fromB.id)).status, 201);
+  assert.equal((await slot(notSaved.id)).status, 403);
+  const extra = (repasId: number) => extras.POST(json('/api/shopping-list/extras', 'POST', { repasId, week: 10, year: 2025 }));
+  assert.equal((await extra(fromB.id)).status, 201);
+  assert.equal((await extra(notSaved.id)).status, 403);
+
+  await actAs(b);
+  assert.equal((await myCarnet()).find((r) => r.id === fromB.id)!.savedCount, 1);
+});
+
+test('carnet : retirer une recette efface mes programmations et extras, pas ceux de l auteur', async () => {
+  const a = await loginAs();
+  const b = await loginAs();
+  const fromB = await db.repas.create({ data: { userId: b.id, titre: 'De B', isPublic: true } });
+  await makeFriends(a, b);
+  await save(fromB.id);
+  const date = new Date('2025-06-02T00:00:00Z');
+  await db.programmation.createMany({
+    data: [
+      { userId: a.id, repasId: fromB.id, date, heure: 0 },
+      { userId: b.id, repasId: fromB.id, date, heure: 0 },
+    ],
+  });
+  await db.shoppingListExtra.create({ data: { userId: a.id, repasId: fromB.id, week: 23, year: 2025 } });
+
+  assert.equal((await unsave(fromB.id)).status, 200);
+  assert.equal(await db.repasSaved.count({ where: { userId: a.id } }), 0);
+  assert.deepEqual((await db.programmation.findMany({ where: { repasId: fromB.id } })).map((p) => p.userId), [b.id]);
+  assert.equal(await db.shoppingListExtra.count({ where: { userId: a.id } }), 0);
+  assert.equal((await myCarnet()).length, 0);
+  assert.equal((await unsave(fromB.id)).status, 404);
+});
+
+test('carnet : le tri par rareté ignore les programmations des autres', async () => {
+  const a = await loginAs();
+  const b = await loginAs();
+  const mine = await db.repas.create({ data: { userId: a.id, titre: 'À moi' } });
+  const fromB = await db.repas.create({ data: { userId: b.id, titre: 'De B', isPublic: true } });
+  await makeFriends(a, b);
+  await save(fromB.id);
+  await db.programmation.createMany({
+    data: [
+      { userId: a.id, repasId: mine.id, date: new Date('2025-01-01T00:00:00Z'), heure: 0 },
+      { userId: b.id, repasId: fromB.id, date: new Date('2025-06-01T00:00:00Z'), heure: 0 }, // pas par moi
+    ],
+  });
+  assert.deepEqual((await myCarnet('rarete')).map((r) => r.id), [fromB.id, mine.id]);
 });

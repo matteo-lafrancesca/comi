@@ -10,9 +10,12 @@ interface RepasCardProps {
   selectMode?: boolean;
 }
 
-/** Vignette d'une recette : photo en 4/5, titre en serif. Sans photo : initiale sur papier ligné. */
+/**
+ * Vignette d'une recette : photo en 4/5, titre en serif. Sans photo : initiale sur papier ligné.
+ * Recette d'un ami : son pseudo sous le titre.
+ */
 export default function RepasCard({ repas, onClick, selectMode = false }: RepasCardProps) {
-  const { titre, photoUrl } = repas;
+  const { titre, photoUrl, owner } = repas;
   const [imageError, setImageError] = useState(false);
 
   return (
@@ -40,9 +43,16 @@ export default function RepasCard({ repas, onClick, selectMode = false }: RepasC
           </span>
         )}
       </div>
-      <h3 className="font-display text-lg leading-snug font-medium line-clamp-2 text-text-light-main dark:text-text-dark-main">
-        {titre}
-      </h3>
+      <div>
+        <h3 className="font-display text-lg leading-snug font-medium line-clamp-2 text-text-light-main dark:text-text-dark-main">
+          {titre}
+        </h3>
+        {owner && (
+          <p className="mt-0.5 text-xs text-text-light-muted dark:text-text-dark-muted truncate">
+            de <span className="font-display italic text-sm">{owner.pseudo}</span>
+          </p>
+        )}
+      </div>
     </button>
   );
 }

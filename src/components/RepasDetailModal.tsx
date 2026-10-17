@@ -3,12 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { errorMessage } from '@/lib/errors';
 import Image from 'next/image';
-import { Pencil, Trash2, Loader2, RefreshCw, Calendar, CalendarX, Globe, Lock } from 'lucide-react';
+import { Pencil, Trash2, Loader2, RefreshCw, Calendar, CalendarX, Globe, Lock, BookmarkMinus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { RepasWithIngredients } from '@/types';
 import { formatIngredient } from '@/lib/shopping-list-utils';
 import { planningUrl } from '@/lib/routes';
-import { useDeleteRepasMutation, useRepasVisibilityMutation, useUnscheduleMutation } from '@/lib/queries/mutations';
+import {
+  useDeleteRepasMutation,
+  useRepasVisibilityMutation,
+  useUnsaveRepasMutation,
+  useUnscheduleMutation,
+} from '@/lib/queries/mutations';
 import Drawer from '@/components/Drawer';
 import IconButton from '@/components/ui/IconButton';
 import Alert from '@/components/ui/Alert';
@@ -23,20 +28,31 @@ interface RepasDetailModalProps {
   onReprogram?: () => void;
 }
 
+/** Confirmations possibles depuis la fiche. */
+type ConfirmKind = 'delete' | 'unsave' | 'private';
+
+const amis = (n: number) => (n === 1 ? '1 ami' : `${n} amis`);
+
+/**
+ * Fiche d'un repas. Mes repas : programmer, confidentialité, modifier, supprimer. Recette d'un ami
+ * (`repas.owner`) : programmer ou la retirer de mon carnet, jamais la modifier.
+ */
 export default function RepasDetailModal({ repas, isOpen, onClose, programmationId, onReprogram }: RepasDetailModalProps) {
   const router = useRouter();
   const [activeRepas, setActiveRepas] = useState<RepasWithIngredients | null>(null);
 
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  /** Gardée à la fermeture pour que le texte ne change pas pendant l'animation */
+  const [confirmKind, setConfirmKind] = useState<ConfirmKind>('delete');
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const [unscheduleError, setUnscheduleError] = useState<string | null>(null);
   const [visibilityError, setVisibilityError] = useState<string | null>(null);
   /** Dernière visibilité enregistrée ici : le repas reçu en prop est une copie qui ne suit pas la mutation. */
   const [savedVisibility, setSavedVisibility] = useState<{ id: number; isPublic: boolean } | null>(null);
   const deleteMutation = useDeleteRepasMutation();
   const visibilityMutation = useRepasVisibilityMutation();
+  const unsaveMutation = useUnsaveRepasMutation();
   const unscheduleMutation = useUnscheduleMutation();
-  const isDeleting = deleteMutation.isPending;
   const isUnscheduling = unscheduleMutation.isPending;
 
   // Conserve le dernier repas affiché pendant l'animation de fermeture
@@ -46,8 +62,8 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
     if (!isOpen) {
       const timer = setTimeout(() => {
         setActiveRepas(null);
-        setIsDeleteConfirmOpen(false);
-        setDeleteError(null);
+        setConfirmOpen(false);
+        setConfirmError(null);
         setUnscheduleError(null);
         setVisibilityError(null);
         setSavedVisibility(null);
@@ -62,10 +78,18 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
   const currentRepas = activeRepas || repas;
   if (!currentRepas) return null;
 
-  const { id, titre, photoUrl, recette, ingredients } = currentRepas;
+  const { id, titre, photoUrl, recette, ingredients, owner } = currentRepas;
   const isPublic = savedVisibility?.id === id ? savedVisibility.isPublic : currentRepas.isPublic;
+  // Après un changement de visibilité ici, plus aucun ami ne l'a dans son carnet (passage en privé)
+  const savedCount = savedVisibility?.id === id ? 0 : currentRepas.savedCount;
 
-  const handleToggleVisibility = async () => {
+  const openConfirm = (kind: ConfirmKind) => {
+    setConfirmKind(kind);
+    setConfirmError(null);
+    setConfirmOpen(true);
+  };
+
+  const toggleVisibility = async () => {
     setVisibilityError(null);
     try {
       const updated = await visibilityMutation.mutateAsync({ repasId: id, isPublic: !isPublic });
@@ -73,6 +97,12 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
     } catch (err) {
       setVisibilityError(errorMessage(err, 'Une erreur est survenue.'));
     }
+  };
+
+  /** Repasser en privé une recette présente chez des amis demande confirmation (elle en sera retirée). */
+  const handleVisibilityClick = () => {
+    if (isPublic && savedCount > 0) openConfirm('private');
+    else void toggleVisibility();
   };
 
   const handleEdit = () => {
@@ -96,15 +126,55 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
     }
   };
 
-  const handleDeleteConfirm = async () => {
-    setDeleteError(null);
+  /** Supprimer mon repas ou retirer la recette d'un ami de mon carnet, puis fermer la fiche. */
+  const runAndClose = async (action: () => Promise<unknown>) => {
+    setConfirmError(null);
     try {
-      await deleteMutation.mutateAsync(id);
+      await action();
+      setConfirmOpen(false);
       onClose();
     } catch (err) {
-      setDeleteError(errorMessage(err, 'Une erreur est survenue.'));
+      setConfirmError(errorMessage(err, 'Une erreur est survenue.'));
     }
   };
+
+  const confirmations = {
+    delete: {
+      title: 'Supprimer le repas',
+      message: 'Êtes-vous sûr de vouloir supprimer',
+      warningText:
+        'Cette action est irréversible. Le repas sera définitivement supprimé de votre carnet de recettes.' +
+        (savedCount > 0 ? ` Il disparaîtra aussi du carnet de ${amis(savedCount)}.` : ''),
+      confirmLabel: undefined,
+      pendingLabel: undefined,
+      pending: deleteMutation.isPending,
+      onConfirm: () => runAndClose(() => deleteMutation.mutateAsync(id)),
+    },
+    unsave: {
+      title: 'Retirer de mon carnet',
+      message: 'Retirer de votre carnet',
+      warningText: `La recette reste celle de ${owner?.pseudo ?? 'votre ami'}. Elle sera aussi retirée de votre planning et de vos courses.`,
+      confirmLabel: 'Retirer',
+      pendingLabel: 'Retrait…',
+      pending: unsaveMutation.isPending,
+      onConfirm: () => runAndClose(() => unsaveMutation.mutateAsync(id)),
+    },
+    private: {
+      title: 'Rendre la recette privée',
+      message: 'Rendre privée',
+      warningText: `Elle figure dans le carnet de ${amis(savedCount)} : elle en sera retirée, ainsi que ${
+        savedCount === 1 ? 'de son planning et de ses courses' : 'de leur planning et de leurs courses'
+      }.`,
+      confirmLabel: 'Rendre privée',
+      pendingLabel: undefined,
+      pending: false,
+      onConfirm: () => {
+        setConfirmOpen(false);
+        void toggleVisibility();
+      },
+    },
+  } satisfies Record<ConfirmKind, unknown>;
+  const confirmation = confirmations[confirmKind];
 
   const headerImage = (
     <div
@@ -145,10 +215,17 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
               <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-tight leading-tight">{titre}</h2>
-              {!programmationId && (
-                <p className="eyebrow mt-2 text-text-light-muted dark:text-text-dark-muted">
-                  {isPublic ? 'Visible par vos amis' : 'Recette privée'}
+              {owner ? (
+                <p className="mt-2 text-sm text-text-light-muted dark:text-text-dark-muted">
+                  Recette de{' '}
+                  <span className="font-display italic text-base text-text-light-main dark:text-text-dark-main">{owner.pseudo}</span>
                 </p>
+              ) : (
+                !programmationId && (
+                  <p className="eyebrow mt-2 text-text-light-muted dark:text-text-dark-muted">
+                    {isPublic ? 'Visible par vos amis' : 'Recette privée'}
+                  </p>
+                )
               )}
             </div>
 
@@ -164,6 +241,15 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
                     </IconButton>
                   )}
                 </>
+              ) : owner ? (
+                <>
+                  <IconButton label="Programmer ce repas" onClick={handleSchedule}>
+                    <Calendar className="h-4 w-4" />
+                  </IconButton>
+                  <IconButton label="Retirer de mon carnet" tone="danger" onClick={() => openConfirm('unsave')}>
+                    <BookmarkMinus className="h-4 w-4" />
+                  </IconButton>
+                </>
               ) : (
                 <>
                   <IconButton label="Programmer ce repas" onClick={handleSchedule}>
@@ -172,7 +258,7 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
                   <IconButton
                     label={isPublic ? 'Rendre ce repas privé' : 'Rendre ce repas visible par vos amis'}
                     aria-pressed={isPublic}
-                    onClick={handleToggleVisibility}
+                    onClick={handleVisibilityClick}
                     disabled={visibilityMutation.isPending}
                   >
                     {visibilityMutation.isPending ? (
@@ -186,7 +272,7 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
                   <IconButton label="Modifier ce repas" onClick={handleEdit}>
                     <Pencil className="h-4 w-4" />
                   </IconButton>
-                  <IconButton label="Supprimer ce repas" tone="danger" onClick={() => setIsDeleteConfirmOpen(true)}>
+                  <IconButton label="Supprimer ce repas" tone="danger" onClick={() => openConfirm('delete')}>
                     <Trash2 className="h-4 w-4" />
                   </IconButton>
                 </>
@@ -232,20 +318,18 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
         </div>
       </Drawer>
 
-      {/* Delete Confirmation Drawer */}
       <ConfirmDeleteDrawer
-        isOpen={isDeleteConfirmOpen}
-        onClose={() => {
-          setIsDeleteConfirmOpen(false);
-          setDeleteError(null);
-        }}
-        title="Supprimer le repas"
-        message="Êtes-vous sûr de vouloir supprimer"
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title={confirmation.title}
+        message={confirmation.message}
         highlightedName={titre}
-        warningText="Cette action est irréversible. Le repas sera définitivement supprimé de votre carnet de recettes."
-        onConfirm={handleDeleteConfirm}
-        isDeleting={isDeleting}
-        error={deleteError}
+        warningText={confirmation.warningText}
+        confirmLabel={confirmation.confirmLabel}
+        pendingLabel={confirmation.pendingLabel}
+        onConfirm={confirmation.onConfirm}
+        isDeleting={confirmation.pending}
+        error={confirmError}
       />
     </>
   );

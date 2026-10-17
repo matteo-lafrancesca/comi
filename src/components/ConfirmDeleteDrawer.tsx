@@ -23,6 +23,8 @@ interface ConfirmDeleteDrawerProps {
   title?: string;
   /** Label for the confirm button. Defaults to "Supprimer définitivement" */
   confirmLabel?: string;
+  /** Libellé du bouton pendant l'action. Par défaut « Suppression… » */
+  pendingLabel?: string;
 }
 
 /** Confirmation de suppression — à utiliser pour toute suppression (jamais de modale inline). */
@@ -37,6 +39,7 @@ export default function ConfirmDeleteDrawer({
   error,
   title = 'Supprimer',
   confirmLabel = 'Supprimer définitivement',
+  pendingLabel = 'Suppression…',
 }: ConfirmDeleteDrawerProps) {
   return (
     <Drawer isOpen={isOpen} onClose={onClose} maxWidth="sm:max-w-md" height="h-auto" title={title}>
@@ -63,7 +66,7 @@ export default function ConfirmDeleteDrawer({
           </Button>
           <Button variant="danger" onClick={onConfirm} disabled={isDeleting}>
             {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isDeleting ? 'Suppression…' : confirmLabel}
+            {isDeleting ? pendingLabel : confirmLabel}
           </Button>
         </div>
       </div>

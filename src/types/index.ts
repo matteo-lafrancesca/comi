@@ -40,6 +40,10 @@ export type CategorieIngredient = keyof typeof CATEGORY_DETAILS;
 
 // Types étendus avec les relations Prisma (couramment utilisés dans l'application)
 export type RepasWithIngredients = Repas & {
+  /** Auteur, si c'est la recette d'un ami (null pour mes propres repas) */
+  owner: FriendSummary | null;
+  /** Nombre d'amis qui l'ont dans leur carnet (connu de l'auteur seulement, 0 sinon) */
+  savedCount: number;
   ingredients: {
     id: number;
     nom: string;

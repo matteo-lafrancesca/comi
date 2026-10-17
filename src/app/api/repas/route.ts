@@ -3,9 +3,9 @@ import { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { withAuth, parseBody } from '@/lib/api-handler';
 import { repasInputSchema } from '@/lib/schemas';
-import { REPAS_INCLUDE, cleanText, ingredientLinks } from '@/lib/repas-input';
+import { cleanText, ingredientLinks } from '@/lib/repas-input';
 import { normalizeSearchText } from '@/lib/string-utils';
-import { formatRepasResponse } from '@/lib/api-formatters';
+import { REPAS_INCLUDE, formatRepasResponse } from '@/lib/api-formatters';
 
 /**
  * POST /api/repas
@@ -26,12 +26,12 @@ export const POST = withAuth(async (request, user) => {
     include: REPAS_INCLUDE,
   });
 
-  return NextResponse.json(formatRepasResponse(nouveauRepas), { status: 201 });
+  return NextResponse.json(formatRepasResponse(nouveauRepas, user.id), { status: 201 });
 });
 
 /**
  * GET /api/repas
- * Récupère la liste des repas de l'utilisateur connecté avec filtres et tris.
+ * Récupère le carnet de l'utilisateur connecté (ses repas + les recettes d'amis ajoutées) avec filtres et tris.
  */
 export const GET = withAuth(async (request, user) => {
   const { searchParams } = new URL(request.url);
@@ -53,11 +53,11 @@ export const GET = withAuth(async (request, user) => {
 
   // Si pas de recherche ni de tri en mémoire, on pagine directement au niveau SQLite
   const meals = await db.repas.findMany({
-    where: { userId: user.id },
+    where: { OR: [{ userId: user.id }, { savedBy: { some: { userId: user.id } } }] },
     include: {
       ...REPAS_INCLUDE,
-      // On ne charge la programmation que pour le tri par rareté
-      programmation: sort === 'rarete' ? { orderBy: { date: 'desc' }, take: 1 } : undefined,
+      // On ne charge la programmation que pour le tri par rareté (la sienne : une recette d'ami est aussi programmée par d'autres)
+      programmation: sort === 'rarete' ? { where: { userId: user.id }, orderBy: { date: 'desc' }, take: 1 } : undefined,
     },
     orderBy,
     ...(!search && sort !== 'rarete' ? { skip, take: limit + 1 } : {}),
@@ -95,5 +95,5 @@ export const GET = withAuth(async (request, user) => {
     filteredMeals = filteredMeals.slice(0, limit);
   }
 
-  return NextResponse.json({ repas: filteredMeals.map(formatRepasResponse), hasMore }, { status: 200 });
+  return NextResponse.json({ repas: filteredMeals.map((meal) => formatRepasResponse(meal, user.id)), hasMore }, { status: 200 });
 });

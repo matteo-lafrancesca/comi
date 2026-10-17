@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { HttpError, assertOwned, parseBody, withAuth } from '@/lib/api-handler';
+import { HttpError, parseBody, withAuth } from '@/lib/api-handler';
+import { assertUsableRepas } from '@/lib/friends';
 import { normalizeCategory } from '@/lib/category-utils';
 import { cleanText, toQuantite } from '@/lib/repas-input';
 import { createExtraSchema } from '@/lib/schemas';
@@ -17,7 +18,7 @@ export const POST = withAuth(async (request, user) => {
     const parsedRepasId = typeof repasId === 'number' ? repasId : Number.parseInt(repasId, 10);
     if (Number.isNaN(parsedRepasId)) throw new HttpError(400, 'Identifiant de repas invalide.');
 
-    assertOwned(await db.repas.findUnique({ where: { id: parsedRepasId } }), user.id, {
+    await assertUsableRepas(parsedRepasId, user.id, {
       notFound: 'Le repas sélectionné est introuvable.',
       forbidden: "Vous n'êtes pas autorisé à ajouter ce repas.",
     });

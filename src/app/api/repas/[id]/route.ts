@@ -3,8 +3,8 @@ import { UTApi } from 'uploadthing/server';
 import { db } from '@/lib/db';
 import { withAuth, parseBody, parseId, assertOwned } from '@/lib/api-handler';
 import { repasPatchSchema } from '@/lib/schemas';
-import { REPAS_INCLUDE, cleanText, ingredientLinks } from '@/lib/repas-input';
-import { formatRepasResponse } from '@/lib/api-formatters';
+import { cleanText, ingredientLinks } from '@/lib/repas-input';
+import { REPAS_INCLUDE, formatRepasResponse } from '@/lib/api-formatters';
 import { purgeSharedAccess } from '@/lib/friends';
 
 type Params = { id: string };
@@ -20,7 +20,7 @@ export const GET = withAuth<Params>(async (_request, user, { id }) => {
     notFound: 'Repas non trouvé.',
     forbidden: "Vous n'êtes pas autorisé à accéder à ce repas.",
   });
-  return NextResponse.json(formatRepasResponse(repas), { status: 200 });
+  return NextResponse.json(formatRepasResponse(repas, user.id), { status: 200 });
 });
 
 /**
@@ -60,7 +60,7 @@ export const PATCH = withAuth<Params>(async (request, user, { id }) => {
     });
   });
 
-  return NextResponse.json(formatRepasResponse(repasMisAJour), { status: 200 });
+  return NextResponse.json(formatRepasResponse(repasMisAJour, user.id), { status: 200 });
 });
 
 /**

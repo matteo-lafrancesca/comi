@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { HttpError, assertOwned, parseBody, withAuth } from '@/lib/api-handler';
+import { HttpError, parseBody, withAuth } from '@/lib/api-handler';
+import { assertUsableRepas } from '@/lib/friends';
 import { toDbDate } from '@/lib/date-utils';
 import { createProgrammationSchema } from '@/lib/schemas';
 import { resolveWeek } from '@/lib/week-context';
@@ -40,7 +41,7 @@ export const GET = withAuth(async (request, user) => {
 export const POST = withAuth(async (request, user) => {
   const { repasId, date, heure } = await parseBody(request, createProgrammationSchema);
 
-  assertOwned(await db.repas.findUnique({ where: { id: repasId } }), user.id, {
+  await assertUsableRepas(repasId, user.id, {
     notFound: 'Le repas spécifié est introuvable.',
     forbidden: "Vous n'êtes pas autorisé à programmer ce repas.",
   });
