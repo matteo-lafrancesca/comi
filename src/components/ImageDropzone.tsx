@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { ImagePlus, Loader2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
@@ -37,7 +38,12 @@ export default function ImageDropzone({
     <div>
       {previewUrl ? (
         <div className="relative w-full aspect-[4/3] overflow-hidden rounded-card bg-neutral-100 dark:bg-neutral-800">
-          <img src={previewUrl} alt="Aperçu" className="w-full h-full object-cover" />
+          {previewUrl.startsWith('blob:') ? (
+            <img src={previewUrl} alt="Aperçu" className="w-full h-full object-cover" />
+          ) : (
+            // Photo déjà enregistrée : next/image évite de décoder l'originale (jusqu'à 4K, ~32-47 Mo)
+            <Image src={previewUrl} alt="Aperçu" fill sizes="(max-width: 672px) 100vw, 672px" className="object-cover" />
+          )}
           {busy ? (
             <div className="absolute inset-0 bg-ink/65 flex items-center justify-center gap-3 text-white">
               <Loader2 className="h-5 w-5 animate-spin" />
