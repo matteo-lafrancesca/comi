@@ -95,6 +95,12 @@ npx prisma db seed
 > [!NOTE]
 > Le script de seeding peuple la base de données avec plus de 400 ingrédients prédéfinis classés par catégories (Fruits & Légumes, Boucherie, Épicerie, Surgelés...) pour faciliter l'ajout de recettes lors de la première utilisation.
 
+Les produits d'hygiène et d'entretien (catégorie « Hygiène & Entretien ») s'ajoutent à part, sans toucher aux ingrédients existants, et le script peut être relancé sans risque (en prod : sauvegarder la base avant) :
+
+```bash
+npm run seed:hygiene
+```
+
 ### 6. Lancer le serveur de développement
 
 Démarrez le serveur Next.js en mode développement :

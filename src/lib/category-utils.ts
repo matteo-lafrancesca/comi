@@ -8,6 +8,9 @@ import type { CategorieIngredient } from '@/types';
 export function normalizeCategory(category: string): CategorieIngredient {
   const normalized = category.trim().toLowerCase();
 
+  if (normalized.includes('hygi') || normalized.includes('entretien') || normalized.includes('ménage') || normalized.includes('menage')) {
+    return 'hygiene';
+  }
   if (normalized.includes('fruit') || normalized.includes('legume') || normalized.includes('légume')) {
     return 'fruits-legumes';
   }

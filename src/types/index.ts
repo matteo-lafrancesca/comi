@@ -29,7 +29,8 @@ export const CATEGORY_DETAILS = {
   'epicerie-salee': { label: 'Épicerie Salée', order: 6 },
   'epicerie-sucree': { label: 'Épicerie Sucrée', order: 7 },
   'boissons': { label: 'Boissons', order: 8 },
-  'surgeles': { label: 'Surgelés', order: 9 }
+  'surgeles': { label: 'Surgelés', order: 9 },
+  'hygiene': { label: 'Hygiène & Entretien', order: 10 }
 } as const;
 
 export const CATEGORIES_INGREDIENTS = Object.keys(CATEGORY_DETAILS) as Array<keyof typeof CATEGORY_DETAILS>;
