@@ -79,7 +79,7 @@ export async function renewRefreshToken(tokenString: string) {
   try {
     const storedToken = await db.refreshToken.findUnique({
       where: { token: hashToken(tokenString) },
-      include: { user: true },
+      include: { user: { select: SESSION_USER_SELECT } },
     });
 
     if (!storedToken) {
@@ -107,12 +107,7 @@ export async function renewRefreshToken(tokenString: string) {
     return {
       accessToken: newAccessToken,
       refreshToken: tokenString,
-      user: {
-        id: storedToken.user.id,
-        email: storedToken.user.email,
-        createdAt: storedToken.user.createdAt,
-        weekStartDay: storedToken.user.weekStartDay,
-      },
+      user: storedToken.user,
     };
   } catch (error) {
     console.error('Erreur lors du rafraîchissement du token:', error);
@@ -139,9 +134,20 @@ export interface SessionUser {
   email: string;
   createdAt: Date;
   weekStartDay: number;
+  /** Nom d'affichage ; null tant que l'utilisateur ne l'a pas choisi. */
+  pseudo: string | null;
+  photoUrl: string | null;
 }
 
-const SESSION_USER_SELECT = { id: true, email: true, createdAt: true, weekStartDay: true } as const;
+/** Colonnes d'un `SessionUser` : à utiliser pour toute réponse qui renvoie l'utilisateur connecté. */
+export const SESSION_USER_SELECT = {
+  id: true,
+  email: true,
+  createdAt: true,
+  weekStartDay: true,
+  pseudo: true,
+  photoUrl: true,
+} as const;
 
 /** Cookies de session (nom, valeur, options) : source unique pour set sur Response ou cookieStore. */
 function sessionCookies(accessToken: string, refreshToken: string) {

@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import bcryptjs from 'bcryptjs';
 import { db } from '@/lib/db';
 import { isRateLimited, rateLimitKey } from '@/lib/rate-limit';
-import { signJWT, createRefreshToken, setAuthCookies } from '@/lib/auth';
+import { signJWT, createRefreshToken, setAuthCookies, SESSION_USER_SELECT } from '@/lib/auth';
+import { pseudoSchema } from '@/lib/schemas';
+import { PSEUDO_PRIS, isPseudoTaken, pseudoFields } from '@/lib/pseudo';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -24,6 +26,11 @@ export async function POST(request: Request) {
         { error: 'Email et mot de passe requis.' },
         { status: 400 }
       );
+    }
+
+    const pseudo = pseudoSchema.safeParse(body.pseudo);
+    if (!pseudo.success) {
+      return NextResponse.json({ error: pseudo.error.issues[0]?.message }, { status: 400 });
     }
 
     const trimmedEmail = email.trim().toLowerCase();
@@ -54,6 +61,10 @@ export async function POST(request: Request) {
       );
     }
 
+    if (await isPseudoTaken(pseudo.data)) {
+      return NextResponse.json({ error: PSEUDO_PRIS }, { status: 409 });
+    }
+
     // Hacher le mot de passe
     const passwordHash = await bcryptjs.hash(password, 10);
 
@@ -62,12 +73,9 @@ export async function POST(request: Request) {
       data: {
         email: trimmedEmail,
         passwordHash,
+        ...pseudoFields(pseudo.data),
       },
-      select: {
-        id: true,
-        email: true,
-        createdAt: true,
-      },
+      select: SESSION_USER_SELECT,
     });
 
     // Générer l'Access Token et le Refresh Token

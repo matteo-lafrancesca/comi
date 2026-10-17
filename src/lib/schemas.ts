@@ -60,13 +60,30 @@ export const updateProgrammationSchema = z
   .object({ repasId: z.number({ error: 'repasId doit être un nombre.' }), date: ymd, heure })
   .partial();
 
+// ── Profil ─────────────────────────────────────────────────────────────────
+
+const PSEUDO =
+  "Le pseudo doit faire de 2 à 30 caractères : lettres, chiffres, espaces simples et . _ - ' (commençant par une lettre ou un chiffre).";
+
+/** Nom d'affichage libre (majuscules, accents) ; l'unicité se vérifie sur sa clé normalisée (`lib/pseudo`). */
+export const pseudoSchema = z
+  .string({ error: PSEUDO })
+  .trim()
+  .min(2, PSEUDO)
+  .max(30, PSEUDO)
+  .regex(/^[\p{L}\p{N}](?:[\p{L}\p{N}._'-]| (?! ))*$/u, PSEUDO);
+
 // ── Réglages ───────────────────────────────────────────────────────────────
 
 const WEEK_START = 'weekStartDay doit être un entier entre 0 (Lundi) et 6 (Dimanche).';
 
 export const settingsSchema = z.object({
   weekStartDay: z.number({ error: WEEK_START }).int(WEEK_START).min(0, WEEK_START).max(6, WEEK_START).optional(),
+  pseudo: pseudoSchema.optional(),
+  photoUrl: z.string().nullish(),
 });
+
+export type SettingsPayload = z.input<typeof settingsSchema>;
 
 // ── Liste de courses ───────────────────────────────────────────────────────
 

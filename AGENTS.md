@@ -65,6 +65,9 @@ Avant de coder une interface, **analyse toujours si des éléments similaires ex
 | `SortableStepsList` | Étapes de recette réordonnables (`@dnd-kit`) |
 | `RepasFormSteps` | Formulaire de repas en 3 étapes, partagé par « nouveau » et « modifier » |
 | `AuthShell` | Cadre des écrans connexion / inscription |
+| `Avatar` | Photo de profil carrée, ou initiale du pseudo en serif italique |
+| `PseudoSetupDrawer` | Choix obligatoire du pseudo (comptes sans pseudo) ; le fermer déconnecte |
+| `ProfileForm` | Pseudo + photo de profil (réglages) |
 | `ui/Button`, `ui/IconButton`, `ui/TextInput`, `ui/Alert` | Primitives de formulaire et d'action — **ne pas réécrire de classes de bouton/champ à la main** |
 
 ### Lors de l'ajout d'une nouvelle fonctionnalité

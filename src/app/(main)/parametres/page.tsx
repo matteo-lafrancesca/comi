@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { FRENCH_DAYS } from '@/lib/date-utils';
 import PageHeader from '@/components/PageHeader';
+import ProfileForm from '@/components/ProfileForm';
 import Button from '@/components/ui/Button';
 import Alert from '@/components/ui/Alert';
 import { errorMessage } from '@/lib/errors';
@@ -20,7 +21,7 @@ function choiceClasses(selected: boolean) {
 }
 
 export default function ParametresPage() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { weekStartDay, setWeekStartDay, theme, toggleTheme } = useSettings();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +43,18 @@ export default function ParametresPage() {
       <PageHeader title="Réglages" />
 
       <div className="space-y-10">
+        {user?.pseudo && (
+          <section>
+            <h2 className="eyebrow pb-2 border-b border-text-light-main dark:border-text-dark-main">Profil</h2>
+            {/* Remonté après chaque enregistrement : repart des valeurs sauvegardées */}
+            <ProfileForm
+              key={`${user.pseudo}|${user.photoUrl}`}
+              initialPseudo={user.pseudo}
+              initialPhotoUrl={user.photoUrl}
+            />
+          </section>
+        )}
+
         <section>
           <h2 className="eyebrow pb-2 border-b border-text-light-main dark:border-text-dark-main">Apparence</h2>
           <div className="mt-4 flex border border-text-light-main dark:border-text-dark-main rounded-input overflow-hidden divide-x divide-text-light-main dark:divide-text-dark-main">

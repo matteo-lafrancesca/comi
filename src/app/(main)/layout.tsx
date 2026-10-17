@@ -3,6 +3,7 @@
 import React, { useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ScrollContainerContext } from '@/contexts/ScrollContainerContext';
+import PseudoSetupDrawer from '@/components/PseudoSetupDrawer';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -24,7 +25,7 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { loading } = useAuth();
+  const { user, loading } = useAuth();
   const pathname = usePathname();
   const mainRef = useRef<HTMLElement>(null);
 
@@ -145,6 +146,9 @@ export default function MainLayout({
           );
         })}
       </nav>
+
+      {/* Comptes créés avant les amis : pseudo obligatoire */}
+      {user && !user.pseudo && <PseudoSetupDrawer />}
     </div>
     </ScrollContainerContext.Provider>
   );

@@ -14,6 +14,7 @@ function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const [pseudo, setPseudo] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -34,7 +35,7 @@ function RegisterContent() {
     setError(null);
 
     // Validation client
-    if (!email.trim() || !password || !confirmPassword) {
+    if (!pseudo.trim() || !email.trim() || !password || !confirmPassword) {
       setError('Veuillez remplir tous les champs.');
       return;
     }
@@ -51,7 +52,7 @@ function RegisterContent() {
 
     setIsSubmitting(true);
     try {
-      const result = await register(email, password);
+      const result = await register(email, password, pseudo);
       if (result.success) {
         router.push(redirectUrl);
         router.refresh();
@@ -82,6 +83,16 @@ function RegisterContent() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-7">
         {error && <Alert>{error}</Alert>}
 
+        <TextInput
+          label="Pseudo"
+          autoComplete="nickname"
+          placeholder="Le nom que verront vos amis"
+          maxLength={30}
+          value={pseudo}
+          onChange={(e) => setPseudo(e.target.value)}
+          required
+          disabled={isSubmitting}
+        />
         <TextInput
           label="Adresse e-mail"
           type="email"

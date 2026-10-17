@@ -11,6 +11,9 @@ export interface AuthUser {
   createdAt: string;
   /** Jour de début de semaine : 0 = lundi … 6 = dimanche */
   weekStartDay: number;
+  /** Nom d'affichage ; null tant qu'il n'a pas été choisi (popup obligatoire). */
+  pseudo: string | null;
+  photoUrl: string | null;
 }
 
 type AuthResult = { success: boolean; error?: string };
@@ -19,7 +22,7 @@ interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<AuthResult>;
-  register: (email: string, password: string) => Promise<AuthResult>;
+  register: (email: string, password: string, pseudo: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
   /** Met à jour des champs de l'utilisateur déjà connecté (ex : réglages). */
   updateUser: (changes: Partial<AuthUser>) => void;
@@ -58,12 +61,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /** Connexion ou inscription : le cache d'un éventuel compte précédent ne doit pas survivre. */
   const authenticate = useCallback(
-    async (endpoint: string, email: string, password: string, fallbackError: string): Promise<AuthResult> => {
+    async (endpoint: string, credentials: Record<string, string>, fallbackError: string): Promise<AuthResult> => {
       try {
         const res = await apiFetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify(credentials),
         });
         const data = await res.json();
         if (!res.ok) return { success: false, error: data.error || fallbackError };
@@ -79,12 +82,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const login = useCallback(
-    (email: string, password: string) => authenticate('/api/auth/login', email, password, 'Erreur lors de la connexion'),
+    (email: string, password: string) =>
+      authenticate('/api/auth/login', { email, password }, 'Erreur lors de la connexion'),
     [authenticate]
   );
   const register = useCallback(
-    (email: string, password: string) =>
-      authenticate('/api/auth/register', email, password, "Erreur lors de l'inscription"),
+    (email: string, password: string, pseudo: string) =>
+      authenticate('/api/auth/register', { email, password, pseudo }, "Erreur lors de l'inscription"),
     [authenticate]
   );
 

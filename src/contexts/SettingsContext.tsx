@@ -4,7 +4,7 @@ import React, { createContext, useCallback, useContext, useSyncExternalStore } f
 import { useQueryClient } from '@tanstack/react-query';
 import { apiJson } from '@/lib/api';
 import { queryKeys } from '@/lib/queries/keys';
-import { useAuth } from './AuthContext';
+import { useAuth, type AuthUser } from './AuthContext';
 
 type Theme = 'light' | 'dark';
 
@@ -13,6 +13,8 @@ interface SettingsContextType {
   weekStartDay: number;
   /** Enregistre le jour de début de semaine. Lève une erreur si l'enregistrement échoue. */
   setWeekStartDay: (day: number) => Promise<void>;
+  /** Enregistre pseudo et/ou photo de profil. Lève une erreur (ex. pseudo déjà pris) si l'enregistrement échoue. */
+  updateProfile: (changes: { pseudo?: string; photoUrl?: string | null }) => Promise<void>;
   theme: Theme;
   toggleTheme: () => void;
 }
@@ -55,6 +57,18 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [weekStartDay, queryClient, updateUser]
   );
 
+  const updateProfile = useCallback(
+    async (changes: { pseudo?: string; photoUrl?: string | null }) => {
+      const saved = await apiJson<Pick<AuthUser, 'pseudo' | 'photoUrl'>>('/api/settings', {
+        method: 'PATCH',
+        json: changes,
+        fallbackError: 'Impossible d’enregistrer le profil.',
+      });
+      updateUser({ pseudo: saved.pseudo, photoUrl: saved.photoUrl });
+    },
+    [updateUser]
+  );
+
   const toggleTheme = useCallback(() => {
     const next: Theme = readTheme() === 'dark' ? 'light' : 'dark';
     document.documentElement.classList.toggle('dark', next === 'dark');
@@ -67,7 +81,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <SettingsContext.Provider value={{ weekStartDay, setWeekStartDay, theme, toggleTheme }}>
+    <SettingsContext.Provider value={{ weekStartDay, setWeekStartDay, updateProfile, theme, toggleTheme }}>
       {children}
     </SettingsContext.Provider>
   );

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import bcryptjs from 'bcryptjs';
 import { db } from '@/lib/db';
 import { isRateLimited, rateLimitKey } from '@/lib/rate-limit';
-import { signJWT, createRefreshToken, setAuthCookies } from '@/lib/auth';
+import { signJWT, createRefreshToken, setAuthCookies, type SessionUser } from '@/lib/auth';
 
 // Hash bcrypt (coût 10) d'une valeur arbitraire, uniquement pour égaliser le temps de réponse.
 const DUMMY_HASH = '$2b$10$UvM0.tI.fFW8b.gjdvJ43enf6I.OSKKIs4l6jORbOd7DKu1C9zHaK';
@@ -55,7 +55,10 @@ export async function POST(request: Request) {
         id: user.id,
         email: user.email,
         createdAt: user.createdAt,
-      },
+        weekStartDay: user.weekStartDay,
+        pseudo: user.pseudo,
+        photoUrl: user.photoUrl,
+      } satisfies SessionUser,
     });
 
     setAuthCookies(response, accessToken, refreshToken);

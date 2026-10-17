@@ -10,11 +10,13 @@ import * as register from '../src/app/api/auth/register/route';
 import * as login from '../src/app/api/auth/login/route';
 import * as refresh from '../src/app/api/auth/refresh/route';
 import * as logout from '../src/app/api/auth/logout/route';
+import * as settingsMod from '../src/app/api/settings/route';
 import { setCookie } from './env';
 
 const repas = routes(repasMod);
 const planning = routes(planningMod);
 const shopping = routes(shoppingMod);
+const settings = routes(settingsMod);
 
 beforeEach(() => clearCookies());
 
@@ -69,9 +71,11 @@ test('liste de courses : agrège les ingrédients de la semaine', async () => {
 test('auth : inscription, login, refresh, logout (refresh token haché)', async () => {
   const email = `a${Date.now()}@t.fr`;
   const h = { 'x-forwarded-for': `1.1.1.${Date.now() % 250}` };
-  const reg = await register.POST(json('/api/auth/register', 'POST', { email, password: 'secret1' }, h));
+  const pseudo = `Auth${Date.now()}`;
+  const reg = await register.POST(json('/api/auth/register', 'POST', { email, password: 'secret1', pseudo }, h));
   assert.equal(reg.status, 201);
-  assert.equal((await register.POST(json('/api/auth/register', 'POST', { email, password: 'secret1' }, h))).status, 400);
+  assert.equal((await reg.json()).user.pseudo, pseudo);
+  assert.equal((await register.POST(json('/api/auth/register', 'POST', { email, password: 'secret1', pseudo }, h))).status, 400);
   assert.equal((await login.POST(json('/api/auth/login', 'POST', { email, password: 'mauvais' }, h))).status, 401);
   assert.equal((await login.POST(json('/api/auth/login', 'POST', { email: 'no@t.fr', password: 'x' }, h))).status, 401);
 
@@ -83,6 +87,37 @@ test('auth : inscription, login, refresh, logout (refresh token haché)', async 
   assert.equal((await refresh.POST()).status, 200);
   await logout.POST();
   assert.equal((await refresh.POST()).status, 401);
+});
+
+test('auth : inscription -> pseudo obligatoire, valide, unique sans casse ni accents', async () => {
+  const h = { 'x-forwarded-for': `2.2.2.${Date.now() % 250}` };
+  const reg = (pseudo?: string) =>
+    register.POST(json('/api/auth/register', 'POST', { email: `p${Date.now()}${Math.random()}@t.fr`, password: 'secret1', pseudo }, h));
+  const base = `Mattéo L${Date.now()}`;
+
+  for (const bad of [undefined, 'a', ' x', '-abc', 'deux  espaces', 'x'.repeat(31), 'emoji 🍕']) {
+    assert.equal((await reg(bad)).status, 400, String(bad));
+  }
+  const ok = await reg(`  ${base}  `);
+  assert.equal(ok.status, 201);
+  assert.equal((await ok.json()).user.pseudo, base); // casse et accents conservés, espaces retirés
+  assert.equal((await reg(base.toUpperCase().replace('É', 'E'))).status, 409);
+});
+
+test('réglages : modifier pseudo et photo, pseudo pris -> 409, le sien en autre casse -> ok', async () => {
+  const taken = `Pris${Date.now()}`;
+  await db.user.create({ data: { email: `t${Date.now()}@t.fr`, passwordHash: 'x', pseudo: taken, pseudoKey: taken.toLowerCase() } });
+  await loginAs();
+  const patch = (body: object) => settings.PATCH(json('/api/settings', 'PATCH', body));
+
+  assert.equal((await patch({ pseudo: taken.toUpperCase() })).status, 409);
+  assert.equal((await patch({ pseudo: 'x' })).status, 400);
+
+  const mine = `Moi${Date.now()}`;
+  const res = await patch({ pseudo: mine, photoUrl: 'https://utfs.io/f/abc' });
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), { weekStartDay: 0, pseudo: mine, photoUrl: 'https://utfs.io/f/abc' });
+  assert.equal((await patch({ pseudo: mine.toLowerCase(), photoUrl: null })).status, 200);
 });
 
 test('auth : limitation de débit -> 429', async () => {

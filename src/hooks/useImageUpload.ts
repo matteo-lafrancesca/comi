@@ -5,14 +5,14 @@ import { useUploadThing } from '@/lib/uploadthing';
 import { compressImage } from '@/lib/image-compression';
 
 interface UseImageUploadOptions {
-  /** Photo déjà enregistrée (modification d'un repas) */
+  /** Photo déjà enregistrée (modification d'un repas, profil) */
   initialUrl?: string | null;
   /** Reçoit les erreurs de sélection / d'envoi (null pour les effacer) */
   onError: (message: string | null) => void;
 }
 
 /**
- * Photo d'un repas : sélection (clic ou glisser-déposer), aperçu local et envoi différé
+ * Photo (repas, profil) : sélection (clic ou glisser-déposer), aperçu local et envoi différé
  * vers Uploadthing au moment de l'enregistrement.
  */
 export function useImageUpload({ initialUrl = null, onError }: UseImageUploadOptions) {
