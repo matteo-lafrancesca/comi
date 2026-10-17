@@ -4,6 +4,32 @@ import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
+let scrollLocks = 0;
+let savedOverflow = { body: '', main: '' };
+
+/**
+ * Verrouille le scroll derrière un drawer. Compteur partagé : avec des drawers empilés (ex. confirmation
+ * de suppression sur une fiche), chacun mémorisait l'état déjà verrouillé par l'autre et le restaurait
+ * dans le désordre, laissant la page bloquée pour de bon. Renvoie la fonction de déverrouillage.
+ */
+function lockPageScroll() {
+  const mainEl = document.querySelector('main');
+  if (scrollLocks++ === 0) {
+    savedOverflow = { body: document.body.style.overflow, main: mainEl?.style.overflow ?? '' };
+    document.body.style.overflow = 'hidden';
+    if (mainEl) mainEl.style.overflow = 'hidden';
+  }
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    if (--scrollLocks > 0) return;
+    document.body.style.overflow = savedOverflow.body;
+    const currentMain = document.querySelector('main');
+    if (currentMain) currentMain.style.overflow = savedOverflow.main;
+  };
+}
+
 interface DrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -68,24 +94,11 @@ export default function Drawer({
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    
-    const originalBodyOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    // Lock main scroll container to prevent page scrolling behind drawer
-    const mainEl = document.querySelector('main');
-    let originalMainOverflow = '';
-    if (mainEl) {
-      originalMainOverflow = mainEl.style.overflow;
-      mainEl.style.overflow = 'hidden';
-    }
+    const unlock = lockPageScroll();
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = originalBodyOverflow;
-      if (mainEl) {
-        mainEl.style.overflow = originalMainOverflow;
-      }
+      unlock();
     };
   }, [visible, onClose]);
 
@@ -140,6 +153,13 @@ export default function Drawer({
     if (dragOffset > 120) {
       onClose();
     }
+    setDragOffset(0);
+  };
+
+  // iOS annule le geste (geste système, appel…) sans touchend : sans reset, le panneau resterait décalé
+  const handleTouchCancel = () => {
+    draggingRef.current = false;
+    setIsDragging(false);
     setDragOffset(0);
   };
 
@@ -198,6 +218,7 @@ export default function Drawer({
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchCancel}
             className="shrink-0 cursor-grab active:cursor-grabbing"
           >
             {/* Swipe Handle Indicator */}
@@ -236,6 +257,7 @@ export default function Drawer({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchCancel}
           className={`overflow-y-auto overscroll-y-contain flex-1 select-text${headerImage ? 'p-0' : 'p-6'}`}
         >
           {headerImage && (
