@@ -59,6 +59,7 @@ function ModifierRepas({ repas }: { repas: RepasWithIngredients }) {
         submitLabel="Enregistrer"
         submitLoadingLabel={form.image.file ? "Envoi de l'image..." : 'Enregistrement...'}
         onSubmit={handleSubmit}
+        submitOnEveryStep
         onCancel={() => router.push('/repas')}
       />
     </div>

@@ -25,6 +25,8 @@ interface RepasFormStepsProps {
   onCancel: () => void;
   /** Affiche le bandeau de confirmation IA à l'étape 1 (uniquement pour la page nouveau) */
   isModeIa?: boolean;
+  /** Affiche le bouton de validation à chaque étape (édition), « Suivant » devenant secondaire */
+  submitOnEveryStep?: boolean;
 }
 
 const STEP_LABELS = ['Le plat', 'Ingrédients', 'Préparation'] as const;
@@ -40,6 +42,7 @@ export default function RepasFormSteps({
   onSubmit,
   onCancel,
   isModeIa = false,
+  submitOnEveryStep = false,
 }: RepasFormStepsProps) {
   const { step, error, loading, image } = form;
 
@@ -122,14 +125,19 @@ export default function RepasFormSteps({
             {step > 1 ? 'Précédent' : 'Annuler'}
           </Button>
 
-          {step < 3 ? (
-            <Button onClick={form.next}>Suivant</Button>
-          ) : (
-            <Button onClick={onSubmit} disabled={loading}>
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {loading ? submitLoadingLabel : submitLabel}
-            </Button>
-          )}
+          <div className="flex items-center gap-3">
+            {step < 3 && (
+              <Button variant={submitOnEveryStep ? 'secondary' : 'primary'} onClick={form.next}>
+                Suivant
+              </Button>
+            )}
+            {(step === 3 || submitOnEveryStep) && (
+              <Button onClick={onSubmit} disabled={loading}>
+                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                {loading ? submitLoadingLabel : submitLabel}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
