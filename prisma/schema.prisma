@@ -10,6 +10,9 @@ generator client {
 model User {
   id            Int             @id @default(autoincrement())
   email         String          @unique
+  /// Pseudo public, stocké en minuscules (unicité insensible à la casse). Null tant qu'il n'est pas choisi.
+  pseudo        String?         @unique
+  photoUrl      String?         @map("photo_url")
   passwordHash  String          @map("password_hash")
   weekStartDay  Int             @default(0) @map("week_start_day") // 0=Lun, 1=Mar, 2=Mer, 3=Jeu, 4=Ven, 5=Sam, 6=Dim
   createdAt     DateTime        @default(now()) @map("created_at")
@@ -18,6 +21,9 @@ model User {
   shoppingList  ShoppingListItem[]
   shoppingListExtras ShoppingListExtra[]
   refreshTokens RefreshToken[]
+  friendRequestsSent     Friendship[] @relation("FriendshipRequester")
+  friendRequestsReceived Friendship[] @relation("FriendshipAddressee")
+  savedRepas    RepasSaved[]
 
   @@map("users")
 }
@@ -29,13 +35,17 @@ model Repas {
   titre         String
   recette       String?
   photoUrl      String?           @map("photo_url")
+  /// Visible par les amis de l'auteur (privé par défaut).
+  isPublic      Boolean           @default(false) @map("is_public")
   createdAt     DateTime          @default(now()) @map("created_at")
   ingredients   RepasIngredient[]
   programmation Programmation[]
   shoppingListExtras ShoppingListExtra[]
+  savedBy       RepasSaved[]
 
   @@map("repas")
   @@index([userId])
+  @@index([userId, isPublic])
 }
 
 model Ingredient {
@@ -130,3 +140,32 @@ model RefreshToken {
   @@index([token])
 }
 
+
+/// Demande d'ami (`pending`) ou amitié (`accepted`). Une seule ligne par paire, quel que soit le sens.
+model Friendship {
+  id          Int      @id @default(autoincrement())
+  requesterId Int      @map("requester_id")
+  requester   User     @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addresseeId Int      @map("addressee_id")
+  addressee   User     @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  status      String   @default("pending") // "pending" | "accepted"
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([requesterId, addresseeId])
+  @@map("friendships")
+  @@index([addresseeId])
+}
+
+/// Recette d'un ami ajoutée à son carnet : un lien, pas une copie (supprimé avec le repas).
+model RepasSaved {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repasId   Int      @map("repas_id")
+  repas     Repas    @relation(fields: [repasId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, repasId])
+  @@map("repas_saved")
+  @@index([repasId])
+}

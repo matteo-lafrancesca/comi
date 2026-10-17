@@ -26,6 +26,7 @@ export function formatRepasResponse(repas: RepasWithIngredientsPayload): RepasWi
     titre: repas.titre,
     recette: repas.recette,
     photoUrl: repas.photoUrl,
+    isPublic: repas.isPublic,
     createdAt: repas.createdAt,
     ingredients: repas.ingredients.map((ri) => ({
       id: ri.id,
