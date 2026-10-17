@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import type { ProgrammationWithRepas } from '@/types';
@@ -65,7 +66,8 @@ export default function PlanningSlot({
         }`}
       >
         {repas?.photoUrl ? (
-          <img src={repas.photoUrl} alt="" className="object-cover w-full h-full" />
+          // next/image : une vignette de 48 px ne doit pas décoder l'originale (jusqu'à 4K, ~32-47 Mo en mémoire)
+          <Image src={repas.photoUrl} alt="" width={48} height={48} className="object-cover w-full h-full" />
         ) : repas ? (
           <span className="font-display italic text-xl text-neutral-400 dark:text-neutral-600">
             {repas.titre.trim().charAt(0).toUpperCase()}
