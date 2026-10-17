@@ -2,14 +2,23 @@
 
 import { useState } from 'react';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ApiError, BASE_PATH } from '@/lib/api';
+import { ApiError, BASE_PATH, apiFetch } from '@/lib/api';
 
-/** Session expirée : on repart de la page de connexion (rechargement complet = état propre). */
+let redirecting = false;
+
+/**
+ * Session refusée par l'API : on repart de la page de connexion (rechargement complet = état propre).
+ * Les cookies sont effacés d'abord : le proxy ne vérifie que la signature du JWT et renverrait sinon
+ * aussitôt vers l'accueil, qui reprendrait un 401 (boucle infinie si l'API et le proxy divergent).
+ */
 function handleUnauthorized(error: unknown) {
-  if (!(error instanceof ApiError) || error.status !== 401) return;
+  if (!(error instanceof ApiError) || error.status !== 401 || redirecting) return;
   const { pathname } = window.location;
   if (pathname.startsWith(`${BASE_PATH}/login`) || pathname.startsWith(`${BASE_PATH}/register`)) return;
-  window.location.assign(`${BASE_PATH}/login`);
+  redirecting = true;
+  apiFetch('/api/auth/logout', { method: 'POST' })
+    .catch(() => {})
+    .finally(() => window.location.assign(`${BASE_PATH}/login`));
 }
 
 /**
