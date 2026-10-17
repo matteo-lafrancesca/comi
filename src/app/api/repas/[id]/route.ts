@@ -5,6 +5,7 @@ import { withAuth, parseBody, parseId, assertOwned } from '@/lib/api-handler';
 import { repasPatchSchema } from '@/lib/schemas';
 import { REPAS_INCLUDE, cleanText, ingredientLinks } from '@/lib/repas-input';
 import { formatRepasResponse } from '@/lib/api-formatters';
+import { purgeSharedAccess } from '@/lib/friends';
 
 type Params = { id: string };
 const ID_INVALIDE = "L'identifiant du repas doit être un nombre valide.";
@@ -24,18 +25,23 @@ export const GET = withAuth<Params>(async (_request, user, { id }) => {
 
 /**
  * PATCH /api/repas/[id]
- * Met à jour un repas spécifique de l'utilisateur connecté (titre, recette, photoUrl, ingrédients).
+ * Met à jour un repas spécifique de l'utilisateur connecté (titre, recette, photoUrl, isPublic, ingrédients).
+ * Repasser un repas en privé le retire de chez les amis (carnets, programmations, extras de courses).
  */
 export const PATCH = withAuth<Params>(async (request, user, { id }) => {
   const mealId = parseId(id, ID_INVALIDE);
-  assertOwned(await db.repas.findUnique({ where: { id: mealId } }), user.id, {
+  const existing = assertOwned(await db.repas.findUnique({ where: { id: mealId } }), user.id, {
     notFound: 'Repas non trouvé.',
     forbidden: "Vous n'êtes pas autorisé à modifier ce repas.",
   });
 
-  const { titre, recette, photoUrl, ingredients } = await parseBody(request, repasPatchSchema);
+  const { titre, recette, photoUrl, isPublic, ingredients } = await parseBody(request, repasPatchSchema);
 
   const repasMisAJour = await db.$transaction(async (tx) => {
+    if (existing.isPublic && isPublic === false) {
+      await purgeSharedAccess(tx, { id: mealId }, { not: user.id });
+    }
+
     // Si des ingrédients sont fournis, ils remplacent entièrement les anciens liens
     if (ingredients !== undefined) {
       await tx.repasIngredient.deleteMany({ where: { repasId: mealId } });
@@ -47,6 +53,7 @@ export const PATCH = withAuth<Params>(async (request, user, { id }) => {
         ...(titre !== undefined ? { titre } : {}),
         ...(recette !== undefined ? { recette: cleanText(recette) } : {}),
         ...(photoUrl !== undefined ? { photoUrl: cleanText(photoUrl) } : {}),
+        ...(isPublic !== undefined ? { isPublic } : {}),
         ...(ingredients !== undefined ? { ingredients: { create: ingredientLinks(ingredients) } } : {}),
       },
       include: REPAS_INCLUDE,

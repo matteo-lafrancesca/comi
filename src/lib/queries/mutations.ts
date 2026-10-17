@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiJson } from '@/lib/api';
 import type { Ymd } from '@/lib/date-utils';
-import type { RepasPayload } from '@/lib/schemas';
+import type { RepasPatchPayload, RepasPayload } from '@/lib/schemas';
 import type { AnalysisResult } from '@/lib/repas-form';
 import type { ProgrammationWithRepas, RepasWithIngredients } from '@/types';
 import { queryKeys } from './keys';
@@ -91,6 +91,20 @@ export function useAnalyseImageMutation() {
         fallbackError: "Une erreur est survenue lors de l'analyse.",
       });
     },
+  });
+}
+
+/** Rend un repas public (visible par les amis) ou privé (le retire de chez eux). */
+export function useRepasVisibilityMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ repasId, isPublic }: { repasId: number; isPublic: boolean }) =>
+      apiJson<RepasWithIngredients>(`/api/repas/${repasId}`, {
+        method: 'PATCH',
+        json: { isPublic } satisfies RepasPatchPayload,
+        fallbackError: 'Impossible de modifier la confidentialité du repas.',
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.repas.all }),
   });
 }
 

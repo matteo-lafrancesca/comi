@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { errorMessage } from '@/lib/errors';
 import Image from 'next/image';
-import { Pencil, Trash2, Loader2, RefreshCw, Calendar, CalendarX } from 'lucide-react';
+import { Pencil, Trash2, Loader2, RefreshCw, Calendar, CalendarX, Globe, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { RepasWithIngredients } from '@/types';
 import { formatIngredient } from '@/lib/shopping-list-utils';
 import { planningUrl } from '@/lib/routes';
-import { useDeleteRepasMutation, useUnscheduleMutation } from '@/lib/queries/mutations';
+import { useDeleteRepasMutation, useRepasVisibilityMutation, useUnscheduleMutation } from '@/lib/queries/mutations';
 import Drawer from '@/components/Drawer';
 import IconButton from '@/components/ui/IconButton';
 import Alert from '@/components/ui/Alert';
@@ -30,7 +30,11 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [unscheduleError, setUnscheduleError] = useState<string | null>(null);
+  const [visibilityError, setVisibilityError] = useState<string | null>(null);
+  /** Dernière visibilité enregistrée ici : le repas reçu en prop est une copie qui ne suit pas la mutation. */
+  const [savedVisibility, setSavedVisibility] = useState<{ id: number; isPublic: boolean } | null>(null);
   const deleteMutation = useDeleteRepasMutation();
+  const visibilityMutation = useRepasVisibilityMutation();
   const unscheduleMutation = useUnscheduleMutation();
   const isDeleting = deleteMutation.isPending;
   const isUnscheduling = unscheduleMutation.isPending;
@@ -45,6 +49,8 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
         setIsDeleteConfirmOpen(false);
         setDeleteError(null);
         setUnscheduleError(null);
+        setVisibilityError(null);
+        setSavedVisibility(null);
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -57,6 +63,17 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
   if (!currentRepas) return null;
 
   const { id, titre, photoUrl, recette, ingredients } = currentRepas;
+  const isPublic = savedVisibility?.id === id ? savedVisibility.isPublic : currentRepas.isPublic;
+
+  const handleToggleVisibility = async () => {
+    setVisibilityError(null);
+    try {
+      const updated = await visibilityMutation.mutateAsync({ repasId: id, isPublic: !isPublic });
+      setSavedVisibility({ id, isPublic: updated.isPublic });
+    } catch (err) {
+      setVisibilityError(errorMessage(err, 'Une erreur est survenue.'));
+    }
+  };
 
   const handleEdit = () => {
     onClose();
@@ -124,8 +141,16 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
       >
         <div className="space-y-8">
           {unscheduleError && <Alert>{unscheduleError}</Alert>}
+          {visibilityError && <Alert>{visibilityError}</Alert>}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-            <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-tight leading-tight">{titre}</h2>
+            <div>
+              <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-tight leading-tight">{titre}</h2>
+              {!programmationId && (
+                <p className="eyebrow mt-2 text-text-light-muted dark:text-text-dark-muted">
+                  {isPublic ? 'Visible par vos amis' : 'Recette privée'}
+                </p>
+              )}
+            </div>
 
             <div className="flex items-center gap-2 shrink-0 sm:mt-1">
               {programmationId ? (
@@ -143,6 +168,20 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
                 <>
                   <IconButton label="Programmer ce repas" onClick={handleSchedule}>
                     <Calendar className="h-4 w-4" />
+                  </IconButton>
+                  <IconButton
+                    label={isPublic ? 'Rendre ce repas privé' : 'Rendre ce repas visible par vos amis'}
+                    aria-pressed={isPublic}
+                    onClick={handleToggleVisibility}
+                    disabled={visibilityMutation.isPending}
+                  >
+                    {visibilityMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : isPublic ? (
+                      <Globe className="h-4 w-4" />
+                    ) : (
+                      <Lock className="h-4 w-4" />
+                    )}
                   </IconButton>
                   <IconButton label="Modifier ce repas" onClick={handleEdit}>
                     <Pencil className="h-4 w-4" />

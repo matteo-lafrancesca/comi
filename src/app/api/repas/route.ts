@@ -12,13 +12,14 @@ import { formatRepasResponse } from '@/lib/api-formatters';
  * Crée un nouveau repas pour l'utilisateur connecté avec ses ingrédients associés.
  */
 export const POST = withAuth(async (request, user) => {
-  const { titre, recette, photoUrl, ingredients } = await parseBody(request, repasInputSchema);
+  const { titre, recette, photoUrl, isPublic, ingredients } = await parseBody(request, repasInputSchema);
 
   const nouveauRepas = await db.repas.create({
     data: {
       titre,
       recette: cleanText(recette),
       photoUrl: cleanText(photoUrl),
+      isPublic,
       userId: user.id,
       ingredients: { create: ingredientLinks(ingredients ?? []) },
     },

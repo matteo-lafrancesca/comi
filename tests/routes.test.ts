@@ -253,6 +253,42 @@ test('repas/[id] : 400 id invalide, 404, 403 autre utilisateur, suppression', as
   assert.equal(await db.repas.count({ where: { id: mine.id } }), 0);
 });
 
+test('repas : confidentialité (privé par défaut, bascule, 400 si non booléen, 403 autre utilisateur)', async () => {
+  await loginAs();
+  const created = await (await repas.POST(json('/api/repas', 'POST', { titre: 'Soupe' }))).json();
+  assert.equal(created.isPublic, false);
+  const patch = (body: object) => repasId.PATCH(json(`/api/repas/${created.id}`, 'PATCH', body), byId(created.id));
+
+  assert.equal((await patch({ isPublic: 'oui' })).status, 400);
+  const pub = await patch({ isPublic: true });
+  assert.equal(pub.status, 200);
+  assert.equal((await pub.json()).isPublic, true);
+  assert.equal((await patch({ titre: 'Soupe 2' })).status, 200); // le formulaire n'envoie pas isPublic
+  assert.equal((await db.repas.findUniqueOrThrow({ where: { id: created.id } })).isPublic, true);
+
+  await loginAs();
+  assert.equal((await patch({ isPublic: false })).status, 403);
+});
+
+test('repas : repasser en privé retire le repas de chez les autres, pas de chez son auteur', async () => {
+  const owner = await loginAs();
+  const meal = await db.repas.create({ data: { userId: owner.id, titre: 'Partagé', isPublic: true } });
+  const friend = await db.user.create({ data: { email: `f${Date.now()}@t.fr`, passwordHash: 'x' } });
+  const date = new Date('2025-06-02T00:00:00Z');
+  await db.repasSaved.create({ data: { userId: friend.id, repasId: meal.id } });
+  for (const userId of [owner.id, friend.id]) {
+    await db.programmation.create({ data: { userId, repasId: meal.id, date, heure: 0 } });
+    await db.shoppingListExtra.create({ data: { userId, repasId: meal.id, week: 23, year: 2025 } });
+  }
+
+  const res = await repasId.PATCH(json(`/api/repas/${meal.id}`, 'PATCH', { isPublic: false }), byId(meal.id));
+  assert.equal(res.status, 200);
+  const where = { repasId: meal.id };
+  assert.equal(await db.repasSaved.count({ where }), 0);
+  assert.deepEqual((await db.programmation.findMany({ where })).map((p) => p.userId), [owner.id]);
+  assert.deepEqual((await db.shoppingListExtra.findMany({ where })).map((e) => e.userId), [owner.id]);
+});
+
 test('resolveSession : access token valide, sinon refresh token (cookies renvoyés), sinon null', async () => {
   const { resolveSession, signJWT, createRefreshToken } = await import('../src/lib/auth');
   const u = await loginAs();

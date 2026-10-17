@@ -23,6 +23,8 @@ export const repasInputSchema = z.object({
   titre: z.string({ error: TITRE_REPAS }).trim().min(1, TITRE_REPAS),
   recette: z.string().nullish(),
   photoUrl: z.string().nullish(),
+  /** Visible par les amis (privé par défaut) */
+  isPublic: z.boolean({ error: 'isPublic doit être un booléen.' }).optional(),
   ingredients: z
     .array(ingredientInputSchema, { error: 'Les ingrédients doivent être fournis sous forme de tableau.' })
     .optional(),
@@ -33,6 +35,7 @@ export const repasPatchSchema = repasInputSchema.partial();
 
 export type IngredientPayload = z.input<typeof ingredientInputSchema>;
 export type RepasPayload = z.input<typeof repasInputSchema>;
+export type RepasPatchPayload = z.input<typeof repasPatchSchema>;
 
 // ── Ingrédients ────────────────────────────────────────────────────────────
 

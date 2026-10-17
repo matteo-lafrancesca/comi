@@ -10,6 +10,7 @@ import type { WeekRef } from '@/lib/date-utils';
  * - programmer / déprogrammer un repas      -> planning + courses
  * - créer un repas                          -> repas
  * - modifier / supprimer un repas           -> repas + planning + courses
+ * - rendre un repas public / privé          -> repas
  * - ajouter / retirer un article hors plan  -> courses
  * - changer le jour de début de semaine     -> planning + courses retirés du cache (autre découpage)
  */
