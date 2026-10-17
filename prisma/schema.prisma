@@ -10,8 +10,10 @@ generator client {
 model User {
   id            Int             @id @default(autoincrement())
   email         String          @unique
-  /// Pseudo public, stocké en minuscules (unicité insensible à la casse). Null tant qu'il n'est pas choisi.
-  pseudo        String?         @unique
+  /// Nom d'affichage tel que saisi (majuscules, accents, espaces). Null tant qu'il n'est pas choisi.
+  pseudo        String?
+  /// Pseudo normalisé (`normalizeSearchText`) : unicité insensible à la casse et aux accents, et recherche.
+  pseudoKey     String?         @unique @map("pseudo_key")
   photoUrl      String?         @map("photo_url")
   passwordHash  String          @map("password_hash")
   weekStartDay  Int             @default(0) @map("week_start_day") // 0=Lun, 1=Mar, 2=Mer, 3=Jeu, 4=Ven, 5=Sam, 6=Dim
