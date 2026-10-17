@@ -38,7 +38,10 @@ export default function Drawer({
   const touchStartRef = useRef(0);
   const scrollStartRef = useRef(0);
 
+  const draggingRef = useRef(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -86,6 +89,26 @@ export default function Drawer({
     };
   }, [visible, onClose]);
 
+  // React attache touchmove en mode passif : preventDefault y est ignoré et iOS
+  // applique son rebond natif au contenu en plus du translateY du panneau
+  // (la photo descend alors plus vite que le drawer). Écouteur natif non passif.
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    const block = (e: TouchEvent) => {
+      if (
+        draggingRef.current &&
+        scrollStartRef.current <= 0 &&
+        e.touches[0].clientY > touchStartRef.current &&
+        e.cancelable
+      ) {
+        e.preventDefault();
+      }
+    };
+    panel.addEventListener('touchmove', block, { passive: false });
+    return () => panel.removeEventListener('touchmove', block);
+  }, [mounted]);
+
   if (!mounted) return null;
 
   // Touch handlers for responsive swipe-to-close gestures
@@ -93,6 +116,7 @@ export default function Drawer({
     touchStartRef.current = e.touches[0].clientY;
     // Record current scroll position of the scrollable container
     scrollStartRef.current = scrollRef.current ? scrollRef.current.scrollTop : 0;
+    draggingRef.current = true;
     setIsDragging(true);
   };
 
@@ -100,19 +124,17 @@ export default function Drawer({
     if (!isDragging) return;
     const currentY = e.touches[0].clientY;
     const deltaY = currentY - touchStartRef.current;
-    
+
     // Swipe-to-close conditions:
     // 1. Swiping downwards (deltaY > 0)
     // 2. The scrollable content is scrolled to the very top (scrollTop <= 0)
     if (deltaY > 0 && scrollStartRef.current <= 0) {
-      if (e.cancelable) {
-        e.preventDefault();
-      }
       setDragOffset(deltaY);
     }
   };
 
   const handleTouchEnd = () => {
+    draggingRef.current = false;
     setIsDragging(false);
     // If swiped down past the 120px threshold, trigger close
     if (dragOffset > 120) {
@@ -142,7 +164,8 @@ export default function Drawer({
       />
 
       {/* Drawer Panel container */}
-      <div 
+      <div
+        ref={panelRef}
         style={panelStyle}
         className={`fixed bottom-0 left-0 right-0 sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:right-auto bg-card-light dark:bg-card-dark rounded-t-card sm:rounded-card shadow-2xl flex flex-col overflow-hidden border-t sm:border border-neutral-200 dark:border-neutral-800 z-10 w-full ${maxWidth} ${height} ${maxHeight} transition-all duration-300 ease-out select-none ${
           visible 
@@ -213,7 +236,7 @@ export default function Drawer({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className={`overflow-y-auto flex-1 select-text ${headerImage ? 'p-0' : 'p-6'}`}
+          className={`overflow-y-auto overscroll-y-contain flex-1 select-text${headerImage ? 'p-0' : 'p-6'}`}
         >
           {headerImage && (
             <div className="relative w-full overflow-hidden shrink-0 select-none">
