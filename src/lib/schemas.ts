@@ -76,6 +76,12 @@ export const pseudoSchema = z
   .max(30, PSEUDO)
   .regex(/^[\p{L}\p{N}](?:[\p{L}\p{N}._'-]| (?! ))*$/u, PSEUDO);
 
+// ── Amis ───────────────────────────────────────────────────────────────────
+
+export const friendRequestSchema = z.object({
+  userId: z.number({ error: 'userId doit être un nombre.' }).int('userId doit être un entier.'),
+});
+
 // ── Réglages ───────────────────────────────────────────────────────────────
 
 const WEEK_START = 'weekStartDay doit être un entier entre 0 (Lundi) et 6 (Dimanche).';

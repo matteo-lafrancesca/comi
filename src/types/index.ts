@@ -146,3 +146,43 @@ export interface StepItem {
   id: string;
   text: string;
 }
+
+// ── Amis ────────────────────────────────────────────────────────────────────
+
+/** Ce qu'un utilisateur montre aux autres : jamais son e-mail. */
+export interface FriendSummary {
+  id: number;
+  pseudo: string;
+  photoUrl: string | null;
+}
+
+/** Un ami et quelques-unes de ses recettes publiques (vitrine). */
+export interface FriendCard extends FriendSummary {
+  vitrine: { id: number; titre: string; photoUrl: string | null }[];
+}
+
+/** Lien avec un autre utilisateur, vu par l'utilisateur connecté. */
+export type FriendRelation = 'none' | 'sent' | 'received' | 'friend';
+
+/** Résultat de la recherche par pseudo, avec la demande en cours (pour accepter / annuler sur place). */
+export interface UserSearchResult extends FriendSummary {
+  relation: FriendRelation;
+  requestId: number | null;
+}
+
+/** Demande d'ami en attente ; `user` est l'autre personne (expéditeur ou destinataire). */
+export interface FriendRequest {
+  id: number;
+  user: FriendSummary;
+  createdAt: Date;
+}
+
+export interface FriendRequestsResponse {
+  received: FriendRequest[];
+  sent: FriendRequest[];
+}
+
+/** Profil d'un ami : ses recettes publiques, en précisant celles déjà dans mon carnet. */
+export interface FriendProfile extends FriendSummary {
+  repas: (RepasWithIngredients & { savedByMe: boolean })[];
+}
