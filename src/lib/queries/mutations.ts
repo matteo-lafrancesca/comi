@@ -5,7 +5,7 @@ import { apiJson } from '@/lib/api';
 import type { Ymd } from '@/lib/date-utils';
 import type { RepasPatchPayload, RepasPayload } from '@/lib/schemas';
 import type { AnalysisResult } from '@/lib/repas-form';
-import type { ProgrammationWithRepas, RepasWithIngredients } from '@/types';
+import type { FriendRelation, ProgrammationWithRepas, RepasWithIngredients } from '@/types';
 import { queryKeys } from './keys';
 
 /** Invalide planning et courses (les deux dépendent des programmations). */
@@ -162,5 +162,52 @@ export function useDeleteExtraMutation() {
         fallbackError: 'Erreur lors de la suppression.',
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.shopping.all }),
+  });
+}
+
+// ── Amis ────────────────────────────────────────────────────────────────────
+
+/** Toute action sur une demande change la liste, les demandes et les relations affichées dans la recherche. */
+function useInvalidateFriends() {
+  const queryClient = useQueryClient();
+  return () => queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
+}
+
+/** Envoie une demande (acceptée d'office si l'autre m'en avait envoyé une). */
+export function useSendFriendRequestMutation() {
+  const invalidate = useInvalidateFriends();
+  return useMutation({
+    mutationFn: (userId: number) =>
+      apiJson<{ relation: FriendRelation }>('/api/friends/requests', {
+        method: 'POST',
+        json: { userId },
+        fallbackError: "Impossible d'envoyer la demande.",
+      }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useAcceptFriendRequestMutation() {
+  const invalidate = useInvalidateFriends();
+  return useMutation({
+    mutationFn: (requestId: number) =>
+      apiJson<unknown>(`/api/friends/requests/${requestId}/accept`, {
+        method: 'POST',
+        fallbackError: "Impossible d'accepter la demande.",
+      }),
+    onSuccess: invalidate,
+  });
+}
+
+/** Refuse (demande reçue) ou annule (demande envoyée). */
+export function useDeleteFriendRequestMutation() {
+  const invalidate = useInvalidateFriends();
+  return useMutation({
+    mutationFn: (requestId: number) =>
+      apiJson<unknown>(`/api/friends/requests/${requestId}`, {
+        method: 'DELETE',
+        fallbackError: 'Impossible de supprimer la demande.',
+      }),
+    onSuccess: invalidate,
   });
 }

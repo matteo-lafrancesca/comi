@@ -68,7 +68,10 @@ Avant de coder une interface, **analyse toujours si des éléments similaires ex
 | `Avatar` | Photo de profil carrée, ou initiale du pseudo en serif italique |
 | `PseudoSetupDrawer` | Choix obligatoire du pseudo (comptes sans pseudo) ; le fermer déconnecte |
 | `ProfileForm` | Pseudo + photo de profil (réglages) |
-| `ui/Button`, `ui/IconButton`, `ui/TextInput`, `ui/Alert` | Primitives de formulaire et d'action — **ne pas réécrire de classes de bouton/champ à la main** |
+| `FriendCard` | Carte de profil d'un ami (avatar, pseudo, vitrine) menant à son profil |
+| `FriendRequestsDrawer` | Ajout d'amis : recherche par pseudo et demandes reçues / envoyées |
+| `RepasThumbnail` | Visuel d'une recette (photo, ou initiale sur papier ligné) qui remplit son conteneur |
+| `ui/Button`, `ui/IconButton`, `ui/TextInput`, `ui/Alert`, `ui/Tabs` | Primitives de formulaire et d'action — **ne pas réécrire de classes de bouton/champ à la main** |
 
 ### Lors de l'ajout d'une nouvelle fonctionnalité
 1. **Vérifie** si un composant existant couvre déjà le besoin (avec une prop supplémentaire éventuelle).

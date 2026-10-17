@@ -40,6 +40,9 @@ export function planningUrl({ week, schedule, focus }: PlanningUrlOptions = {}):
   return withQuery('/planification', params);
 }
 
+/** Profil d'un ami. */
+export const friendUrl = (userId: number) => `/amis/${userId}`;
+
 export function shoppingUrl(week?: WeekRef | null): string {
   const params = new URLSearchParams();
   withWeek(params, week);

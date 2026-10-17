@@ -9,6 +9,7 @@ import type { IngredientSuggestion } from '@/types';
 import Button from '@/components/ui/Button';
 import Alert from '@/components/ui/Alert';
 import TextInput from '@/components/ui/TextInput';
+import Tabs from '@/components/ui/Tabs';
 import { errorMessage } from '@/lib/errors';
 import type { WeekRef } from '@/lib/date-utils';
 import { useRepasOptions } from '@/lib/queries/queries';
@@ -80,23 +81,16 @@ function AddExtraForm({ onClose, week }: Omit<AddExtraDrawerProps, 'isOpen'>) {
     }
   };
 
-  const tabClasses = (tab: Tab) =>
-    `pb-2 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
-      activeTab === tab
-        ? 'border-brand text-text-light-main dark:text-text-dark-main'
-        : 'border-transparent text-text-light-muted dark:text-text-dark-muted hover:text-text-light-main dark:hover:text-text-dark-main'
-    }`;
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="flex gap-6 border-b border-neutral-200 dark:border-neutral-800">
-        <button type="button" onClick={() => switchTab('repas')} className={tabClasses('repas')}>
-          Une recette
-        </button>
-        <button type="button" onClick={() => switchTab('ingredient')} className={tabClasses('ingredient')}>
-          Un article
-        </button>
-      </div>
+      <Tabs
+        tabs={[
+          { id: 'repas', label: 'Une recette' },
+          { id: 'ingredient', label: 'Un article' },
+        ]}
+        active={activeTab}
+        onChange={switchTab}
+      />
 
       {formError && <Alert>{formError}</Alert>}
 

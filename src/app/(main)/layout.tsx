@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   Settings,
   UtensilsCrossed,
+  Users,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -44,6 +45,11 @@ export default function MainLayout({
       label: 'Courses',
       href: '/courses',
       icon: ShoppingBag,
+    },
+    {
+      label: 'Amis',
+      href: '/amis',
+      icon: Users,
     },
   ];
 

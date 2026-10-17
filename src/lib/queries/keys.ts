@@ -12,6 +12,7 @@ import type { WeekRef } from '@/lib/date-utils';
  * - modifier / supprimer un repas           -> repas + planning + courses
  * - rendre un repas public / privé          -> repas
  * - retirer une recette d'ami de son carnet  -> repas + planning + courses
+ * - envoyer / accepter / refuser / annuler une demande d'ami -> amis (liste, demandes, recherche)
  * - ajouter / retirer un article hors plan  -> courses
  * - changer le jour de début de semaine     -> planning + courses retirés du cache (autre découpage)
  */
@@ -25,6 +26,12 @@ export const queryKeys = {
     all: ['shopping'] as const,
     week: (weekStartDay: number, ref: WeekRef | null, today: string) =>
       ['shopping', weekStartDay, ref ? `${ref.year}-${ref.week}` : `current-${today}`] as const,
+  },
+  friends: {
+    all: ['friends'] as const,
+    list: ['friends', 'list'] as const,
+    requests: ['friends', 'requests'] as const,
+    search: (q: string) => ['friends', 'search', q] as const,
   },
   repas: {
     all: ['repas'] as const,

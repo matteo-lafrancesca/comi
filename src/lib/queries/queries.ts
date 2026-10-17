@@ -3,7 +3,14 @@
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { apiJson } from '@/lib/api';
 import type { WeekRef } from '@/lib/date-utils';
-import type { PlanningResponse, RepasWithIngredients, ShoppingListResponse } from '@/types';
+import type {
+  FriendCard,
+  FriendRequestsResponse,
+  PlanningResponse,
+  RepasWithIngredients,
+  ShoppingListResponse,
+  UserSearchResult,
+} from '@/types';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToday } from '@/hooks/useToday';
 import { queryKeys } from './keys';
@@ -93,5 +100,38 @@ export function useRepasQuery(id: number) {
     refetchOnWindowFocus: false,
     queryFn: () =>
       apiJson<RepasWithIngredients>(`/api/repas/${id}`, { fallbackError: 'Repas introuvable ou accès non autorisé.' }),
+  });
+}
+
+// ── Amis ────────────────────────────────────────────────────────────────────
+
+/** Mes amis et leur vitrine. */
+export function useFriends() {
+  return useQuery({
+    queryKey: queryKeys.friends.list,
+    queryFn: () => apiJson<FriendCard[]>('/api/friends', { fallbackError: 'Impossible de charger vos amis.' }),
+  });
+}
+
+/** Demandes d'amis en attente (reçues et envoyées). */
+export function useFriendRequests() {
+  return useQuery({
+    queryKey: queryKeys.friends.requests,
+    queryFn: () =>
+      apiJson<FriendRequestsResponse>('/api/friends/requests', { fallbackError: 'Impossible de charger les demandes.' }),
+  });
+}
+
+/** Recherche d'utilisateurs par début de pseudo (à partir de 2 caractères). */
+export function useUserSearch(q: string) {
+  const query = q.trim();
+  return useQuery({
+    queryKey: queryKeys.friends.search(query),
+    enabled: query.length >= 2,
+    placeholderData: keepPreviousData,
+    queryFn: () =>
+      apiJson<UserSearchResult[]>(`/api/users/search?q=${encodeURIComponent(query)}`, {
+        fallbackError: 'Impossible de lancer la recherche.',
+      }),
   });
 }
