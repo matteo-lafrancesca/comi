@@ -77,6 +77,19 @@ body {
   color: var(--color-text-dark-main);
 }
 
+/* Barres de défilement fines : piste transparente, seul le curseur reste visible.
+   Dans @layer base pour que `hide-scrollbar` (utilitaire) garde la priorité. */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-neutral-300) transparent;
+  }
+
+  .dark * {
+    scrollbar-color: var(--color-neutral-700) transparent;
+  }
+}
+
 /* ─── Utilitaires Safe Area PWA ─── */
 
 /* Padding top = hauteur de la status bar iOS */
