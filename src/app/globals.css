@@ -62,17 +62,6 @@ body {
   background-color: var(--color-bg-light);
 }
 
-/* iOS 26, PWA installée (viewport-fit=cover + barre de statut translucide) : tant que la page est moins haute
-   que l'écran, le viewport est raccourci de la hauteur de la barre de statut (WebKit 301108). Le layout
-   `fixed inset-0` s'arrête alors avant le bas de l'écran et les zones de clic ne coïncident plus avec
-   l'affichage. Une page aussi haute que l'écran rend le viewport complet ; `min()` évite un défilement
-   quand la barre de statut est opaque (inset 0, 100lvh déjà plein écran). */
-@media (display-mode: standalone) {
-  html {
-    min-height: min(100lvh, calc(100% + env(safe-area-inset-top, 0px)));
-  }
-}
-
 .dark html,
 .dark body {
   background-color: var(--color-bg-dark);
