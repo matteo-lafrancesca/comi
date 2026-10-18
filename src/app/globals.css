@@ -62,6 +62,20 @@ body {
   background-color: var(--color-bg-light);
 }
 
+/* Hauteur de l'écran pour les cadres plein écran (`h-(--app-h)`, jamais `inset-0` / `bottom-0`).
+   PWA iOS 26 (viewport-fit=cover + barre de statut black-translucent, WebKit 301108) : au lancement, le viewport
+   est raccourci de la hauteur de la barre de statut ; `100%`, `dvh` et `inset-0` s'arrêtent avant le bas de
+   l'écran, `lvh` reste juste. `min()` couvre les versions d'iOS où `lvh` dépasse. */
+:root {
+  --app-h: 100dvh;
+}
+
+@media (display-mode: standalone) {
+  :root {
+    --app-h: min(100lvh, calc(100dvh + env(safe-area-inset-top, 0px)));
+  }
+}
+
 .dark html,
 .dark body {
   background-color: var(--color-bg-dark);

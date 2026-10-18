@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description: "Gestion de repas et liste de courses",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Comi",
   },
   icons: {
@@ -26,19 +26,15 @@ export const metadata: Metadata = {
   },
 };
 
-// Un seul viewport, et barre de statut opaque (statusBarStyle "default", teintée par themeColor) :
-// cover + black-translucent déclenche le bug iOS 26 WebKit 301108 (viewport raccourci de la barre de statut),
-// et le contourner en basculant le viewport en cours de chargement décale les zones de clic.
+// Un seul viewport : le changer en cours de chargement décale les zones de clic en PWA iOS.
+// Le bug iOS 26 lié à cover + black-translucent (WebKit 301108) est traité en CSS (globals.css).
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F4EEE2" },
-    { media: "(prefers-color-scheme: dark)", color: "#15120E" },
-  ],
+  themeColor: "#E64A33",
 };
 
 export default function RootLayout({

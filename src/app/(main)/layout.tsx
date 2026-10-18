@@ -78,7 +78,7 @@ export default function MainLayout({
 
   return (
     <ScrollContainerContext.Provider value={mainRef}>
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-bg-light dark:bg-bg-dark text-text-light-main dark:text-text-dark-main">
+    <div className="fixed inset-x-0 top-0 h-(--app-h) flex flex-col overflow-hidden bg-bg-light dark:bg-bg-dark text-text-light-main dark:text-text-dark-main">
       {/* Desktop : colonne de navigation */}
       <aside className="hidden md:flex flex-col w-60 fixed inset-y-0 left-0 border-r border-neutral-200 dark:border-neutral-800 px-8 py-10 z-40">
         <Wordmark className="mb-14" />

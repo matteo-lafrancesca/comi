@@ -51,8 +51,8 @@ export default function Drawer({
   headerImage,
   maxWidth = 'sm:max-w-2xl',
   fullScreenMobile = false,
-  height = fullScreenMobile ? 'h-dvh sm:h-auto' : 'h-[80dvh] sm:h-auto',
-  maxHeight = fullScreenMobile ? 'max-h-dvh sm:max-h-[90vh]' : 'max-h-[94dvh] sm:max-h-[90vh]'
+  height = fullScreenMobile ? 'h-(--app-h) sm:h-auto' : 'h-[80dvh] sm:h-auto',
+  maxHeight = fullScreenMobile ? 'max-h-(--app-h) sm:max-h-[90vh]' : 'max-h-[94dvh] sm:max-h-[90vh]'
 }: DrawerProps) {
   // Montage différé : le panneau reste monté pendant l'animation de fermeture
   const [mounted, setMounted] = useState(isOpen);
@@ -177,7 +177,7 @@ export default function Drawer({
     : {};
 
   return createPortal(
-    <div className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center transition-all duration-300 ${
+    <div className={`fixed inset-x-0 top-0 h-(--app-h) z-50 flex items-end sm:items-center justify-center transition-all duration-300 ${
       visible ? 'pointer-events-auto' : 'pointer-events-none'
     }`}>
       {/* Backdrop overlay */}
@@ -186,7 +186,7 @@ export default function Drawer({
         onTouchMove={(e) => {
           if (e.cancelable) e.preventDefault();
         }}
-        className={`fixed inset-0 bg-ink/55 dark:bg-black/70 transition-opacity duration-300 ease-in-out ${
+        className={`fixed inset-x-0 top-0 h-(--app-h) bg-ink/55 dark:bg-black/70 transition-opacity duration-300 ease-in-out ${
           visible ? 'opacity-100' : 'opacity-0'
         }`}
       />
@@ -195,7 +195,7 @@ export default function Drawer({
       <div
         ref={panelRef}
         style={panelStyle}
-        className={`fixed bottom-0 left-0 right-0 sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:right-auto bg-card-light dark:bg-card-dark ${fullScreenMobile ? 'rounded-none pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] sm:pt-0 sm:pb-0' : 'rounded-t-card'} sm:rounded-card shadow-2xl flex flex-col overflow-hidden border-t sm:border border-neutral-200 dark:border-neutral-800 z-10 w-full ${maxWidth} ${height} ${maxHeight} transition-all duration-300 ease-out select-none ${
+        className={`fixed bottom-[calc(100dvh-var(--app-h))] left-0 right-0 sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:right-auto bg-card-light dark:bg-card-dark ${fullScreenMobile ? 'rounded-none pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] sm:pt-0 sm:pb-0' : 'rounded-t-card'} sm:rounded-card shadow-2xl flex flex-col overflow-hidden border-t sm:border border-neutral-200 dark:border-neutral-800 z-10 w-full ${maxWidth} ${height} ${maxHeight} transition-all duration-300 ease-out select-none ${
           visible 
             ? 'translate-y-0 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:scale-100 sm:opacity-100' 
             : 'translate-y-full sm:translate-y-4 sm:-translate-x-1/2 sm:-translate-y-[45%] sm:scale-95 sm:opacity-0'
