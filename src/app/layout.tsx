@@ -5,7 +5,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import QueryProvider from "./providers";
 import GestureBlocker from "@/components/GestureBlocker";
-import PwaViewportSync from "@/components/PwaViewportSync";
 import { BASE_PATH } from "@/lib/api";
 
 const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"] });
@@ -16,7 +15,7 @@ export const metadata: Metadata = {
   description: "Gestion de repas et liste de courses",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "Comi",
   },
   icons: {
@@ -27,14 +26,19 @@ export const metadata: Metadata = {
   },
 };
 
-// Deux viewports, volontairement : Next émet celui-ci, puis le <meta> de <head> ajoute viewport-fit=cover.
-// Déclaré d'emblée, cover déclenche le bug iOS 26 (WebKit 301108) : en PWA, viewport raccourci de la barre
-// de statut et bande vide en bas. Ce passage en cours de chargement donne le plein écran ;
-// PwaViewportSync recale ensuite les zones de clic.
+// Un seul viewport, et barre de statut opaque (statusBarStyle "default", teintée par themeColor) :
+// cover + black-translucent déclenche le bug iOS 26 WebKit 301108 (viewport raccourci de la barre de statut),
+// et le contourner en basculant le viewport en cours de chargement décale les zones de clic.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#E64A33",
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F4EEE2" },
+    { media: "(prefers-color-scheme: dark)", color: "#15120E" },
+  ],
 };
 
 export default function RootLayout({
@@ -49,7 +53,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <link id="apple-touch-icon" rel="apple-touch-icon" href={`${BASE_PATH}/light/ios/180.png`} />
 
@@ -71,7 +74,6 @@ export default function RootLayout({
       </head>
       <body className="bg-bg-light text-text-light-main dark:bg-bg-dark dark:text-text-dark-main font-sans transition-colors duration-300">
         <GestureBlocker />
-        <PwaViewportSync />
         <div className="orientation-warning">
           <svg
             xmlns="http://www.w3.org/2000/svg"
