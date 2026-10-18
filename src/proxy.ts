@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { renewRefreshToken, setAuthCookies, verifyJWT } from '@/lib/auth';
+import { SESSION_COOKIES, renewRefreshToken, setAuthCookies, verifyJWT } from '@/lib/auth';
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Récupérer les tokens depuis les cookies
-  const token = request.cookies.get('token')?.value;
-  const refreshToken = request.cookies.get('refresh_token')?.value;
+  const token = request.cookies.get(SESSION_COOKIES.access)?.value;
+  const refreshToken = request.cookies.get(SESSION_COOKIES.refresh)?.value;
 
   let isAuthenticated = false;
   let newCookiesToSet: { accessToken: string; refreshToken: string } | null = null;

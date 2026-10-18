@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  basePath: "/comi",
+  // Une instance par basePath : /comi (prod), /comi/dev (préproduction). Fixé au build.
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || "/comi",
   images: {
     remotePatterns: [
       {

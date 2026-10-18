@@ -109,7 +109,7 @@ Démarrez le serveur Next.js en mode développement :
 npm run dev
 ```
 
-L'application est accessible sur **[http://localhost:3000/comi](http://localhost:3000/comi)** (le projet est servi sous le `basePath` `/comi`).
+L'application est accessible sur **[http://localhost:3000/comi](http://localhost:3000/comi)** (le projet est servi sous le `basePath` `/comi`, modifiable avec `NEXT_PUBLIC_BASE_PATH` : voir `.env.example`).
 
 ### 7. Contrôles qualité
 

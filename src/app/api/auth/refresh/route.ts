@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { renewRefreshToken, setAuthCookies, clearAuthCookies, toClientUser } from '@/lib/auth';
+import { SESSION_COOKIES, renewRefreshToken, setAuthCookies, clearAuthCookies, toClientUser } from '@/lib/auth';
 
 export async function POST() {
   try {
     const cookieStore = await cookies();
-    const refreshToken = cookieStore.get('refresh_token')?.value;
+    const refreshToken = cookieStore.get(SESSION_COOKIES.refresh)?.value;
 
     if (!refreshToken) {
       const response = NextResponse.json(

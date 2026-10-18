@@ -160,6 +160,13 @@ export const SESSION_USER_SELECT = {
   photoUrl: true,
 } as const;
 
+/**
+ * Noms des cookies de session. `SESSION_COOKIE_PREFIX` distingue deux instances servies sur le même domaine
+ * (ex. `dev_` pour /comi/dev) : sans lui, se connecter à l'une écraserait la session de l'autre.
+ */
+const COOKIE_PREFIX = process.env.SESSION_COOKIE_PREFIX ?? '';
+export const SESSION_COOKIES = { access: `${COOKIE_PREFIX}token`, refresh: `${COOKIE_PREFIX}refresh_token` } as const;
+
 /** Cookies de session (nom, valeur, options) : source unique pour set sur Response ou cookieStore. */
 function sessionCookies(accessToken: string, refreshToken: string) {
   const base = {
@@ -169,8 +176,8 @@ function sessionCookies(accessToken: string, refreshToken: string) {
     path: '/',
   };
   return [
-    { name: 'token', value: accessToken, options: { ...base, maxAge: ACCESS_TOKEN_EXPIRY_SECONDS } },
-    { name: 'refresh_token', value: refreshToken, options: { ...base, maxAge: REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 } },
+    { name: SESSION_COOKIES.access, value: accessToken, options: { ...base, maxAge: ACCESS_TOKEN_EXPIRY_SECONDS } },
+    { name: SESSION_COOKIES.refresh, value: refreshToken, options: { ...base, maxAge: REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 } },
   ];
 }
 
@@ -222,7 +229,7 @@ export async function resolveSession(token?: string, refreshToken?: string): Pro
 export async function getSessionUser(): Promise<SessionUser | null> {
   try {
     const cookieStore = await cookies();
-    const session = await resolveSession(cookieStore.get('token')?.value, cookieStore.get('refresh_token')?.value);
+    const session = await resolveSession(cookieStore.get(SESSION_COOKIES.access)?.value, cookieStore.get(SESSION_COOKIES.refresh)?.value);
     if (!session) return null;
 
     if (session.renewed) {

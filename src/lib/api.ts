@@ -1,7 +1,8 @@
-export const BASE_PATH = '/comi';
+/** Chemin de base de l'app (`next.config.ts`), fixé au build : `/comi` en prod, `/comi/dev` en préproduction. */
+export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '/comi';
 
 /**
- * Construit une URL d'API complète préfixée avec le basePath (/comi).
+ * Construit une URL d'API complète préfixée avec le basePath.
  * Exemple: apiUrl('/api/auth/login') -> '/comi/api/auth/login'
  */
 export function apiUrl(path: string): string {

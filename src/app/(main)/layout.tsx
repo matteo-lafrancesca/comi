@@ -7,6 +7,7 @@ import PseudoSetupDrawer from '@/components/PseudoSetupDrawer';
 import { useFriendRequests } from '@/lib/queries/queries';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { BASE_PATH } from '@/lib/api';
 import {
   Calendar,
   ShoppingBag,
@@ -70,7 +71,7 @@ export default function MainLayout({
   if (loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-bg-light dark:bg-bg-dark">
-        <img src="/comi/clear/windows/StoreLogo.scale-200.png" alt="Comi" className="h-12 w-12 animate-pulse" />
+        <img src={`${BASE_PATH}/clear/windows/StoreLogo.scale-200.png`} alt="Comi" className="h-12 w-12 animate-pulse" />
       </div>
     );
   }
@@ -186,7 +187,7 @@ function NavBadge({ count = 0, className = '' }: { count?: number; className?: s
 function Wordmark({ className = '', small = false }: { className?: string; small?: boolean }) {
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
-      <img src="/comi/clear/windows/StoreLogo.scale-200.png" alt="" className={small ? 'h-7 w-7' : 'h-9 w-9'} />
+      <img src={`${BASE_PATH}/clear/windows/StoreLogo.scale-200.png`} alt="" className={small ? 'h-7 w-7' : 'h-9 w-9'} />
       <span className={`font-display italic font-semibold tracking-tight ${small ? 'text-2xl' : 'text-3xl'}`}>Comi</span>
     </div>
   );

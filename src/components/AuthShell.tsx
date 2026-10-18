@@ -1,4 +1,5 @@
 import React from 'react';
+import { BASE_PATH } from '@/lib/api';
 
 interface AuthShellProps {
   title: string;
@@ -20,7 +21,7 @@ export default function AuthShell({ title, footer, children }: AuthShellProps) {
     >
       <main className="w-full max-w-sm py-10">
         <div className="flex items-center gap-3 mb-12">
-          <img src="/comi/clear/windows/StoreLogo.scale-200.png" alt="" className="h-10 w-10" />
+          <img src={`${BASE_PATH}/clear/windows/StoreLogo.scale-200.png`} alt="" className="h-10 w-10" />
           <span className="font-display italic font-semibold text-4xl tracking-tight">Comi</span>
         </div>
 
@@ -40,7 +41,7 @@ export default function AuthShell({ title, footer, children }: AuthShellProps) {
 export function AuthLoading() {
   return (
     <div className="flex h-dvh w-full items-center justify-center bg-bg-light dark:bg-bg-dark">
-      <img src="/comi/clear/windows/StoreLogo.scale-200.png" alt="Comi" className="h-12 w-12 animate-pulse" />
+      <img src={`${BASE_PATH}/clear/windows/StoreLogo.scale-200.png`} alt="Comi" className="h-12 w-12 animate-pulse" />
     </div>
   );
 }

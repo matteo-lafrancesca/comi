@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { resolveSession, setAuthCookies, clearAuthCookies, toClientUser } from '@/lib/auth';
+import { SESSION_COOKIES, resolveSession, setAuthCookies, clearAuthCookies, toClientUser } from '@/lib/auth';
 
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const session = await resolveSession(cookieStore.get('token')?.value, cookieStore.get('refresh_token')?.value);
+    const session = await resolveSession(cookieStore.get(SESSION_COOKIES.access)?.value, cookieStore.get(SESSION_COOKIES.refresh)?.value);
 
     if (session) {
       const response = NextResponse.json({ user: toClientUser(session.user) });

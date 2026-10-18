@@ -5,6 +5,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import QueryProvider from "./providers";
 import GestureBlocker from "@/components/GestureBlocker";
+import { BASE_PATH } from "@/lib/api";
 
 const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"] });
 const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], axes: ["opsz"] });
@@ -19,8 +20,8 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/comi/clear/windows/Square44x44Logo.targetsize-32.png?v=1", sizes: "32x32", type: "image/png" },
-      { url: "/comi/clear/windows/Square44x44Logo.targetsize-16.png?v=1", sizes: "16x16", type: "image/png" },
+      { url: `${BASE_PATH}/clear/windows/Square44x44Logo.targetsize-32.png?v=1`, sizes: "32x32", type: "image/png" },
+      { url: `${BASE_PATH}/clear/windows/Square44x44Logo.targetsize-16.png?v=1`, sizes: "16x16", type: "image/png" },
     ],
   },
 };
@@ -41,8 +42,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="theme-color" content="#E64A33" />
-        <link id="manifest-link" rel="manifest" href="/comi/manifest-light.json" />
-        <link id="apple-touch-icon" rel="apple-touch-icon" href="/comi/light/ios/180.png" />
+        <link id="apple-touch-icon" rel="apple-touch-icon" href={`${BASE_PATH}/light/ios/180.png`} />
 
         <script
           dangerouslySetInnerHTML={{
