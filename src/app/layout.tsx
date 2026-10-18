@@ -5,6 +5,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import QueryProvider from "./providers";
 import GestureBlocker from "@/components/GestureBlocker";
+import ViewportScrollReset from "@/components/ViewportScrollReset";
 import { BASE_PATH } from "@/lib/api";
 
 const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"] });
@@ -62,6 +63,7 @@ export default function RootLayout({
       </head>
       <body className="bg-bg-light text-text-light-main dark:bg-bg-dark dark:text-text-dark-main font-sans transition-colors duration-300">
         <GestureBlocker />
+        <ViewportScrollReset />
         <div className="orientation-warning">
           <svg
             xmlns="http://www.w3.org/2000/svg"
