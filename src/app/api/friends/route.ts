@@ -4,7 +4,7 @@ import { withAuth } from '@/lib/api-handler';
 import { FRIEND_SUMMARY_SELECT, toFriendSummary } from '@/lib/friends';
 import type { FriendCard } from '@/types';
 
-/** Ami + ses 3 dernières recettes publiques (vitrine). */
+/** Ami + ses 3 dernières recettes publiques (vitrine) et leur nombre total. */
 const CARD_SELECT = {
   ...FRIEND_SUMMARY_SELECT,
   repas: {
@@ -13,6 +13,7 @@ const CARD_SELECT = {
     take: 3,
     select: { id: true, titre: true, photoUrl: true },
   },
+  _count: { select: { repas: { where: { isPublic: true } } } },
 } as const;
 
 /**
@@ -27,7 +28,7 @@ export const GET = withAuth(async (_request, user) => {
 
   const friends: FriendCard[] = friendships
     .map((f) => (f.requesterId === user.id ? f.addressee : f.requester))
-    .map((friend) => ({ ...toFriendSummary(friend), vitrine: friend.repas }))
+    .map((friend) => ({ ...toFriendSummary(friend), vitrine: friend.repas, recipeCount: friend._count.repas }))
     .sort((a, b) => a.pseudo.localeCompare(b.pseudo, 'fr', { sensitivity: 'base' }));
   return NextResponse.json(friends);
 });

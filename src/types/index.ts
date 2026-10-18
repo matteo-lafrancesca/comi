@@ -164,6 +164,8 @@ export interface FriendSummary {
 /** Un ami et quelques-unes de ses recettes publiques (vitrine). */
 export interface FriendCard extends FriendSummary {
   vitrine: { id: number; titre: string; photoUrl: string | null }[];
+  /** Nombre total de ses recettes publiques */
+  recipeCount: number;
 }
 
 /** Lien avec un autre utilisateur, vu par l'utilisateur connecté. */

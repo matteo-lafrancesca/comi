@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Loader2, UserMinus } from 'lucide-react';
 import { ApiError } from '@/lib/api';
 import { errorMessage } from '@/lib/errors';
+import { sharedRecipesLabel } from '@/lib/string-utils';
 import { useFriendProfile } from '@/lib/queries/queries';
 import { useRemoveFriendMutation } from '@/lib/queries/mutations';
 import BackHeader from '@/components/BackHeader';
@@ -90,7 +91,7 @@ export default function FriendProfilePage() {
       <div className="flex items-center gap-4">
         <Avatar pseudo={pseudo} photoUrl={photoUrl} size={88} />
         <p className="eyebrow text-text-light-muted dark:text-text-dark-muted">
-          {repas.length === 0 ? 'Aucune recette partagée' : repas.length === 1 ? '1 recette partagée' : `${repas.length} recettes partagées`}
+          {sharedRecipesLabel(repas.length)}
         </p>
       </div>
 

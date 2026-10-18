@@ -48,11 +48,18 @@ export default function AmisPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-10">
-          {friends.map((friend) => (
-            <FriendCard key={friend.id} friend={friend} />
-          ))}
-        </div>
+        <section>
+          <h2 className="eyebrow pb-2 border-b border-text-light-main dark:border-text-dark-main">
+            {friends.length === 1 ? '1 ami' : `${friends.length} amis`}
+          </h2>
+          <ul className="grid grid-cols-1 md:grid-cols-2 md:gap-x-12">
+            {friends.map((friend) => (
+              <li key={friend.id} className="border-b border-dashed border-neutral-300 dark:border-neutral-700">
+                <FriendCard friend={friend} />
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <FriendRequestsDrawer

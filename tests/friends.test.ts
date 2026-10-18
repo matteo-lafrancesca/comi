@@ -92,6 +92,7 @@ test('demandes : envoyer, doublon, soi-même, inconnu, voir, accepter, liste ave
   const list: FriendCard[] = await (await friends.GET(json('/api/friends', 'GET'))).json();
   assert.deepEqual(list.map((f) => f.id), [b.publicId]);
   assert.deepEqual(list[0].vitrine.map((r) => r.titre), ['Public 4', 'Public 3', 'Public 2']);
+  assert.equal(list[0].recipeCount, 4); // la privée ne compte pas
   assert.equal((await sendRequest(b)).status, 409); // déjà amis
   assert.equal((await searchFor(b.pseudo!))[0].relation, 'friend');
 });
