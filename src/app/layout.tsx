@@ -5,7 +5,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import QueryProvider from "./providers";
 import GestureBlocker from "@/components/GestureBlocker";
-import ViewportReflow from "@/components/ViewportReflow";
 import { BASE_PATH } from "@/lib/api";
 
 const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"] });
@@ -30,7 +29,7 @@ export const metadata: Metadata = {
 // Deux viewports, volontairement : Next émet celui-ci, puis le <meta> de <head> ajoute viewport-fit=cover.
 // Déclaré d'emblée, cover déclenche le bug iOS 26 (WebKit 301108) : en PWA, viewport raccourci de la barre
 // de statut et bande vide en bas. Ce passage en cours de chargement donne le plein écran ; les zones de clic
-// restent décalées jusqu'au recalcul forcé par ViewportReflow.
+// restent décalées jusqu'au premier recalcul du viewport (ouverture du clavier).
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -71,7 +70,6 @@ export default function RootLayout({
       </head>
       <body className="bg-bg-light text-text-light-main dark:bg-bg-dark dark:text-text-dark-main font-sans transition-colors duration-300">
         <GestureBlocker />
-        <ViewportReflow />
         <div className="orientation-warning">
           <svg
             xmlns="http://www.w3.org/2000/svg"
