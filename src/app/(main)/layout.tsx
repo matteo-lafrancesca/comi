@@ -4,6 +4,7 @@ import React, { useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ScrollContainerContext } from '@/contexts/ScrollContainerContext';
 import PseudoSetupDrawer from '@/components/PseudoSetupDrawer';
+import { useFriendRequests } from '@/lib/queries/queries';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -19,6 +20,8 @@ interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  /** Nombre affiché à côté de l'onglet (0 : rien) */
+  badge?: number;
 }
 
 export default function MainLayout({
@@ -29,6 +32,8 @@ export default function MainLayout({
   const { user, loading } = useAuth();
   const pathname = usePathname();
   const mainRef = useRef<HTMLElement>(null);
+  // Demandes d'ami reçues : rafraîchies au retour sur l'app (refetchOnWindowFocus) et après chaque action sur une demande.
+  const { data: requests } = useFriendRequests();
 
   const navItems: NavItem[] = [
     {
@@ -50,6 +55,7 @@ export default function MainLayout({
       label: 'Amis',
       href: '/amis',
       icon: Users,
+      badge: requests?.received.length ?? 0,
     },
   ];
 
@@ -95,6 +101,7 @@ export default function MainLayout({
               >
                 {item.label}
               </span>
+              <NavBadge count={item.badge} />
             </Link>
           ))}
         </nav>
@@ -146,7 +153,10 @@ export default function MainLayout({
               }`}
             >
               {active && <span className="absolute top-0 inset-x-6 h-[3px] bg-brand" />}
-              <Icon className="h-5 w-5" strokeWidth={active ? 2.25 : 1.75} />
+              <span className="relative">
+                <Icon className="h-5 w-5" strokeWidth={active ? 2.25 : 1.75} />
+                <NavBadge count={item.badge} className="absolute -top-1.5 left-3.5" />
+              </span>
               <span className="text-[11px] font-semibold">{item.label}</span>
             </Link>
           );
@@ -157,6 +167,19 @@ export default function MainLayout({
       {user && !user.pseudo && <PseudoSetupDrawer />}
     </div>
     </ScrollContainerContext.Provider>
+  );
+}
+
+/** Pastille de compteur d'un onglet (demandes d'ami reçues). */
+function NavBadge({ count = 0, className = '' }: { count?: number; className?: string }) {
+  if (count === 0) return null;
+  return (
+    <span
+      className={`min-w-4 px-1 rounded-input bg-brand text-ink font-sans text-[10px] font-bold leading-4 text-center tabular-nums self-center ${className}`}
+    >
+      {count > 9 ? '9+' : count}
+      <span className="sr-only">{count === 1 ? ' demande d’ami en attente' : ' demandes d’ami en attente'}</span>
+    </span>
   );
 }
 

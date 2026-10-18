@@ -3,7 +3,7 @@
 Document de reprise : contexte, décisions, ce qui est fait, ce qui reste. À lire en entier avant de
 reprendre le travail dans une nouvelle conversation (avec `AGENTS.md` et `DESIGN_GUIDELINES.md`).
 
-Branche : `dev` · état : **étapes 1 à 7 faites + identifiant public, reste 8** (finitions).
+Branche : `dev` · état : **chantier terminé** (étapes 1 à 8). Limites reportées dans `docs/dette-technique.md` (n° 8 à 15).
 
 ---
 
@@ -51,7 +51,8 @@ Demandes de départ de l'utilisateur :
 | 5 | `5121296` | Carnet : `POST/DELETE /api/repas/[id]/save`, `GET /api/repas` inclut les recettes ajoutées, `owner` et `savedCount` dans chaque repas, `assertUsableRepas` pour planning et extras, tri rareté limité à ses propres programmations, fiche « recette d'ami » (programmer / retirer du carnet), confirmation avant de repasser en privé une recette présente chez des amis. |
 | 6 | `294dd13` | Onglet **Amis** : page `/amis` (`FriendCard`), `FriendRequestsDrawer` (recherche + demandes), requêtes / mutations, `RepasThumbnail` et `ui/Tabs` extraits. |
 | 7 | (voir `git log`) | Profil d'un ami `/amis/[id]` : recettes publiques, fiche en aperçu (`RepasDetailModal` `savedByMe` : ajouter / retirer du carnet sans fermer), « Retirer cet ami » ; `useFriendProfile`, `useSaveRepasMutation`, `useRemoveFriendMutation` (requêtes amis marquées périmées sans rechargement, ami retiré de la liste en cache), `RepasCard` `hideOwner`. Vérifié dans le navigateur. |
-| 7 bis | (voir `git log`) | Identifiant public des utilisateurs (décision 6). Migration `20261018120000_user_public_id`. |
+| 7 bis | `b20665f` | Identifiant public des utilisateurs (décision 6). Migration `20261018120000_user_public_id`. |
+| 8 | (voir `git log`) | Finitions : compteur de demandes reçues sur l'onglet Amis (`NavBadge` dans `(main)/layout.tsx`), limites reportées dans `docs/dette-technique.md`, passe complète dans le navigateur (demande → badge → acceptation → profil → carnet → planning → passage en privé → retrait d'ami, clair et sombre). |
 
 ## 4. Carte du code
 
@@ -84,13 +85,12 @@ Composants : `Avatar`, `PseudoSetupDrawer`, `ProfileForm`, `FriendCard`, `Friend
 
 ## 5. Étapes restantes
 
-### Étape 8 — Finitions (prochaine)
-
-- Ajouter à `docs/dette-technique.md` les limites ci-dessous.
-- Option : indicateur de demandes reçues sur l'onglet Amis de la navigation.
-- `npm run check` + passe complète dans le navigateur.
+Aucune. Pistes possibles : choix public / privé dans les formulaires, recherche dans tout le pseudo, notifications de demandes en temps réel.
 
 ## 6. Limites connues / dette
+
+Reportées dans `docs/dette-technique.md` (n° 8 à 15) ; liste conservée ici pour le contexte.
+
 
 - **Demandes croisées simultanées** : l'unicité de `Friendship` n'est garantie que dans un sens (commentaire
   `ponytail:` dans `findFriendship`). Correctif si besoin : paire canonique `(minId, maxId)` unique.
@@ -129,7 +129,7 @@ Composants : `Avatar`, `PseudoSetupDrawer`, `ProfileForm`, `FriendCard`, `Friend
 
 ## 8. Pour reprendre
 
-> « Lis `docs/plan-amis.md`, `AGENTS.md` et `DESIGN_GUIDELINES.md`, puis fais l'étape 8. »
+> « Lis `docs/plan-amis.md`, `AGENTS.md` et `DESIGN_GUIDELINES.md`, puis … » (chantier terminé ; partir de la dette ou des pistes du §5).
 
 Méthode suivie à chaque étape : coder → tests (`tests/friends.test.ts`) → `npm run check` → vérification
 navigateur → commit sur `dev` → rapport des modifications. Mettre à jour ce document (tableau §3 et §5) à la fin de chaque étape.
