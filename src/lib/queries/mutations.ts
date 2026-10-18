@@ -5,7 +5,7 @@ import { apiJson } from '@/lib/api';
 import type { Ymd } from '@/lib/date-utils';
 import type { RepasPatchPayload, RepasPayload } from '@/lib/schemas';
 import type { AnalysisResult } from '@/lib/repas-form';
-import type { FriendRelation, ProgrammationWithRepas, RepasWithIngredients } from '@/types';
+import type { FriendCard, FriendRelation, ProgrammationWithRepas, RepasWithIngredients } from '@/types';
 import { queryKeys } from './keys';
 
 /** Invalide planning et courses (les deux dépendent des programmations). */
@@ -108,8 +108,26 @@ export function useRepasVisibilityMutation() {
   });
 }
 
+/** Ajoute la recette publique d'un ami à mon carnet. */
+export function useSaveRepasMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (repasId: number) =>
+      apiJson<unknown>(`/api/repas/${repasId}/save`, {
+        method: 'POST',
+        fallbackError: "Impossible d'ajouter cette recette à votre carnet.",
+      }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.repas.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.friends.all }),
+      ]),
+  });
+}
+
 /** Retire la recette d'un ami de mon carnet (et de mon planning / mes courses). */
 export function useUnsaveRepasMutation() {
+  const queryClient = useQueryClient();
   const invalidateRepas = useInvalidateRepas();
   return useMutation({
     mutationFn: (repasId: number) =>
@@ -117,7 +135,8 @@ export function useUnsaveRepasMutation() {
         method: 'DELETE',
         fallbackError: 'Impossible de retirer cette recette de votre carnet.',
       }),
-    onSuccess: invalidateRepas,
+    onSuccess: () =>
+      Promise.all([invalidateRepas(), queryClient.invalidateQueries({ queryKey: queryKeys.friends.all })]),
   });
 }
 
@@ -209,5 +228,27 @@ export function useDeleteFriendRequestMutation() {
         fallbackError: 'Impossible de supprimer la demande.',
       }),
     onSuccess: invalidate,
+  });
+}
+
+/**
+ * Retire un ami : ses recettes quittent mon carnet, mon planning et mes courses. Appelée depuis son
+ * profil, que l'on quitte ensuite : les requêtes « amis » sont marquées périmées sans être rechargées
+ * (le profil encore affiché répondrait 403) ; elles se rechargent à leur prochain affichage, et l'ami
+ * est retiré de la liste en cache pour ne pas y réapparaître le temps du rechargement.
+ */
+export function useRemoveFriendMutation() {
+  const queryClient = useQueryClient();
+  const invalidateRepas = useInvalidateRepas();
+  return useMutation({
+    mutationFn: (userId: number) =>
+      apiJson<unknown>(`/api/friends/${userId}`, { method: 'DELETE', fallbackError: 'Impossible de retirer cet ami.' }),
+    onSuccess: (_data, userId) => {
+      queryClient.setQueryData<FriendCard[]>(queryKeys.friends.list, (list) => list?.filter((f) => f.id !== userId));
+      return Promise.all([
+        invalidateRepas(),
+        queryClient.invalidateQueries({ queryKey: queryKeys.friends.all, refetchType: 'none' }),
+      ]);
+    },
   });
 }

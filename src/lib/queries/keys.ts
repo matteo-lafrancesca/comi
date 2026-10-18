@@ -11,8 +11,10 @@ import type { WeekRef } from '@/lib/date-utils';
  * - créer un repas                          -> repas
  * - modifier / supprimer un repas           -> repas + planning + courses
  * - rendre un repas public / privé          -> repas
- * - retirer une recette d'ami de son carnet  -> repas + planning + courses
- * - envoyer / accepter / refuser / annuler une demande d'ami -> amis (liste, demandes, recherche)
+ * - ajouter une recette d'ami à son carnet   -> repas + amis (`savedByMe` du profil)
+ * - retirer une recette d'ami de son carnet  -> repas + planning + courses + amis
+ * - envoyer / accepter / refuser / annuler une demande d'ami -> amis (liste, demandes, recherche, profil)
+ * - retirer un ami                          -> amis (sans rechargement : on quitte son profil) + repas + planning + courses
  * - ajouter / retirer un article hors plan  -> courses
  * - changer le jour de début de semaine     -> planning + courses retirés du cache (autre découpage)
  */
@@ -32,6 +34,7 @@ export const queryKeys = {
     list: ['friends', 'list'] as const,
     requests: ['friends', 'requests'] as const,
     search: (q: string) => ['friends', 'search', q] as const,
+    profile: (userId: number) => ['friends', 'profile', userId] as const,
   },
   repas: {
     all: ['repas'] as const,

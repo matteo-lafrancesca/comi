@@ -5,6 +5,7 @@ import { apiJson } from '@/lib/api';
 import type { WeekRef } from '@/lib/date-utils';
 import type {
   FriendCard,
+  FriendProfile,
   FriendRequestsResponse,
   PlanningResponse,
   RepasWithIngredients,
@@ -119,6 +120,14 @@ export function useFriendRequests() {
     queryKey: queryKeys.friends.requests,
     queryFn: () =>
       apiJson<FriendRequestsResponse>('/api/friends/requests', { fallbackError: 'Impossible de charger les demandes.' }),
+  });
+}
+
+/** Profil d'un ami et ses recettes publiques (403 si nous ne sommes pas, ou plus, amis). */
+export function useFriendProfile(userId: number) {
+  return useQuery({
+    queryKey: queryKeys.friends.profile(userId),
+    queryFn: () => apiJson<FriendProfile>(`/api/friends/${userId}`, { fallbackError: 'Impossible de charger ce profil.' }),
   });
 }
 

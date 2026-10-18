@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { errorMessage } from '@/lib/errors';
 import Image from 'next/image';
-import { Pencil, Trash2, Loader2, RefreshCw, Calendar, CalendarX, Globe, Lock, BookmarkMinus } from 'lucide-react';
+import { Pencil, Trash2, Loader2, RefreshCw, Calendar, CalendarX, Globe, Lock, BookmarkMinus, BookmarkPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { RepasWithIngredients } from '@/types';
 import { formatIngredient } from '@/lib/shopping-list-utils';
@@ -11,10 +11,12 @@ import { planningUrl } from '@/lib/routes';
 import {
   useDeleteRepasMutation,
   useRepasVisibilityMutation,
+  useSaveRepasMutation,
   useUnsaveRepasMutation,
   useUnscheduleMutation,
 } from '@/lib/queries/mutations';
 import Drawer from '@/components/Drawer';
+import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Alert from '@/components/ui/Alert';
 import ConfirmDeleteDrawer from '@/components/ConfirmDeleteDrawer';
@@ -26,6 +28,12 @@ interface RepasDetailModalProps {
   /** Présent quand le repas est affiché depuis un créneau du planning */
   programmationId?: number;
   onReprogram?: () => void;
+  /**
+   * Aperçu depuis le profil d'un ami : la recette n'est pas forcément dans mon carnet.
+   * `false` : bouton « Ajouter à mon carnet » ; `true` : programmer ou retirer (la fiche reste ouverte).
+   * Absent : la recette vient de mon carnet.
+   */
+  savedByMe?: boolean;
 }
 
 /** Confirmations possibles depuis la fiche. */
@@ -37,7 +45,14 @@ const amis = (n: number) => (n === 1 ? '1 ami' : `${n} amis`);
  * Fiche d'un repas. Mes repas : programmer, confidentialité, modifier, supprimer. Recette d'un ami
  * (`repas.owner`) : programmer ou la retirer de mon carnet, jamais la modifier.
  */
-export default function RepasDetailModal({ repas, isOpen, onClose, programmationId, onReprogram }: RepasDetailModalProps) {
+export default function RepasDetailModal({
+  repas,
+  isOpen,
+  onClose,
+  programmationId,
+  onReprogram,
+  savedByMe,
+}: RepasDetailModalProps) {
   const router = useRouter();
   const [activeRepas, setActiveRepas] = useState<RepasWithIngredients | null>(null);
 
@@ -47,10 +62,12 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [unscheduleError, setUnscheduleError] = useState<string | null>(null);
   const [visibilityError, setVisibilityError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   /** Dernière visibilité enregistrée ici : le repas reçu en prop est une copie qui ne suit pas la mutation. */
   const [savedVisibility, setSavedVisibility] = useState<{ id: number; isPublic: boolean } | null>(null);
   const deleteMutation = useDeleteRepasMutation();
   const visibilityMutation = useRepasVisibilityMutation();
+  const saveMutation = useSaveRepasMutation();
   const unsaveMutation = useUnsaveRepasMutation();
   const unscheduleMutation = useUnscheduleMutation();
   const isUnscheduling = unscheduleMutation.isPending;
@@ -66,6 +83,7 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
         setConfirmError(null);
         setUnscheduleError(null);
         setVisibilityError(null);
+        setSaveError(null);
         setSavedVisibility(null);
       }, 300);
       return () => clearTimeout(timer);
@@ -79,6 +97,7 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
   if (!currentRepas) return null;
 
   const { id, titre, photoUrl, recette, ingredients, owner } = currentRepas;
+  const isPreview = savedByMe !== undefined;
   const isPublic = savedVisibility?.id === id ? savedVisibility.isPublic : currentRepas.isPublic;
   // Après un changement de visibilité ici, plus aucun ami ne l'a dans son carnet (passage en privé)
   const savedCount = savedVisibility?.id === id ? 0 : currentRepas.savedCount;
@@ -126,13 +145,22 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
     }
   };
 
-  /** Supprimer mon repas ou retirer la recette d'un ami de mon carnet, puis fermer la fiche. */
+  const handleSave = async () => {
+    setSaveError(null);
+    try {
+      await saveMutation.mutateAsync(id);
+    } catch (err) {
+      setSaveError(errorMessage(err, 'Une erreur est survenue.'));
+    }
+  };
+
+  /** Supprimer mon repas ou retirer la recette d'un ami de mon carnet, puis fermer la fiche (sauf en aperçu). */
   const runAndClose = async (action: () => Promise<unknown>) => {
     setConfirmError(null);
     try {
       await action();
       setConfirmOpen(false);
-      onClose();
+      if (!isPreview) onClose();
     } catch (err) {
       setConfirmError(errorMessage(err, 'Une erreur est survenue.'));
     }
@@ -212,10 +240,13 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
         <div className="space-y-8">
           {unscheduleError && <Alert>{unscheduleError}</Alert>}
           {visibilityError && <Alert>{visibilityError}</Alert>}
+          {saveError && <Alert>{saveError}</Alert>}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
               <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-tight leading-tight">{titre}</h2>
-              {owner ? (
+              {isPreview ? (
+                savedByMe && <p className="eyebrow mt-2 text-text-light-muted dark:text-text-dark-muted">Dans votre carnet</p>
+              ) : owner ? (
                 <p className="mt-2 text-sm text-text-light-muted dark:text-text-dark-muted">
                   Recette de{' '}
                   <span className="font-display italic text-base text-text-light-main dark:text-text-dark-main">{owner.pseudo}</span>
@@ -241,6 +272,11 @@ export default function RepasDetailModal({ repas, isOpen, onClose, programmation
                     </IconButton>
                   )}
                 </>
+              ) : savedByMe === false ? (
+                <Button size="sm" onClick={handleSave} disabled={saveMutation.isPending}>
+                  {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookmarkPlus className="h-4 w-4" />}
+                  Ajouter à mon carnet
+                </Button>
               ) : owner ? (
                 <>
                   <IconButton label="Programmer ce repas" onClick={handleSchedule}>

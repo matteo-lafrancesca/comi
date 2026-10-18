@@ -3,7 +3,7 @@
 Document de reprise : contexte, décisions, ce qui est fait, ce qui reste. À lire en entier avant de
 reprendre le travail dans une nouvelle conversation (avec `AGENTS.md` et `DESIGN_GUIDELINES.md`).
 
-Branche : `dev` · dernier commit du chantier : `294dd13` (étape 6) · état : **étapes 1 à 6 faites, reste 7 et 8**.
+Branche : `dev` · état : **étapes 1 à 7 faites, reste 8** (finitions).
 
 ---
 
@@ -46,6 +46,7 @@ Demandes de départ de l'utilisateur :
 | 4 | `873c1b6` | Backend amis (voir §4). Tests `tests/friends.test.ts`. |
 | 5 | `5121296` | Carnet : `POST/DELETE /api/repas/[id]/save`, `GET /api/repas` inclut les recettes ajoutées, `owner` et `savedCount` dans chaque repas, `assertUsableRepas` pour planning et extras, tri rareté limité à ses propres programmations, fiche « recette d'ami » (programmer / retirer du carnet), confirmation avant de repasser en privé une recette présente chez des amis. |
 | 6 | `294dd13` | Onglet **Amis** : page `/amis` (`FriendCard`), `FriendRequestsDrawer` (recherche + demandes), requêtes / mutations, `RepasThumbnail` et `ui/Tabs` extraits. |
+| 7 | (voir `git log`) | Profil d'un ami `/amis/[id]` : recettes publiques, fiche en aperçu (`RepasDetailModal` `savedByMe` : ajouter / retirer du carnet sans fermer), « Retirer cet ami » ; `useFriendProfile`, `useSaveRepasMutation`, `useRemoveFriendMutation` (requêtes amis marquées périmées sans rechargement, ami retiré de la liste en cache), `RepasCard` `hideOwner`. Vérifié dans le navigateur. |
 
 ## 4. Carte du code
 
@@ -59,8 +60,8 @@ Demandes de départ de l'utilisateur :
 | `DELETE /api/friends/requests/[id]` | Refuser ou annuler. |
 | `GET /api/friends` | Amis + vitrine (`FriendCard[]`). |
 | `GET /api/friends/[userId]` | Profil : recettes publiques avec `savedByMe` (`FriendProfile`). 403 si pas amis. |
-| `DELETE /api/friends/[userId]` | Retirer un ami + purge dans les deux sens. **Déjà fait et testé, pas encore branché à l'UI.** |
-| `POST / DELETE /api/repas/[id]/save` | Ajouter à / retirer de son carnet. **POST pas encore branché à l'UI.** |
+| `DELETE /api/friends/[userId]` | Retirer un ami + purge dans les deux sens. |
+| `POST / DELETE /api/repas/[id]/save` | Ajouter à / retirer de son carnet. |
 
 **Lib** : `src/lib/friends.ts` (`requirePseudo`, `findFriendship`, `relationOf`, `assertFriends`,
 `assertUsableRepas`, `purgeSharedAccess`), `src/lib/pseudo.ts`, `src/lib/api-formatters.ts`
@@ -70,40 +71,17 @@ Demandes de départ de l'utilisateur :
 **Types** (`src/types/index.ts`) : `FriendSummary`, `FriendCard`, `FriendRelation`, `UserSearchResult`,
 `FriendRequest(sResponse)`, `FriendProfile` ; `RepasWithIngredients` a `isPublic`, `owner`, `savedCount`.
 
-**Front** : `src/lib/queries/` → `useFriends`, `useFriendRequests`, `useUserSearch`,
-`useSend/Accept/DeleteFriendRequestMutation`, `useRepasVisibilityMutation`, `useUnsaveRepasMutation` ;
-clés `friends.{all,list,requests,search}` ; `friendUrl(id)` dans `routes.ts`.
+**Front** : `src/lib/queries/` → `useFriends`, `useFriendRequests`, `useUserSearch`, `useFriendProfile`,
+`useSend/Accept/DeleteFriendRequestMutation`, `useRepasVisibilityMutation`, `useSave/UnsaveRepasMutation`,
+`useRemoveFriendMutation` ; clés `friends.{all,list,requests,search,profile}` ; `friendUrl(id)` dans `routes.ts`.
 Composants : `Avatar`, `PseudoSetupDrawer`, `ProfileForm`, `FriendCard`, `FriendRequestsDrawer`,
 `RepasThumbnail`, `ui/Tabs` (tous listés dans `AGENTS.md`).
 
 ## 5. Étapes restantes
 
-### Étape 7 — Profil d'un ami (prochaine)
+### Étape 8 — Finitions (prochaine)
 
-Aujourd'hui, cliquer sur une carte d'ami mène à `/amis/[id]` → **404**.
-
-- `src/app/(main)/amis/[id]/page.tsx` : `BackHeader` (retour vers `/amis`, titre = pseudo), grand `Avatar`,
-  grille de `RepasCard` avec `profile.repas`, puis en bas « Retirer cet ami » (`Button` `danger`) →
-  `ConfirmDeleteDrawer` (« ses recettes quitteront votre carnet et votre planning ») → retour à `/amis`.
-  États : chargement, erreur (403 si plus amis → message + lien vers `/amis`), aucune recette publique.
-- Requête `useFriendProfile(id)` + clé `friends.profile(id)` (sous `friends.all`).
-- Mutations :
-  - `useSaveRepasMutation` (`POST /api/repas/[id]/save`) → invalide `repas` + `friends.profile` ;
-  - `useRemoveFriendMutation` (`DELETE /api/friends/[userId]`) → invalide `friends` + `repas` + planning + courses ;
-  - `useUnsaveRepasMutation` doit aussi invalider `friends` (le `savedByMe` du profil change).
-  Mettre à jour le commentaire d'invalidation de `keys.ts`.
-- `RepasDetailModal` en **mode aperçu** depuis le profil : la recette n'est pas forcément dans mon carnet.
-  Proposition : prop optionnelle (ex. `savedByMe?: boolean`, présente seulement depuis le profil) →
-  bouton « Ajouter à mon carnet » (`BookmarkPlus`) si `false`, mention « Dans mon carnet » + « Retirer »
-  si `true`. Pas de « Programmer » tant qu'elle n'est pas dans le carnet (l'API le refuserait : 403).
-  Afficher l'état à jour après la mutation sans resynchroniser par effet (même technique que `savedVisibility`).
-- `RepasCard` sur le profil : la mention « de *pseudo* » est redondante → prop pour la masquer.
-- Vérifier dans le navigateur (voir §6) : ajout au carnet → visible dans « Mes repas » → programmable ;
-  retrait d'un ami → ses recettes disparaissent du carnet et du planning.
-
-### Étape 8 — Finitions
-
-- Relire `AGENTS.md` (composants ajoutés à l'étape 7) et ajouter à `docs/dette-technique.md` les limites ci-dessous.
+- Ajouter à `docs/dette-technique.md` les limites ci-dessous.
 - Option : indicateur de demandes reçues sur l'onglet Amis de la navigation.
 - `npm run check` + passe complète dans le navigateur.
 
@@ -117,6 +95,7 @@ Aujourd'hui, cliquer sur une carte d'ami mène à `/amis/[id]` → **404**.
 - **Recherche par début de pseudo uniquement** ; limiteur de débit en mémoire (repart à zéro au redémarrage).
 - **Vitrine des amis** rafraîchie seulement à leur prochaine visite.
 - Formulaires « Nouveau » / « Modifier » sans choix public / privé (réglé depuis la fiche ; l'API l'accepte).
+- Fiche en aperçu sur le profil : si l'ami repasse la recette en privé pendant qu'elle est ouverte, la fiche se ferme au rechargement du profil.
 
 ## 7. Environnement et pièges rencontrés
 
@@ -141,7 +120,7 @@ Aujourd'hui, cliquer sur une carte d'ami mène à `/amis/[id]` → **404**.
 
 ## 8. Pour reprendre
 
-> « Lis `docs/plan-amis.md`, `AGENTS.md` et `DESIGN_GUIDELINES.md`, puis fais l'étape 7. »
+> « Lis `docs/plan-amis.md`, `AGENTS.md` et `DESIGN_GUIDELINES.md`, puis fais l'étape 8. »
 
 Méthode suivie à chaque étape : coder → tests (`tests/friends.test.ts`) → `npm run check` → vérification
 navigateur → commit sur `dev` → rapport des modifications. Mettre à jour ce document (tableau §3 et §5) à la fin de chaque étape.
