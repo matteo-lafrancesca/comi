@@ -13,6 +13,8 @@ export interface AuthUser {
   /** Nom d'affichage ; null tant qu'il n'a pas été choisi (popup obligatoire). */
   pseudo: string | null;
   photoUrl: string | null;
+  /** Affiche l'accès à l'administration de la base dans les réglages (l'API vérifie de son côté). */
+  isAdmin: boolean;
 }
 
 type AuthResult = { success: boolean; error?: string };

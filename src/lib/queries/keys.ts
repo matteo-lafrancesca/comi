@@ -17,6 +17,7 @@ import type { WeekRef } from '@/lib/date-utils';
  * - retirer un ami                          -> amis (sans rechargement : on quitte son profil) + repas + planning + courses
  * - ajouter / retirer un article hors plan  -> courses
  * - changer le jour de début de semaine     -> planning + courses retirés du cache (autre découpage)
+ * - écrire dans l'administration de la base -> tout (n'importe quelle table peut avoir changé)
  */
 export const queryKeys = {
   planning: {
@@ -35,6 +36,10 @@ export const queryKeys = {
     requests: ['friends', 'requests'] as const,
     search: (q: string) => ['friends', 'search', q] as const,
     profile: (userId: string) => ['friends', 'profile', userId] as const,
+  },
+  admin: {
+    models: ['admin', 'models'] as const,
+    rows: (model: string, page: number) => ['admin', 'rows', model, page] as const,
   },
   repas: {
     all: ['repas'] as const,

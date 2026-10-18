@@ -193,3 +193,32 @@ export interface FriendRequestsResponse {
 export interface FriendProfile extends FriendSummary {
   repas: (RepasWithIngredients & { savedByMe: boolean })[];
 }
+
+// ── Administration ─────────────────────────────────────────────────────────
+
+/** Colonne d'une table (types Prisma : String, Int, Float, Boolean, DateTime). */
+export interface AdminField {
+  name: string;
+  type: string;
+  required: boolean;
+  hasDefault: boolean;
+  isId: boolean;
+  /** Jamais lue (mot de passe) : un champ vide la laisse inchangée. */
+  writeOnly: boolean;
+}
+
+export interface AdminModel {
+  name: string;
+  count: number;
+  fields: AdminField[];
+}
+
+/** Ligne telle que renvoyée en JSON (dates en chaîne ISO). */
+export type AdminRow = Record<string, string | number | boolean | null>;
+
+export interface AdminRowsResponse {
+  rows: AdminRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+}

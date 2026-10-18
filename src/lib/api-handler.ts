@@ -35,6 +35,16 @@ export function withAuth<P extends Record<string, string> = Record<string, never
   };
 }
 
+/** Comme `withAuth`, réservé aux administrateurs (403 sinon). */
+export function withAdmin<P extends Record<string, string> = Record<string, never>>(
+  handler: (request: Request, user: SessionUser, params: P) => Promise<Response>
+) {
+  return withAuth<P>((request, user, params) => {
+    if (!user.isAdmin) throw new HttpError(403, 'Accès réservé aux administrateurs.');
+    return handler(request, user, params);
+  });
+}
+
 /** Lit et valide le corps JSON ; la première erreur du schéma devient un 400 lisible. */
 export async function parseBody<S extends z.ZodType>(request: Request, schema: S): Promise<z.output<S>> {
   let raw: unknown;

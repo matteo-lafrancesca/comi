@@ -4,6 +4,8 @@ import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-qu
 import { apiJson } from '@/lib/api';
 import type { WeekRef } from '@/lib/date-utils';
 import type {
+  AdminModel,
+  AdminRowsResponse,
   FriendCard,
   FriendProfile,
   FriendRequestsResponse,
@@ -141,6 +143,28 @@ export function useUserSearch(q: string) {
     queryFn: () =>
       apiJson<UserSearchResult[]>(`/api/users/search?q=${encodeURIComponent(query)}`, {
         fallbackError: 'Impossible de lancer la recherche.',
+      }),
+  });
+}
+
+/** Tables de la base (administration). */
+export function useAdminModels() {
+  return useQuery({
+    queryKey: queryKeys.admin.models,
+    queryFn: () =>
+      apiJson<{ models: AdminModel[] }>('/api/admin', { fallbackError: 'Impossible de charger les tables.' }).then((d) => d.models),
+  });
+}
+
+/** Une page de lignes d'une table (administration). */
+export function useAdminRows(model: string | null, page: number) {
+  return useQuery({
+    queryKey: queryKeys.admin.rows(model ?? '', page),
+    enabled: model !== null,
+    placeholderData: keepPreviousData,
+    queryFn: () =>
+      apiJson<AdminRowsResponse>(`/api/admin/${encodeURIComponent(model ?? '')}?page=${page}`, {
+        fallbackError: 'Impossible de charger les lignes.',
       }),
   });
 }

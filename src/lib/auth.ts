@@ -137,17 +137,20 @@ export interface SessionUser {
   /** Nom d'affichage ; null tant que l'utilisateur ne l'a pas choisi. */
   pseudo: string | null;
   photoUrl: string | null;
+  /** Accès à l'interface d'administration de la base. */
+  isAdmin: boolean;
 }
 
 /** Utilisateur connecté tel qu'envoyé au client : sans l'id interne, qui ne quitte jamais le serveur. */
 export type ClientUser = Omit<SessionUser, 'id'>;
 
-export const toClientUser = ({ email, createdAt, weekStartDay, pseudo, photoUrl }: SessionUser): ClientUser => ({
+export const toClientUser = ({ email, createdAt, weekStartDay, pseudo, photoUrl, isAdmin }: SessionUser): ClientUser => ({
   email,
   createdAt,
   weekStartDay,
   pseudo,
   photoUrl,
+  isAdmin,
 });
 
 /** Colonnes d'un `SessionUser` : à lire pour toute réponse qui renvoie l'utilisateur connecté (via `toClientUser`). */
@@ -158,6 +161,7 @@ export const SESSION_USER_SELECT = {
   weekStartDay: true,
   pseudo: true,
   photoUrl: true,
+  isAdmin: true,
 } as const;
 
 /**

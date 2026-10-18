@@ -44,6 +44,14 @@ export function planningUrl({ week, schedule, focus }: PlanningUrlOptions = {}):
 /** Profil d'un ami, par son identifiant public. */
 export const friendUrl = (userId: string) => `/amis/${userId}`;
 
+/** Administration de la base : table affichée et page. */
+export function adminUrl(table?: string, page = 1): string {
+  const params = new URLSearchParams();
+  if (table) params.set('table', table);
+  if (page > 1) params.set('page', String(page));
+  return withQuery('/parametres/admin', params);
+}
+
 export function shoppingUrl(week?: WeekRef | null): string {
   const params = new URLSearchParams();
   withWeek(params, week);

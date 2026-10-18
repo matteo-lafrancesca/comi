@@ -3,9 +3,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiJson } from '@/lib/api';
 import type { Ymd } from '@/lib/date-utils';
-import type { RepasPatchPayload, RepasPayload } from '@/lib/schemas';
+import type { AdminRowPayload, RepasPatchPayload, RepasPayload } from '@/lib/schemas';
 import type { AnalysisResult } from '@/lib/repas-form';
-import type { FriendCard, FriendRelation, ProgrammationWithRepas, RepasWithIngredients } from '@/types';
+import type { AdminRow, FriendCard, FriendRelation, ProgrammationWithRepas, RepasWithIngredients } from '@/types';
 import { queryKeys } from './keys';
 
 /** Invalide planning et courses (les deux dépendent des programmations). */
@@ -250,5 +250,32 @@ export function useRemoveFriendMutation() {
         queryClient.invalidateQueries({ queryKey: queryKeys.friends.all, refetchType: 'none' }),
       ]);
     },
+  });
+}
+
+/** Administration : créer (`id` null) ou modifier une ligne. Invalide tout le cache (toute table peut avoir changé). */
+export function useAdminSaveRowMutation(model: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, values }: { id: number | null; values: AdminRowPayload }) =>
+      apiJson<AdminRow>(`/api/admin/${encodeURIComponent(model)}${id === null ? '' : `/${id}`}`, {
+        method: id === null ? 'POST' : 'PATCH',
+        json: values,
+        fallbackError: 'Impossible d’enregistrer la ligne.',
+      }),
+    onSuccess: () => queryClient.invalidateQueries(),
+  });
+}
+
+/** Administration : supprimer une ligne. */
+export function useAdminDeleteRowMutation(model: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) =>
+      apiJson<unknown>(`/api/admin/${encodeURIComponent(model)}/${id}`, {
+        method: 'DELETE',
+        fallbackError: 'Impossible de supprimer la ligne.',
+      }),
+    onSuccess: () => queryClient.invalidateQueries(),
   });
 }

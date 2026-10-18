@@ -70,6 +70,7 @@ Avant de coder une interface, **analyse toujours si des éléments similaires ex
 | `ProfileForm` | Pseudo + photo de profil (réglages) |
 | `FriendCard` | Carte de profil d'un ami (avatar, pseudo, vitrine) menant à son profil |
 | `FriendRequestsDrawer` | Ajout d'amis : recherche par pseudo et demandes reçues / envoyées |
+| `AdminRowDrawer` | Création / modification / suppression d'une ligne de la base (administration, un champ par colonne) |
 | `RepasThumbnail` | Visuel d'une recette (photo, ou initiale sur papier ligné) qui remplit son conteneur |
 | `ui/Button`, `ui/IconButton`, `ui/TextInput`, `ui/Alert`, `ui/Tabs` | Primitives de formulaire et d'action — **ne pas réécrire de classes de bouton/champ à la main** |
 

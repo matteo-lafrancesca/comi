@@ -19,6 +19,8 @@ model User {
   photoUrl      String?         @map("photo_url")
   passwordHash  String          @map("password_hash")
   weekStartDay  Int             @default(0) @map("week_start_day") // 0=Lun, 1=Mar, 2=Mer, 3=Jeu, 4=Ven, 5=Sam, 6=Dim
+  /// Accès à l'interface d'administration (Réglages > Base de données). Se donne en base, jamais depuis l'app publique.
+  isAdmin       Boolean         @default(false) @map("is_admin")
   createdAt     DateTime        @default(now()) @map("created_at")
   repas        Repas[]
   programmation Programmation[]

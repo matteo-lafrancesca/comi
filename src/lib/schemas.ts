@@ -95,6 +95,15 @@ export const settingsSchema = z.object({
 
 export type SettingsPayload = z.input<typeof settingsSchema>;
 
+// ── Administration ─────────────────────────────────────────────────────────
+
+/** Ligne saisie dans l'administration : colonne -> valeur brute, convertie ensuite selon le schéma Prisma. */
+export const adminRowSchema = z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]), {
+  error: 'Le corps doit être un objet { colonne: valeur }.',
+});
+
+export type AdminRowPayload = z.input<typeof adminRowSchema>;
+
 // ── Liste de courses ───────────────────────────────────────────────────────
 
 export const checkItemsSchema = z.object({

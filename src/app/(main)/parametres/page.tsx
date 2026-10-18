@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { LogOut } from 'lucide-react';
+import Link from 'next/link';
+import { Database, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { FRENCH_DAYS } from '@/lib/date-utils';
 import PageHeader from '@/components/PageHeader';
 import ProfileForm from '@/components/ProfileForm';
 import Button from '@/components/ui/Button';
+import { buttonStyles } from '@/components/ui/button-styles';
+import { adminUrl } from '@/lib/routes';
 import Alert from '@/components/ui/Alert';
 import { errorMessage } from '@/lib/errors';
 
@@ -90,6 +93,16 @@ export default function ParametresPage() {
             </div>
           )}
         </section>
+
+        {user?.isAdmin && (
+          <section>
+            <h2 className="eyebrow pb-2 border-b border-text-light-main dark:border-text-dark-main">Administration</h2>
+            <Link id="settings-admin" href={adminUrl()} className={buttonStyles({ variant: 'secondary', className: 'mt-4' })}>
+              <Database className="h-4 w-4" />
+              Base de données
+            </Link>
+          </section>
+        )}
 
         <section>
           <h2 className="eyebrow pb-2 border-b border-text-light-main dark:border-text-dark-main">Compte</h2>
