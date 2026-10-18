@@ -79,7 +79,8 @@ export const pseudoSchema = z
 // ── Amis ───────────────────────────────────────────────────────────────────
 
 export const friendRequestSchema = z.object({
-  userId: z.number({ error: 'userId doit être un nombre.' }).int('userId doit être un entier.'),
+  /** Identifiant public du destinataire */
+  userId: z.string({ error: 'userId doit être une chaîne.' }).min(1, 'userId est requis.'),
 });
 
 // ── Réglages ───────────────────────────────────────────────────────────────

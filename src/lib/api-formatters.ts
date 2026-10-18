@@ -2,12 +2,12 @@ import type { Prisma } from '@prisma/client';
 import type { FriendSummary, ProgrammationWithRepas, RepasWithIngredients } from '@/types';
 import { fromDbDate } from '@/lib/date-utils';
 
-/** Colonnes d'un `FriendSummary` : ce qu'un utilisateur montre aux autres (jamais l'e-mail). */
-export const FRIEND_SUMMARY_SELECT = { id: true, pseudo: true, photoUrl: true } as const;
+/** Colonnes d'un `FriendSummary` : ce qu'un utilisateur montre aux autres (jamais l'e-mail ni l'id interne). */
+export const FRIEND_SUMMARY_SELECT = { publicId: true, pseudo: true, photoUrl: true } as const;
 
 /** Les utilisateurs montrés aux autres ont toujours un pseudo (requis pour les amis). */
-export const toFriendSummary = (u: { id: number; pseudo: string | null; photoUrl: string | null }): FriendSummary => ({
-  id: u.id,
+export const toFriendSummary = (u: { publicId: string; pseudo: string | null; photoUrl: string | null }): FriendSummary => ({
+  id: u.publicId,
   pseudo: u.pseudo ?? '',
   photoUrl: u.photoUrl,
 });
@@ -30,7 +30,6 @@ export function formatRepasResponse(repas: RepasWithIngredientsPayload, viewerId
   const isMine = repas.userId === viewerId;
   return {
     id: repas.id,
-    userId: repas.userId,
     titre: repas.titre,
     recette: repas.recette,
     photoUrl: repas.photoUrl,
@@ -58,7 +57,6 @@ export type ProgrammationPayload = Prisma.ProgrammationGetPayload<{ include: typ
 export function formatProgrammationResponse(prog: ProgrammationPayload): ProgrammationWithRepas {
   return {
     id: prog.id,
-    userId: prog.userId,
     repasId: prog.repasId,
     date: fromDbDate(prog.date),
     heure: prog.heure === 1 ? 1 : 0,

@@ -39,7 +39,8 @@ export type CategorieIngredient = keyof typeof CATEGORY_DETAILS;
 
 
 // Types étendus avec les relations Prisma (couramment utilisés dans l'application)
-export type RepasWithIngredients = Repas & {
+/** Sans `userId` : l'id interne d'un utilisateur ne quitte jamais le serveur (voir `FriendSummary.id`). */
+export type RepasWithIngredients = Omit<Repas, 'userId'> & {
   /** Auteur, si c'est la recette d'un ami (null pour mes propres repas) */
   owner: FriendSummary | null;
   /** Nombre d'amis qui l'ont dans leur carnet (connu de l'auteur seulement, 0 sinon) */
@@ -56,7 +57,6 @@ export type RepasWithIngredients = Repas & {
 /** Repas programmé tel que renvoyé par l'API planning (date calendaire « AAAA-MM-JJ »). */
 export interface ProgrammationWithRepas {
   id: number;
-  userId: number;
   repasId: number;
   date: Ymd;
   /** 0 = midi, 1 = soir */
@@ -155,7 +155,8 @@ export interface StepItem {
 
 /** Ce qu'un utilisateur montre aux autres : jamais son e-mail. */
 export interface FriendSummary {
-  id: number;
+  /** Identifiant public (`User.publicId`), jamais l'id en base */
+  id: string;
   pseudo: string;
   photoUrl: string | null;
 }

@@ -139,7 +139,18 @@ export interface SessionUser {
   photoUrl: string | null;
 }
 
-/** Colonnes d'un `SessionUser` : à utiliser pour toute réponse qui renvoie l'utilisateur connecté. */
+/** Utilisateur connecté tel qu'envoyé au client : sans l'id interne, qui ne quitte jamais le serveur. */
+export type ClientUser = Omit<SessionUser, 'id'>;
+
+export const toClientUser = ({ email, createdAt, weekStartDay, pseudo, photoUrl }: SessionUser): ClientUser => ({
+  email,
+  createdAt,
+  weekStartDay,
+  pseudo,
+  photoUrl,
+});
+
+/** Colonnes d'un `SessionUser` : à lire pour toute réponse qui renvoie l'utilisateur connecté (via `toClientUser`). */
 export const SESSION_USER_SELECT = {
   id: true,
   email: true,

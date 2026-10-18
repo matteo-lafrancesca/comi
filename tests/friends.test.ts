@@ -19,12 +19,12 @@ const search = routes(searchMod);
 const requests = routes(requestsMod);
 const friends = routes(friendsMod);
 const byId = (id: number) => ({ params: Promise.resolve({ id: String(id) }) });
-const byUser = (id: number) => ({ params: Promise.resolve({ userId: String(id) }) });
+const byUser = (u: { publicId: string }) => ({ params: Promise.resolve({ userId: u.publicId }) });
 
 beforeEach(() => clearCookies());
 
 type U = Awaited<ReturnType<typeof loginAs>>;
-const sendRequest = (to: U) => requests.POST(json('/api/friends/requests', 'POST', { userId: to.id }));
+const sendRequest = (to: U) => requests.POST(json('/api/friends/requests', 'POST', { userId: to.publicId }));
 const acceptRequest = (id: number) => acceptMod.POST(json(`/api/friends/requests/${id}/accept`, 'POST'), byId(id));
 const listRequests = async (): Promise<FriendRequestsResponse> =>
   (await requests.GET(json('/api/friends/requests', 'GET'))).json();
@@ -44,7 +44,7 @@ test('amis : pseudo obligatoire (403)', async () => {
   const u = await loginAs();
   await db.user.update({ where: { id: u.id }, data: { pseudo: null, pseudoKey: null } });
   assert.equal((await search.GET(json('/api/users/search?q=ab', 'GET'))).status, 403);
-  assert.equal((await requests.POST(json('/api/friends/requests', 'POST', { userId: 1 }))).status, 403);
+  assert.equal((await requests.POST(json('/api/friends/requests', 'POST', { userId: 'x' }))).status, 403);
 });
 
 test('recherche : préfixe sans casse ni accents, sans soi-même ni e-mail, 2 caractères minimum', async () => {
@@ -56,9 +56,9 @@ test('recherche : préfixe sans casse ni accents, sans soi-même ni e-mail, 2 ca
   });
 
   assert.deepEqual(await searchFor(`${tag.toUpperCase()} LÉ`), [
-    { id: other.id, pseudo: `${tag} Léa`, photoUrl: null, relation: 'none', requestId: null },
+    { id: other.publicId, pseudo: `${tag} Léa`, photoUrl: null, relation: 'none', requestId: null },
   ]);
-  assert.deepEqual((await searchFor(tag)).map((u) => u.id), [other.id]); // pas soi-même
+  assert.deepEqual((await searchFor(tag)).map((u) => u.id), [other.publicId]); // pas soi-même
   assert.deepEqual(await searchFor('z'), []);
 });
 
@@ -76,21 +76,21 @@ test('demandes : envoyer, doublon, soi-même, inconnu, voir, accepter, liste ave
   assert.deepEqual(await sent.json(), { relation: 'sent' });
   assert.equal((await sendRequest(b)).status, 409);
   assert.equal((await sendRequest(a)).status, 400);
-  assert.equal((await requests.POST(json('/api/friends/requests', 'POST', { userId: 99999999 }))).status, 404);
+  assert.equal((await requests.POST(json('/api/friends/requests', 'POST', { userId: 'inconnu' }))).status, 404);
 
   const mine = await listRequests();
-  assert.deepEqual(mine.sent.map((r) => r.user.id), [b.id]);
+  assert.deepEqual(mine.sent.map((r) => r.user.id), [b.publicId]);
   const reqId = mine.sent[0].id;
   assert.equal((await acceptRequest(reqId)).status, 403); // l'expéditeur ne peut pas accepter
 
   await actAs(b);
-  assert.deepEqual((await listRequests()).received.map((r) => r.user.id), [a.id]);
+  assert.deepEqual((await listRequests()).received.map((r) => r.user.id), [a.publicId]);
   assert.equal((await acceptRequest(reqId)).status, 200);
   assert.equal((await acceptRequest(reqId)).status, 404); // plus en attente
 
   await actAs(a);
   const list: FriendCard[] = await (await friends.GET(json('/api/friends', 'GET'))).json();
-  assert.deepEqual(list.map((f) => f.id), [b.id]);
+  assert.deepEqual(list.map((f) => f.id), [b.publicId]);
   assert.deepEqual(list[0].vitrine.map((r) => r.titre), ['Public 4', 'Public 3', 'Public 2']);
   assert.equal((await sendRequest(b)).status, 409); // déjà amis
   assert.equal((await searchFor(b.pseudo!))[0].relation, 'friend');
@@ -128,7 +128,7 @@ test('profil : réservé aux amis, recettes publiques seulement, savedByMe', asy
   const pub = await db.repas.create({ data: { userId: b.id, titre: 'Pub', isPublic: true, createdAt: new Date(2025, 0, 1) } });
   const pub2 = await db.repas.create({ data: { userId: b.id, titre: 'Pub 2', isPublic: true, createdAt: new Date(2025, 0, 2) } });
   await db.repas.create({ data: { userId: b.id, titre: 'Privé' } });
-  const get = () => friendId.GET(json(`/api/friends/${b.id}`, 'GET'), byUser(b.id));
+  const get = () => friendId.GET(json(`/api/friends/${b.publicId}`, 'GET'), byUser(b));
 
   await actAs(a);
   assert.equal((await get()).status, 403);
@@ -138,6 +138,11 @@ test('profil : réservé aux amis, recettes publiques seulement, savedByMe', asy
   const profile: FriendProfile = await (await get()).json();
   assert.equal(profile.pseudo, b.pseudo);
   assert.equal('email' in profile, false);
+  // Seul l'identifiant public sort du serveur, jamais l'id en base
+  assert.equal(profile.id, b.publicId);
+  assert.equal('userId' in profile.repas[0], false);
+  const unknown = friendId.GET(json('/api/friends/inconnu', 'GET'), byUser({ publicId: 'inconnu' }));
+  assert.equal((await unknown).status, 404);
   assert.deepEqual(
     profile.repas.map((r) => [r.id, r.savedByMe]),
     [
@@ -170,7 +175,7 @@ test('retirer un ami : recettes retirées des deux côtés, données personnelle
   });
   await db.shoppingListExtra.create({ data: { userId: a.id, repasId: ofB.id, week: 23, year: 2025 } });
 
-  const remove = () => friendId.DELETE(json(`/api/friends/${b.id}`, 'DELETE'), byUser(b.id));
+  const remove = () => friendId.DELETE(json(`/api/friends/${b.publicId}`, 'DELETE'), byUser(b));
   assert.equal((await remove()).status, 200);
   assert.equal(await db.friendship.count({ where: { OR: [{ requesterId: a.id }, { addresseeId: a.id }] } }), 0);
   assert.equal(await db.repasSaved.count({ where: { userId: { in: [a.id, b.id] } } }), 0);
@@ -222,7 +227,7 @@ test('carnet : liste avec auteur, savedCount réservé à l auteur, utilisable a
   const carnet = await myCarnet();
   assert.deepEqual(carnet.map((r) => r.id).sort(), [fromB.id, mine.id].sort());
   const friendMeal = carnet.find((r) => r.id === fromB.id)!;
-  assert.deepEqual(friendMeal.owner, { id: b.id, pseudo: b.pseudo, photoUrl: null });
+  assert.deepEqual(friendMeal.owner, { id: b.publicId, pseudo: b.pseudo, photoUrl: null });
   assert.equal(friendMeal.savedCount, 0); // caché à celui qui n'est pas l'auteur
   assert.equal(carnet.find((r) => r.id === mine.id)!.owner, null);
 

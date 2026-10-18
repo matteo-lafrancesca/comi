@@ -1,19 +1,26 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { HttpError, parseId, withAuth } from '@/lib/api-handler';
+import { HttpError, withAuth } from '@/lib/api-handler';
 import { REPAS_INCLUDE, formatRepasResponse } from '@/lib/api-formatters';
-import { FRIEND_SUMMARY_SELECT, assertFriends, findFriendship, purgeSharedAccess, toFriendSummary } from '@/lib/friends';
+import {
+  FRIEND_SUMMARY_SELECT,
+  assertFriends,
+  findFriendship,
+  purgeSharedAccess,
+  toFriendSummary,
+  userIdFromPublicId,
+} from '@/lib/friends';
 import type { FriendProfile } from '@/types';
 
+/** `userId` : identifiant public de l'ami (`User.publicId`). */
 type Params = { userId: string };
-const ID_INVALIDE = "L'identifiant de l'utilisateur doit être un nombre valide.";
 
 /**
  * GET /api/friends/[userId]
  * Profil d'un ami et toutes ses recettes publiques (`savedByMe` : déjà dans mon carnet).
  */
 export const GET = withAuth<Params>(async (_request, user, { userId }) => {
-  const friendId = parseId(userId, ID_INVALIDE);
+  const friendId = await userIdFromPublicId(userId);
   await assertFriends(user.id, friendId);
 
   const friend = await db.user.findUniqueOrThrow({
@@ -40,7 +47,7 @@ export const GET = withAuth<Params>(async (_request, user, { userId }) => {
  * Retire un ami : ses recettes quittent mon carnet (et mon planning), les miennes quittent le sien.
  */
 export const DELETE = withAuth<Params>(async (_request, user, { userId }) => {
-  const friendId = parseId(userId, ID_INVALIDE);
+  const friendId = await userIdFromPublicId(userId);
   const friendship = await findFriendship(user.id, friendId);
   if (friendship?.status !== 'accepted') throw new HttpError(404, 'Cet utilisateur ne fait pas partie de vos amis.');
 

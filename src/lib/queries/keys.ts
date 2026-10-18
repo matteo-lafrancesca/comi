@@ -34,7 +34,7 @@ export const queryKeys = {
     list: ['friends', 'list'] as const,
     requests: ['friends', 'requests'] as const,
     search: (q: string) => ['friends', 'search', q] as const,
-    profile: (userId: number) => ['friends', 'profile', userId] as const,
+    profile: (userId: string) => ['friends', 'profile', userId] as const,
   },
   repas: {
     all: ['repas'] as const,

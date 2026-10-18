@@ -225,7 +225,8 @@ test('repas : validation (400), userId du body ignoré, PATCH partiel conserve l
   );
   assert.equal(created.status, 201);
   const meal = await created.json();
-  assert.equal(meal.userId, u.id);
+  assert.equal((await db.repas.findUniqueOrThrow({ where: { id: meal.id } })).userId, u.id);
+  assert.equal('userId' in meal, false); // l'id interne de l'auteur ne sort pas du serveur
   assert.equal(meal.titre, 'Gratin');
 
   const patched = await repasId.PATCH(json(`/api/repas/${meal.id}`, 'PATCH', { titre: 'Gratin 2' }), byId(meal.id));

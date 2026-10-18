@@ -196,7 +196,7 @@ function useInvalidateFriends() {
 export function useSendFriendRequestMutation() {
   const invalidate = useInvalidateFriends();
   return useMutation({
-    mutationFn: (userId: number) =>
+    mutationFn: (userId: string) =>
       apiJson<{ relation: FriendRelation }>('/api/friends/requests', {
         method: 'POST',
         json: { userId },
@@ -241,8 +241,8 @@ export function useRemoveFriendMutation() {
   const queryClient = useQueryClient();
   const invalidateRepas = useInvalidateRepas();
   return useMutation({
-    mutationFn: (userId: number) =>
-      apiJson<unknown>(`/api/friends/${userId}`, { method: 'DELETE', fallbackError: 'Impossible de retirer cet ami.' }),
+    mutationFn: (userId: string) =>
+      apiJson<unknown>(`/api/friends/${encodeURIComponent(userId)}`, { method: 'DELETE', fallbackError: 'Impossible de retirer cet ami.' }),
     onSuccess: (_data, userId) => {
       queryClient.setQueryData<FriendCard[]>(queryKeys.friends.list, (list) => list?.filter((f) => f.id !== userId));
       return Promise.all([

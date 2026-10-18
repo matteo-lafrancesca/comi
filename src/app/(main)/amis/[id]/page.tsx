@@ -20,7 +20,7 @@ import { buttonStyles } from '@/components/ui/button-styles';
 /** Profil d'un ami : ses recettes publiques (à ajouter à mon carnet) et le retrait de l'ami. */
 export default function FriendProfilePage() {
   const params = useParams<{ id: string }>();
-  const friendId = Number(params.id);
+  const friendId = params.id;
   const router = useRouter();
   const { data: profile, isPending, error, refetch } = useFriendProfile(friendId);
   const removeMutation = useRemoveFriendMutation();
@@ -56,7 +56,8 @@ export default function FriendProfilePage() {
   }
 
   if (error) {
-    const notFriends = error instanceof ApiError && error.status === 403;
+    // 403 : plus amis ; 404 : identifiant inconnu (lien périmé ou modifié à la main)
+    const notFriends = error instanceof ApiError && (error.status === 403 || error.status === 404);
     return (
       <div className="max-w-lg">
         <BackHeader title="Profil" backHref="/amis" />

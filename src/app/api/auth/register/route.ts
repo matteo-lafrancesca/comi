@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import bcryptjs from 'bcryptjs';
 import { db } from '@/lib/db';
 import { isRateLimited, rateLimitKey } from '@/lib/rate-limit';
-import { signJWT, createRefreshToken, setAuthCookies, SESSION_USER_SELECT } from '@/lib/auth';
+import { signJWT, createRefreshToken, setAuthCookies, SESSION_USER_SELECT, toClientUser } from '@/lib/auth';
 import { pseudoSchema } from '@/lib/schemas';
 import { PSEUDO_PRIS, isPseudoTaken, pseudoFields } from '@/lib/pseudo';
 
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
     const response = NextResponse.json(
       {
         message: 'Compte créé avec succès.',
-        user,
+        user: toClientUser(user),
       },
       { status: 201 }
     );

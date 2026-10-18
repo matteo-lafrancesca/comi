@@ -124,10 +124,10 @@ export function useFriendRequests() {
 }
 
 /** Profil d'un ami et ses recettes publiques (403 si nous ne sommes pas, ou plus, amis). */
-export function useFriendProfile(userId: number) {
+export function useFriendProfile(userId: string) {
   return useQuery({
     queryKey: queryKeys.friends.profile(userId),
-    queryFn: () => apiJson<FriendProfile>(`/api/friends/${userId}`, { fallbackError: 'Impossible de charger ce profil.' }),
+    queryFn: () => apiJson<FriendProfile>(`/api/friends/${encodeURIComponent(userId)}`, { fallbackError: 'Impossible de charger ce profil.' }),
   });
 }
 

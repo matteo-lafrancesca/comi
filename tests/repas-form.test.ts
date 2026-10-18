@@ -44,7 +44,6 @@ test('validateStep : titre obligatoire à la première étape seulement', () => 
 test('repasToValues -> valuesToPayload : aller-retour', () => {
   const repas = {
     id: 1,
-    userId: 1,
     titre: 'Gratin',
     recette: 'Éplucher\n\nCuire',
     photoUrl: null,

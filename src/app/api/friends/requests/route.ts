@@ -33,15 +33,15 @@ export const GET = withAuth(async (_request, user) => {
 /**
  * POST /api/friends/requests
  * Envoie une demande d'ami. Si l'autre m'en avait déjà envoyé une, elle est acceptée directement.
- * Payload: { userId: number } — Réponse : { relation: 'sent' | 'friend' }
+ * Payload: { userId: string } (identifiant public) — Réponse : { relation: 'sent' | 'friend' }
  */
 export const POST = withAuth(async (request, user) => {
   requirePseudo(user);
-  const { userId } = await parseBody(request, friendRequestSchema);
-  if (userId === user.id) throw new HttpError(400, 'Vous ne pouvez pas vous ajouter vous-même.');
-
-  const target = await db.user.findUnique({ where: { id: userId }, select: { pseudo: true } });
+  const { userId: publicId } = await parseBody(request, friendRequestSchema);
+  const target = await db.user.findUnique({ where: { publicId }, select: { id: true, pseudo: true } });
   if (!target?.pseudo) throw new HttpError(404, 'Utilisateur introuvable.');
+  const userId = target.id;
+  if (userId === user.id) throw new HttpError(400, 'Vous ne pouvez pas vous ajouter vous-même.');
 
   const existing = await findFriendship(user.id, userId);
   const relation = relationOf(user.id, existing);

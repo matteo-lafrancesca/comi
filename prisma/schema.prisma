@@ -10,6 +10,8 @@ generator client {
 model User {
   id            Int             @id @default(autoincrement())
   email         String          @unique
+  /// Identifiant montré aux autres (URL, API) à la place de `id` : aléatoire, ne révèle ni le nombre ni l'ordre des comptes.
+  publicId      String          @unique @default(nanoid(10)) @map("public_id")
   /// Nom d'affichage tel que saisi (majuscules, accents, espaces). Null tant qu'il n'est pas choisi.
   pseudo        String?
   /// Pseudo normalisé (`normalizeSearchText`) : unicité insensible à la casse et aux accents, et recherche.

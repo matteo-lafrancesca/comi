@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { renewRefreshToken, setAuthCookies, clearAuthCookies } from '@/lib/auth';
+import { renewRefreshToken, setAuthCookies, clearAuthCookies, toClientUser } from '@/lib/auth';
 
 export async function POST() {
   try {
@@ -29,7 +29,7 @@ export async function POST() {
 
     const response = NextResponse.json({
       message: 'Session rafraîchie avec succès.',
-      user: result.user,
+      user: toClientUser(result.user),
     });
 
     setAuthCookies(response, result.accessToken, result.refreshToken);

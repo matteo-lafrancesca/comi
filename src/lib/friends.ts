@@ -51,6 +51,13 @@ export async function assertUsableRepas(repasId: number, userId: number, message
   if (repas.userId !== userId && repas.savedBy.length === 0) throw new HttpError(403, messages.forbidden);
 }
 
+/** Id interne d'un utilisateur à partir de son identifiant public (celui des URL et de l'API) ; 404 s'il n'existe pas. */
+export async function userIdFromPublicId(publicId: string) {
+  const user = await db.user.findUnique({ where: { publicId }, select: { id: true } });
+  if (!user) throw new HttpError(404, 'Utilisateur introuvable.');
+  return user.id;
+}
+
 /** Garantit que deux utilisateurs sont amis (403 sinon). */
 export async function assertFriends(a: number, b: number) {
   const friendship = await findFriendship(a, b);

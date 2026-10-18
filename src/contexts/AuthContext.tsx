@@ -6,7 +6,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 
 export interface AuthUser {
-  id: number;
   email: string;
   createdAt: string;
   /** Jour de début de semaine : 0 = lundi … 6 = dimanche */

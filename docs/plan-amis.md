@@ -3,7 +3,7 @@
 Document de reprise : contexte, décisions, ce qui est fait, ce qui reste. À lire en entier avant de
 reprendre le travail dans une nouvelle conversation (avec `AGENTS.md` et `DESIGN_GUIDELINES.md`).
 
-Branche : `dev` · état : **étapes 1 à 7 faites, reste 8** (finitions).
+Branche : `dev` · état : **étapes 1 à 7 faites + identifiant public, reste 8** (finitions).
 
 ---
 
@@ -34,6 +34,10 @@ Demandes de départ de l'utilisateur :
    Toute écriture passe par `pseudoFields()` (`src/lib/pseudo.ts`).
 4. **Vitrine** = les 3 dernières recettes publiques (pas de choix manuel).
 5. Un utilisateur montré aux autres n'expose que `{ id, pseudo, photoUrl }` (`FRIEND_SUMMARY_SELECT`), jamais l'e-mail.
+6. **L'id en base ne sort pas du serveur** : `User.publicId` (nanoid de 10 caractères ; hexadécimal aléatoire pour les comptes
+   existants) sert d'`id` dans `FriendSummary`, dans l'URL `/amis/[publicId]` et en entrée des routes amis
+   (`userIdFromPublicId`, 404 si inconnu). `repas.userId` et `programmation.userId` ne sont plus renvoyés ; l'utilisateur
+   connecté est envoyé sans id (`toClientUser`).
 
 ## 3. Étapes faites
 
@@ -47,6 +51,7 @@ Demandes de départ de l'utilisateur :
 | 5 | `5121296` | Carnet : `POST/DELETE /api/repas/[id]/save`, `GET /api/repas` inclut les recettes ajoutées, `owner` et `savedCount` dans chaque repas, `assertUsableRepas` pour planning et extras, tri rareté limité à ses propres programmations, fiche « recette d'ami » (programmer / retirer du carnet), confirmation avant de repasser en privé une recette présente chez des amis. |
 | 6 | `294dd13` | Onglet **Amis** : page `/amis` (`FriendCard`), `FriendRequestsDrawer` (recherche + demandes), requêtes / mutations, `RepasThumbnail` et `ui/Tabs` extraits. |
 | 7 | (voir `git log`) | Profil d'un ami `/amis/[id]` : recettes publiques, fiche en aperçu (`RepasDetailModal` `savedByMe` : ajouter / retirer du carnet sans fermer), « Retirer cet ami » ; `useFriendProfile`, `useSaveRepasMutation`, `useRemoveFriendMutation` (requêtes amis marquées périmées sans rechargement, ami retiré de la liste en cache), `RepasCard` `hideOwner`. Vérifié dans le navigateur. |
+| 7 bis | (voir `git log`) | Identifiant public des utilisateurs (décision 6). Migration `20261018120000_user_public_id`. |
 
 ## 4. Carte du code
 
@@ -55,16 +60,16 @@ Demandes de départ de l'utilisateur :
 | Route | Rôle |
 |---|---|
 | `GET /api/users/search?q=` | Préfixe de pseudo (≥ 2 car.), 10 max, avec `relation` et `requestId`. 60 req/min par utilisateur. |
-| `GET / POST /api/friends/requests` | Demandes en attente `{ received, sent }` / envoyer `{ userId }` (acceptée d'office si demande croisée). |
+| `GET / POST /api/friends/requests` | Demandes en attente `{ received, sent }` / envoyer `{ userId }` (identifiant public) (acceptée d'office si demande croisée). |
 | `POST /api/friends/requests/[id]/accept` | Accepter (destinataire seulement). |
 | `DELETE /api/friends/requests/[id]` | Refuser ou annuler. |
 | `GET /api/friends` | Amis + vitrine (`FriendCard[]`). |
-| `GET /api/friends/[userId]` | Profil : recettes publiques avec `savedByMe` (`FriendProfile`). 403 si pas amis. |
-| `DELETE /api/friends/[userId]` | Retirer un ami + purge dans les deux sens. |
+| `GET /api/friends/[publicId]` | Profil : recettes publiques avec `savedByMe` (`FriendProfile`). 403 si pas amis. |
+| `DELETE /api/friends/[publicId]` | Retirer un ami + purge dans les deux sens. |
 | `POST / DELETE /api/repas/[id]/save` | Ajouter à / retirer de son carnet. |
 
 **Lib** : `src/lib/friends.ts` (`requirePseudo`, `findFriendship`, `relationOf`, `assertFriends`,
-`assertUsableRepas`, `purgeSharedAccess`), `src/lib/pseudo.ts`, `src/lib/api-formatters.ts`
+`assertUsableRepas`, `purgeSharedAccess`, `userIdFromPublicId`), `src/lib/pseudo.ts`, `src/lib/api-formatters.ts`
 (`REPAS_INCLUDE` charge l'auteur et le nombre de carnets ; `formatRepasResponse(repas, viewerId)` →
 `owner` null pour ses repas, `savedCount` réservé à l'auteur).
 
@@ -95,6 +100,7 @@ Composants : `Avatar`, `PseudoSetupDrawer`, `ProfileForm`, `FriendCard`, `Friend
 - **Recherche par début de pseudo uniquement** ; limiteur de débit en mémoire (repart à zéro au redémarrage).
 - **Vitrine des amis** rafraîchie seulement à leur prochaine visite.
 - Formulaires « Nouveau » / « Modifier » sans choix public / privé (réglé depuis la fiche ; l'API l'accepte).
+- **Ids séquentiels restants** : demandes d'ami (`requestId`, `FriendRequest.id`) et repas (`/repas/[id]/modifier`) ; ils ne désignent pas un utilisateur. Même technique (`publicId`) si besoin.
 - Fiche en aperçu sur le profil : si l'ami repasse la recette en privé pendant qu'elle est ouverte, la fiche se ferme au rechargement du profil.
 
 ## 7. Environnement et pièges rencontrés
@@ -116,6 +122,9 @@ Composants : `Avatar`, `PseudoSetupDrawer`, `ProfileForm`, `FriendCard`, `Friend
   session. Les routes à segment dynamique s'appellent avec `{ params: Promise.resolve({ id: '…' }) }`.
 - `npm run check` doit passer ; il reste **deux warnings ESLint antérieurs au chantier** (`providers.tsx`
   `window.location.assign`, `WeekSelector.tsx` `onReset` inutilisé).
+- **Le sandbox Bash ne supprime pas les fichiers** (sans erreur) : `tests/test.db` n'était jamais effacé par `tests/setup.ts`
+  et un changement de schéma requis faisait échouer `db push`. Lancer `npm run check` depuis PowerShell (ou supprimer `tests/test.db` avant).
+- Après un changement de schéma, le `npm run dev` lancé de son côté garde l'ancien client : le relancer.
 - Côté outils : les heredocs bash contenant une apostrophe typographique (’) échouent ; écrire le script dans un fichier.
 
 ## 8. Pour reprendre

@@ -41,7 +41,8 @@ export function planningUrl({ week, schedule, focus }: PlanningUrlOptions = {}):
 }
 
 /** Profil d'un ami. */
-export const friendUrl = (userId: number) => `/amis/${userId}`;
+/** Profil d'un ami, par son identifiant public. */
+export const friendUrl = (userId: string) => `/amis/${userId}`;
 
 export function shoppingUrl(week?: WeekRef | null): string {
   const params = new URLSearchParams();
