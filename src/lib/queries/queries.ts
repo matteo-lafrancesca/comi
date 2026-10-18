@@ -168,3 +168,12 @@ export function useAdminRows(model: string | null, page: number) {
       }),
   });
 }
+
+/** Fiche d'un repas de n'importe quel utilisateur (administration). */
+export function useAdminRepas(id: number | null) {
+  return useQuery({
+    queryKey: queryKeys.admin.repas(id ?? 0),
+    enabled: id !== null,
+    queryFn: () => apiJson<RepasWithIngredients>(`/api/admin/fiche-repas/${id}`, { fallbackError: 'Repas introuvable.' }),
+  });
+}

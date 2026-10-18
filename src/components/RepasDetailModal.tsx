@@ -34,6 +34,8 @@ interface RepasDetailModalProps {
    * Absent : la recette vient de mon carnet.
    */
   savedByMe?: boolean;
+  /** Consultation seule (administration) : aucune action, l'auteur est affiché. */
+  readOnly?: boolean;
 }
 
 /** Confirmations possibles depuis la fiche. */
@@ -52,6 +54,7 @@ export default function RepasDetailModal({
   programmationId,
   onReprogram,
   savedByMe,
+  readOnly = false,
 }: RepasDetailModalProps) {
   const router = useRouter();
   const [activeRepas, setActiveRepas] = useState<RepasWithIngredients | null>(null);
@@ -261,7 +264,7 @@ export default function RepasDetailModal({
             </div>
 
             <div className="flex items-center gap-2 shrink-0 sm:mt-1">
-              {programmationId ? (
+              {readOnly ? null : programmationId ? (
                 <>
                   <IconButton label="Déprogrammer ce repas" onClick={handleUnschedule} disabled={isUnscheduling}>
                     {isUnscheduling ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarX className="h-4 w-4" />}

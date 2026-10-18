@@ -55,7 +55,7 @@ Avant de coder une interface, **analyse toujours si des éléments similaires ex
 | `IngredientRow` | Ligne ingrédient éditable (nom + quantité/unité + supprimer) |
 | `CreateIngredientDrawer` | Drawer de création d'un nouvel ingrédient (nom + catégorie) |
 | `AddExtraDrawer` | Drawer d'ajout hors-planning (onglets Repas / Article) |
-| `RepasDetailModal` | Fiche détail d'un repas avec actions (modifier, supprimer, déprogrammer, confidentialité ; recette d'ami : programmer ou retirer du carnet ; `savedByMe` = aperçu depuis le profil d'un ami, avec « Ajouter à mon carnet ») |
+| `RepasDetailModal` | Fiche détail d'un repas avec actions (modifier, supprimer, déprogrammer, confidentialité ; recette d'ami : programmer ou retirer du carnet ; `savedByMe` = aperçu depuis le profil d'un ami, avec « Ajouter à mon carnet » ; `readOnly` = sans actions, ex. administration) |
 | `RepasCard` | Carte repas dans la grille (`caption` remplace « de pseudo », ex. « Dans votre carnet ») |
 | `SortDrawer` | Drawer de tri pour la liste de repas |
 | `PlanningDay` / `PlanningSlot` | Une journée du planning / un créneau midi-soir |

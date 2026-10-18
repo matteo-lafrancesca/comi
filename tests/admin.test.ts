@@ -56,11 +56,12 @@ test('admin : créer, modifier, supprimer une ligne ; erreurs lisibles', async (
 test('admin : types convertis, pseudo et mot de passe dérivés', async () => {
   const admin = await loginAdmin();
   const params = ctx({ model: 'User', id: String(admin.id) });
-  const res = await rowMod.PATCH(json('/x', 'PATCH', { pseudo: 'Élodie Admin', weekStartDay: '3', passwordHash: 'secret' }), params);
+  const n = Date.now();
+  const res = await rowMod.PATCH(json('/x', 'PATCH', { pseudo: `Élodie ${n}`, weekStartDay: '3', passwordHash: 'secret' }), params);
   assert.equal(res.status, 200);
   const user = await db.user.findUniqueOrThrow({ where: { id: admin.id } });
   assert.equal(user.weekStartDay, 3);
-  assert.equal(user.pseudoKey, 'elodie admin');
+  assert.equal(user.pseudoKey, `elodie ${n}`);
   assert.notEqual(user.passwordHash, 'secret');
   assert.equal((await rowMod.PATCH(json('/x', 'PATCH', { weekStartDay: 'abc' }), params)).status, 400);
 });

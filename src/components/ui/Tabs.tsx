@@ -4,12 +4,17 @@ interface TabsProps<T extends string> {
   tabs: { id: T; label: React.ReactNode }[];
   active: T;
   onChange: (tab: T) => void;
+  /** Passe à la ligne quand les onglets dépassent la largeur (nombreux onglets). */
+  wrap?: boolean;
 }
 
 /** Onglets soulignés (trait jaune sous l'onglet actif). */
-export default function Tabs<T extends string>({ tabs, active, onChange }: TabsProps<T>) {
+export default function Tabs<T extends string>({ tabs, active, onChange, wrap = false }: TabsProps<T>) {
   return (
-    <div role="tablist" className="flex gap-6 border-b border-neutral-200 dark:border-neutral-800">
+    <div
+      role="tablist"
+      className={`flex gap-x-6 border-b border-neutral-200 dark:border-neutral-800 ${wrap ? 'flex-wrap gap-y-3' : ''}`}
+    >
       {tabs.map((tab) => (
         <button
           key={tab.id}

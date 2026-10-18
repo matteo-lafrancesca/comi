@@ -40,6 +40,7 @@ export const queryKeys = {
   admin: {
     models: ['admin', 'models'] as const,
     rows: (model: string, page: number) => ['admin', 'rows', model, page] as const,
+    repas: (id: number) => ['admin', 'repas', id] as const,
   },
   repas: {
     all: ['repas'] as const,

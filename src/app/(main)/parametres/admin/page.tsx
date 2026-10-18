@@ -2,14 +2,15 @@
 
 import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import BackHeader from '@/components/BackHeader';
 import AdminRowDrawer from '@/components/AdminRowDrawer';
+import RepasDetailModal from '@/components/RepasDetailModal';
 import Tabs from '@/components/ui/Tabs';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Alert from '@/components/ui/Alert';
-import { useAdminModels, useAdminRows } from '@/lib/queries/queries';
+import { useAdminModels, useAdminRepas, useAdminRows } from '@/lib/queries/queries';
 import { adminUrl } from '@/lib/routes';
 import type { AdminRow } from '@/types';
 
@@ -36,6 +37,11 @@ export default function AdminPage() {
     setDrawerOpen(true);
   };
 
+  // Repas : sa fiche plutôt que la ligne brute.
+  const [ficheId, setFicheId] = useState<number | null>(null);
+  const fiche = useAdminRepas(ficheId);
+  const isRepas = model?.name === 'Repas';
+
   const columns = model?.fields.filter((f) => !f.writeOnly) ?? [];
   const lastPage = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
 
@@ -47,8 +53,8 @@ export default function AdminPage() {
 
       {models && model && (
         <>
-          <div className="overflow-x-auto hide-scrollbar">
-            <Tabs
+          <Tabs
+            wrap
               tabs={models.map((m) => ({
                 id: m.name,
                 label: (
@@ -57,10 +63,9 @@ export default function AdminPage() {
                   </span>
                 ),
               }))}
-              active={model.name}
-              onChange={(table) => router.replace(adminUrl(table))}
-            />
-          </div>
+            active={model.name}
+            onChange={(table) => router.replace(adminUrl(table))}
+          />
 
           <div className="flex items-center justify-between gap-4 mt-6 mb-3">
             <p className="eyebrow tabular-nums">
@@ -87,12 +92,14 @@ export default function AdminPage() {
           </div>
 
           {rowsError && <Alert>{rowsError.message}</Alert>}
+          {fiche.error && <Alert>{fiche.error.message}</Alert>}
 
           {data && data.rows.length > 0 && (
             <div className="overflow-x-auto -mx-5 px-5 md:mx-0 md:px-0">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-text-light-main dark:border-text-dark-main">
+                    {isRepas && <th className="w-0" />}
                     {columns.map((c) => (
                       <th key={c.name} className="eyebrow text-left font-normal py-2 pr-5 whitespace-nowrap">
                         {c.name}
@@ -107,6 +114,21 @@ export default function AdminPage() {
                       onClick={() => openRow(row)}
                       className="cursor-pointer transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     >
+                      {isRepas && (
+                        <td className="py-1.5 pr-4">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFicheId(Number(row.id));
+                            }}
+                            className="flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-input border border-neutral-300 dark:border-neutral-700 hover:bg-card-light dark:hover:bg-card-dark cursor-pointer"
+                          >
+                            <BookOpen className="h-3.5 w-3.5" />
+                            Fiche
+                          </button>
+                        </td>
+                      )}
                       {columns.map((c) => (
                         <td key={c.name} className="py-2.5 pr-5 max-w-56 truncate whitespace-nowrap tabular-nums">
                           {c.isId ? (
@@ -128,6 +150,13 @@ export default function AdminPage() {
               </table>
             </div>
           )}
+
+          <RepasDetailModal
+            repas={ficheId !== null && fiche.data ? fiche.data : null}
+            isOpen={ficheId !== null && Boolean(fiche.data)}
+            onClose={() => setFicheId(null)}
+            readOnly
+          />
 
           <AdminRowDrawer
             key={editing.key}
