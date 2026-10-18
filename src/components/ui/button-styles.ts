@@ -1,4 +1,4 @@
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'danger-ghost';
 export type ButtonSize = 'md' | 'sm';
 
 const base =
@@ -13,6 +13,8 @@ const variants: Record<ButtonVariant, string> = {
   danger: 'bg-red-700 text-white hover:bg-red-800 active:bg-red-900',
   ghost:
     'text-text-light-muted dark:text-text-dark-muted hover:text-text-light-main dark:hover:text-text-dark-main hover:bg-neutral-100 dark:hover:bg-neutral-800',
+  // Action destructrice secondaire (ex. retirer un ami) : texte rouge, sans fond
+  'danger-ghost': 'text-red-800 dark:text-red-300 hover:bg-red-700/10',
 };
 
 const sizes: Record<ButtonSize, string> = {

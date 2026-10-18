@@ -83,40 +83,47 @@ export default function FriendProfilePage() {
   }
 
   const { pseudo, photoUrl, repas } = profile;
+  const savedCount = repas.filter((r) => r.savedByMe).length;
 
   return (
     <div>
-      <BackHeader title={pseudo} backHref="/amis" />
-
-      <div className="flex items-center gap-4">
-        <Avatar pseudo={pseudo} photoUrl={photoUrl} size={88} />
-        <p className="eyebrow text-text-light-muted dark:text-text-dark-muted">
-          {sharedRecipesLabel(repas.length)}
-        </p>
-      </div>
+      <BackHeader
+        title={pseudo}
+        backHref="/amis"
+        media={<Avatar pseudo={pseudo} photoUrl={photoUrl} size={72} />}
+        subtitle={
+          savedCount > 0
+            ? `${repas.length} recette${repas.length > 1 ? 's' : ''} · ${savedCount} dans votre carnet`
+            : sharedRecipesLabel(repas.length)
+        }
+      />
 
       {repas.length === 0 ? (
-        <p className="py-16 max-w-sm font-display text-2xl leading-snug">{pseudo} n’a pas encore partagé de recette.</p>
+        <p className="py-12 max-w-sm font-display text-2xl leading-snug">{pseudo} n’a pas encore partagé de recette.</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-6 mt-10 animate-fade-in">
-          {repas.map((r) => (
-            <RepasCard
-              key={r.id}
-              repas={r}
-              hideOwner
-              onClick={() => {
-                setSelectedId(r.id);
-                setIsDetailOpen(true);
-              }}
-            />
-          ))}
-        </div>
+        <section>
+          <h2 className="eyebrow pb-2 border-b border-text-light-main dark:border-text-dark-main">Ses recettes</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-6 mt-6 animate-fade-in">
+            {repas.map((r) => (
+              <RepasCard
+                key={r.id}
+                repas={r}
+                caption={r.savedByMe ? 'Dans votre carnet' : null}
+                onClick={() => {
+                  setSelectedId(r.id);
+                  setIsDetailOpen(true);
+                }}
+              />
+            ))}
+          </div>
+        </section>
       )}
 
-      <div className="mt-16 pt-6 border-t border-neutral-200 dark:border-neutral-800">
+      <div className="mt-16 pt-4 border-t border-dashed border-neutral-300 dark:border-neutral-700">
         <Button
-          variant="danger"
+          variant="danger-ghost"
           size="sm"
+          className="-ml-3.5"
           onClick={() => {
             setRemoveError(null);
             setRemoveOpen(true);

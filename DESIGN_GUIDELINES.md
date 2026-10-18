@@ -48,7 +48,7 @@ Quand on crée un composant, chercher d'abord une forme propre au contenu (une l
 
 | Besoin | Composant |
 | :--- | :--- |
-| Bouton | `ui/Button` (`primary` = tampon jaune à bordure encre, `secondary`, `danger`, `ghost`) ou `buttonStyles()` sur un `<Link>` |
+| Bouton | `ui/Button` (`primary` = tampon jaune à bordure encre, `secondary`, `danger`, `ghost`, `danger-ghost` pour une action destructrice secondaire) ou `buttonStyles()` sur un `<Link>` |
 | Bouton icône | `ui/IconButton` (libellé obligatoire) |
 | Champ texte | `ui/TextInput` (souligné, label en `eyebrow`) |
 | Message d'erreur / info | `ui/Alert` |

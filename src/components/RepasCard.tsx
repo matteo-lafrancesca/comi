@@ -8,15 +8,18 @@ interface RepasCardProps {
   repas: RepasWithIngredients;
   onClick: () => void;
   selectMode?: boolean;
-  /** Masque « de pseudo » (ex. sur le profil de l'auteur, où c'est redondant) */
-  hideOwner?: boolean;
+  /**
+   * Ligne sous le titre à la place de « de pseudo » (ex. « Dans votre carnet » sur le profil de l'auteur) ;
+   * `null` : aucune ligne.
+   */
+  caption?: string | null;
 }
 
 /**
  * Vignette d'une recette : photo en 4/5, titre en serif. Sans photo : initiale sur papier ligné.
  * Recette d'un ami : son pseudo sous le titre.
  */
-export default function RepasCard({ repas, onClick, selectMode = false, hideOwner = false }: RepasCardProps) {
+export default function RepasCard({ repas, onClick, selectMode = false, caption }: RepasCardProps) {
   const { titre, photoUrl, owner } = repas;
 
   return (
@@ -38,11 +41,13 @@ export default function RepasCard({ repas, onClick, selectMode = false, hideOwne
         <h3 className="font-display text-lg leading-snug font-medium line-clamp-2 text-text-light-main dark:text-text-dark-main">
           {titre}
         </h3>
-        {owner && !hideOwner && (
-          <p className="mt-0.5 text-xs text-text-light-muted dark:text-text-dark-muted truncate">
-            de <span className="font-display italic text-sm">{owner.pseudo}</span>
-          </p>
-        )}
+        {caption !== undefined
+          ? caption && <p className="eyebrow mt-1 text-text-light-muted dark:text-text-dark-muted truncate">{caption}</p>
+          : owner && (
+              <p className="mt-0.5 text-xs text-text-light-muted dark:text-text-dark-muted truncate">
+                de <span className="font-display italic text-sm">{owner.pseudo}</span>
+              </p>
+            )}
       </div>
     </button>
   );
