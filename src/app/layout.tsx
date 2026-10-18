@@ -28,8 +28,7 @@ export const metadata: Metadata = {
 
 // Deux viewports, volontairement : Next émet celui-ci, puis le <meta> de <head> ajoute viewport-fit=cover.
 // Déclaré d'emblée, cover déclenche le bug iOS 26 (WebKit 301108) : en PWA, viewport raccourci de la barre
-// de statut et bande vide en bas. Ce passage en cours de chargement donne le plein écran ; les zones de clic
-// restent décalées jusqu'au premier recalcul du viewport (ouverture du clavier).
+// de statut et bande vide en bas. Ce passage en cours de chargement donne le plein écran.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

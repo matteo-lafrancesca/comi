@@ -13,7 +13,6 @@ import { buttonStyles } from '@/components/ui/button-styles';
 import { adminUrl } from '@/lib/routes';
 import Alert from '@/components/ui/Alert';
 import { errorMessage } from '@/lib/errors';
-import ViewportDiagnostic from '@/components/ViewportDiagnostic';
 
 /** Choix exclusif sous forme de cases accolées. */
 function choiceClasses(selected: boolean) {
@@ -111,11 +110,6 @@ export default function ParametresPage() {
             <LogOut className="h-4 w-4" />
             Se déconnecter
           </Button>
-        </section>
-
-        <section>
-          <h2 className="eyebrow pb-2 border-b border-text-light-main dark:border-text-dark-main">Diagnostic PWA (temporaire)</h2>
-          <ViewportDiagnostic />
         </section>
       </div>
     </div>
