@@ -11,7 +11,8 @@
     "check": "npm run lint && npm run typecheck && npm test",
     "seed:demo": "tsx prisma/seed_generated_meals.ts",
     "seed:hygiene": "tsx prisma/seed_hygiene.ts",
-    "test": "tsx tests/setup.ts && node --import tsx --test tests/*.test.ts"
+    "test": "tsx tests/setup.ts && node --import tsx --test tests/*.test.ts",
+    "seed:test": "tsx prisma/seed_test_account.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
